@@ -7,7 +7,6 @@ const loginVali = new LoginVali()
 
 class LoginController {
 	constructor () {
-		console.log('LoginController constructor')
 		loginModel.selectAllData()
 	}
 	async gettag (ctx) {
@@ -40,7 +39,9 @@ class LoginController {
 	// 新用户注册
 	userRegister (ctx) {
 		// 前端进行数据格式校验
-		let registerData = {}
+		// let registerData = {}
+		ctx.body = `Request-body: ${JSON.stringify(ctx.request.body)}`
+		console.log(JSON.stringify(ctx.request.body))
 	}
 	userLogin (ctx) {
 		loginModel.selectAllData()

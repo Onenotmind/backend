@@ -3,11 +3,11 @@ const mysql = require('mysql')
 class Db {
 	constructor () {
 		this.config = {
-			host: '172.17.0.2',
+			host: 'localhost',
 			port: 3306,
 			user: 'root',
 			password: 'chenye8685800',
-			database: 'ethtrade'
+			database: 'trade'
 		}
 		this.pool = mysql.createPool(this.config)
 	}
