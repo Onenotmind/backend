@@ -7,7 +7,7 @@ const loginVali = new LoginVali()
 
 class LoginController {
 	constructor () {
-		loginModel.selectAllData()
+		// loginModel.selectAllData()
 	}
 	async gettag (ctx) {
 		/**
@@ -33,18 +33,30 @@ class LoginController {
 			console.log(valiRes.error)
 		}
 	}
-	async subVisitloginModel (ctx) {
-		ctx.body = `Request-body: ${JSON.stringify(ctx.request.body)}`
-	}
+
 	// 新用户注册
 	userRegister (ctx) {
-		// 前端进行数据格式校验
-		// let registerData = {}
+		// TODO 前端进行数据格式校验
 		ctx.body = `Request-body: ${JSON.stringify(ctx.request.body)}`
-		console.log(JSON.stringify(ctx.request.body))
+		let requestData = ctx.request.body
+		let registerData = {
+			email: requestData.email,
+			pwd: requestData.pwd
+		}
+		// TODO 判断邮箱是否注册过 queryUserByEmail
+		loginModel.queryUserByEmail(registerData.email).then((v)=> {
+			console.log('queryUserByEmail:', v)
+		}, (e)=> {
+
+		})
+
 	}
 	userLogin (ctx) {
-		loginModel.selectAllData()
+		
+	}
+
+	LoginApiTest (ctx) {
+
 	}
 }
 
