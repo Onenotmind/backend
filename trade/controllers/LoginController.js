@@ -45,9 +45,17 @@ class LoginController {
 		}
 		// TODO 判断邮箱是否注册过 queryUserByEmail
 		loginModel.queryUserByEmail(registerData.email).then((v)=> {
-			console.log('queryUserByEmail:', v)
+			if (v.length === 0) { // 邮箱未注册过
+				loginModel.insertUser(registerData.email, registerData.pwd).then((v) => {
+					console.log('注册成功')
+				}, (e) => {
+					console.log('注册失败')
+				})
+			} else {
+				console.log('邮箱已被注册')
+			} 
 		}, (e)=> {
-
+			console.log('error', e)
 		})
 
 	}

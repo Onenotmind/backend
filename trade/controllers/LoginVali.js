@@ -21,11 +21,11 @@ class LoginVali {
 			email: Joi.string().email().required(),
 			pwd: Joi.string().regex(/^[a-zA-Z0-9]{3,30}$/)
 		})
-		Joi.validate(params, registerData, (err) {
+		Joi.validate(params, registerData, (err) => {
 			if (err === null) {
-				succCb() || succCb
+				succCb()
 			} else {
-				errCb() || errCb
+				errCb()
 			}
 		})
 	}
