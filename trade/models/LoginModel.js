@@ -1,6 +1,7 @@
 const Db = require('./Db.js')
 const db = new Db()
-const mysql = require('mysql')
+
+const { UserServerModel } = require('../sqlModel/user.js')
 /*
   table: user
   colume:
@@ -20,7 +21,7 @@ class LoginModel {
 
   // 查询指定email的用户信息
   async queryUserByEmail (email) {
-    let columns = ['uid', 'uemail', 'ustate']
+    let columns = [UserServerModel.uid, UserServerModel.uemail, UserServerModel.ustate]
     let val = [columns, 'user', email]
     let sql = 'SELECT ?? FROM ?? WHERE uemail = ?'
     return db.query(sql, val)
@@ -40,7 +41,7 @@ class LoginModel {
 
   // 账号密码登陆
   async userLogin (email, pwd) {
-    let columns = ['uid', 'uemail', 'upwd', 'utradePwd', 'ustate']
+    let columns = [UserServerModel.id, UserServerModel.email, UserServerModel.pwd, UserServerModel.tradePwd, UserServerModel.state]
     let val = [columns, 'user', email, pwd]
     let sql = 'SELECT ?? FROM ?? WHERE uemail= ? && upwd= ?'
     return db.query(sql, val)
@@ -57,7 +58,7 @@ class LoginModel {
   async changeTradePwd (email, newPwd) {
     let val = ['user', newPwd, email]
     let sql = 'UPDATE ?? SET utradePwd = ? WHERE uemail = ?'
-    return db.query(sql)
+    return db.query(sql, val)
   }
 
   /**
@@ -69,6 +70,7 @@ class LoginModel {
   async updateUserState (email, newState) {
     let val = ['user', newState, email]
     let sql = 'UPDATE ?? SET ustate = ? WHERE uemail = ?'
+    return db.query(sql, val)
   }
 }
 
