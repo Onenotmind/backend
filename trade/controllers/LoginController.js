@@ -59,7 +59,7 @@ class LoginController {
     })
   }
   userLogin (ctx) {
-
+    
   }
 
   changeLoginPass (ctx) {

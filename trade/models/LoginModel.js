@@ -47,14 +47,16 @@ class LoginModel {
   }
 
   // 更改用户密码
-  async changeLoginPwd (mail, newPwd) {
-    let sql = 'UPDATE user SET upwd=' + mysql.escapeId(newPwd) + ' WHERE umail=' + mysql.escapeId(mail)
-    return db.query(sql)
+  async changeLoginPwd (email, newPwd) {
+    let val = ['user', newPwd, email]
+    let sql = 'UPDATE ?? SET upwd = ? WHERE uemail = ?'
+    return db.query(sql, val)
   }
 
   // 更改用户交易密码
-  async changeTradePwd (mail, newPwd) {
-    let sql = 'UPDATE user SET utradePwd=' + mysql.escapeId(newPwd) + ' WHERE umail=' + mysql.escapeId(mail)
+  async changeTradePwd (email, newPwd) {
+    let val = ['user', newPwd, email]
+    let sql = 'UPDATE ?? SET utradePwd = ? WHERE uemail = ?'
     return db.query(sql)
   }
 
@@ -65,8 +67,8 @@ class LoginModel {
       - 用户注销
   */
   async updateUserState (email, newState) {
-    let sql = 'UPDATE user SET ustate=' + mysql.escapeId(newState) + ' WHERE umail=' + mysql.escapeId(email)
-    return db.query(sql)
+    let val = ['user', newState, email]
+    let sql = 'UPDATE ?? SET ustate = ? WHERE uemail = ?'
   }
 }
 

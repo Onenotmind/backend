@@ -47,7 +47,7 @@ function checkToken (ctx) {
 }
 
 // 登陆
-koaRouter.post('/login', async (ctx) => {
+koaRouter.get('/login', async (ctx) => {
   await loginController.userLogin(ctx)
   geneToken(ctx)
 })
