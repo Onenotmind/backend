@@ -7,9 +7,9 @@ const loginVali = new LoginVali()
 const { UserClientModel } = require('../sqlModel/user.js')
 
 class LoginController {
-  // constructor () {
-  // loginModel.selectAllData()
-  // }
+  constructor () {
+    // loginModel.selectAllData()
+  }
   /**
     * [params] GET方式两种获取参数
     * 《1》ctx.query['param']
