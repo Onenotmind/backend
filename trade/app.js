@@ -78,13 +78,18 @@ function checkToken (ctx) {
 }
 
 // 登陆
-koaRouter.get('/login', async (ctx) => {
-  await loginController.userLogin(ctx)
+koaRouter.get('/userLogin', async (ctx) => {
+  let res = loginController.userLogin(ctx)
+  let response = null
+  await res.then((v) => {
+    response = v
+  })
+  ctx.body = response
   geneToken(ctx)
 })
 
 // 产生验证码
-koaRouter.get('/geneCode', async (ctx) => {
+koaRouter.get('/userGeneCode', async (ctx) => {
   let code = Math.ceil(Math.random()*10000)
   let email = ctx.query['email']
   ctx.session = {
@@ -95,7 +100,7 @@ koaRouter.get('/geneCode', async (ctx) => {
 })
 
 // 注册
-koaRouter.post('/register', async (ctx) => {
+koaRouter.post('/userRegister', async (ctx) => {
   let code = ctx.request.body['code']
   if (ctx.session && ctx.session.code === code) {
     loginController.userRegister(ctx)

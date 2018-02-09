@@ -5,6 +5,7 @@ const LoginVali = require('./LoginVali.js')
 const loginModel = new LoginModel()
 const loginVali = new LoginVali()
 const { UserClientModel } = require('../sqlModel/user.js')
+const loginRes = require('../libs/msgCodes/LoginErrorCodes.js')
 
 class LoginController {
   constructor () {
@@ -46,12 +47,25 @@ class LoginController {
   userLogin (ctx) {
     let params = [UserClientModel.email, UserClientModel.pwd]
     let loginData = this.getParamsCheck(ctx, params)
-    let flag = false
-    loginVali.checkLoginData(loginData).catch((e) => {
-      console.log('参数校验失败')
-      flag = true
+    let ctxRes = null
+    return loginVali.checkLoginData(loginData)
+    .then((v) => {
+      return loginModel.userLogin(loginData.email, loginData.pwd)
+      .then((v) => {
+        if (v.length > 0) {
+          ctxRes = loginRes.loginSucc({id: 1})
+          return JSON.stringify(ctxRes)
+        } else {
+          ctxRes = loginRes.loginAccountFailed()
+        }
+      })
+      .catch((e) => {
+        ctxRes = loginRes.serviceError()
+      })
     })
-    if (flag) return
+    .catch((e) => {
+      ctxRes = loginRes.loginIllegalFailed()
+    })
   }
 
   changeLoginPass (ctx) {
