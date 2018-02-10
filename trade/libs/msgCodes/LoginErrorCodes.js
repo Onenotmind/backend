@@ -5,15 +5,45 @@ let LoginCodes = {
   'Email_Exist': '你的邮件已经注册了！', // 重复邮箱注册
   'Login_DataWrong': '账号密码输入错误', // 账号密码错误
   'Login_Succ': '登陆成功',
-  'Login_IllegalData': '账号密码输入错误'
+  'Login_No_Account': '请先注册',
+  'Login_IllegalData': '账号密码输入错误',
+  'Register_Failed': '注册失败，请稍后再试',
+  'Register_Succ': '注册成功',
+  'Params_Check_Fail': '参数校验失败',
+  'Mail_Send_Succ': '邮件发送成功！',
+  'Mail_Send_Error': '邮件发送失败,请稍后再试',
+  'Code_Error': '验证码错误！',
+  'Code_Correct': '验证码正确！'
 }
-
+/**
+	{
+		status: 0 || 1, // 0为正常返回
+		res: {
+			data: {}, // 正常返回数据
+			status: 0 || 1,
+			msg: ''
+		},
+		msg: ''
+	}
+*/
 function loginAccountFailed () { // 账号密码输错登陆失败返回
 	let response = {
 		status: 0,
     res: {
       status: 1,
       msg: LoginCodes.Login_DataWrong,
+      data: {}
+    }
+	}
+	return response
+}
+
+function registerAccountFailed () { // 账号密码输错登陆失败返回
+	let response = {
+		status: 0,
+    res: {
+      status: 1,
+      msg: LoginCodes.Email_Exist,
       data: {}
     }
 	}
@@ -44,6 +74,18 @@ function loginErrorRes (msg) {
 	return response
 }
 
+function loginSuccRes (msg, data) {
+	let response = {
+		status: 0,
+    res: {
+      status: 0,
+      msg: msg,
+      data: data
+    }
+	}
+	return response
+}
+
 function serviceError () {
 	let response = {
 		status: 1,
@@ -68,5 +110,7 @@ module.exports = {
 	loginAccountFailed: loginAccountFailed,
 	loginIllegalFailed: loginIllegalFailed,
 	loginSucc: loginSucc,
-	loginErrorRes: loginErrorRes
+	loginErrorRes: loginErrorRes,
+	loginSuccRes: loginSuccRes,
+	serviceError: serviceError
 }

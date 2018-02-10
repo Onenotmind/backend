@@ -21,7 +21,7 @@ class LoginModel {
 
   // 查询指定email的用户信息
   async queryUserByEmail (email) {
-    let columns = [UserServerModel.uid, UserServerModel.uemail, UserServerModel.ustate]
+    let columns = [UserServerModel.id, UserServerModel.email, UserServerModel.state]
     let val = [columns, 'user', email]
     let sql = 'SELECT ?? FROM ?? WHERE uemail = ?'
     return db.query(sql, val)

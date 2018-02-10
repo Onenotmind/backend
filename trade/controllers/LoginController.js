@@ -5,7 +5,7 @@ const LoginVali = require('./LoginVali.js')
 const loginModel = new LoginModel()
 const loginVali = new LoginVali()
 const { UserClientModel } = require('../sqlModel/user.js')
-const loginRes = require('../libs/msgCodes/LoginErrorCodes.js')
+const { LoginCodes, loginErrorRes, serviceError, loginSuccRes } = require('../libs/msgCodes/LoginErrorCodes.js')
 
 class LoginController {
   constructor () {
@@ -21,25 +21,31 @@ class LoginController {
   userRegister (ctx) {
     let params = [UserClientModel.email, UserClientModel.pwd]
     let registerData = this.postParamsCheck(ctx, params)
-    let flag = false
-    loginVali.checkRegisterData(registerData).catch((e) => {
-      console.log('参数校验失败')
-      flag = true
-    })
-    if (flag) return
+    let ctxRes = null
     // TODO 判断邮箱是否注册过 queryUserByEmail
-    loginModel.queryUserByEmail(registerData.email).then((v) => {
-      if (v.length === 0) { // 邮箱未注册过
-        loginModel.insertUser(registerData.email, registerData.pwd).then((v) => {
-          console.log('注册成功')
-        }, (e) => {
-          console.log('注册失败')
-        })
-      } else {
-        console.log('邮箱已被注册')
-      }
-    }, (e) => {
-      console.log('error', e)
+    return loginVali.checkRegisterData(registerData) // 数据格式验证
+    .then(v => {
+      return loginModel.queryUserByEmail(registerData.email)
+      .then((v) => {
+        if (v.length === 0) { // 邮箱未注册过
+          return loginModel.insertUser(registerData.email, registerData.pwd)
+          .then((v) => {
+            return loginSuccRes(LoginCodes.Register_Succ, {})
+          })
+          .catch((e) => {
+            return loginErrorRes(LoginCodes.Register_Failed)
+          })
+        } else {
+          return loginErrorRes(LoginCodes.Email_Exist)
+        }
+      })
+      .catch((e) => {
+        return serviceError()
+      })
+    })
+    .catch(e => {
+      console.log(e)
+      return loginErrorRes(LoginCodes.Params_Check_Fail)
     })
   }
 
@@ -53,18 +59,17 @@ class LoginController {
       return loginModel.userLogin(loginData.email, loginData.pwd)
       .then((v) => {
         if (v.length > 0) {
-          ctxRes = loginRes.loginSucc({id: 1})
-          return JSON.stringify(ctxRes)
+          return loginSuccRes(LoginCodes.Login_Succ, {id: 1})
         } else {
-          ctxRes = loginRes.loginAccountFailed()
+          return loginErrorRes(LoginCodes.Login_No_Account)
         }
       })
       .catch((e) => {
-        ctxRes = loginRes.serviceError()
+        return serviceError()
       })
     })
     .catch((e) => {
-      ctxRes = loginRes.loginIllegalFailed()
+      return loginErrorRes(LoginCodes.Login_IllegalData)
     })
   }
 
@@ -75,7 +80,7 @@ class LoginController {
   // 封装GET请求的参数
   getParamsCheck (ctx, paramsArray) {
     if (ctx.request.method !== 'GET') {
-      ctx.body = '接口请求方式必须为GET'
+      // ctx.body = '接口请求方式必须为GET'
       return null
     }
     let params = {}
@@ -88,7 +93,7 @@ class LoginController {
   // 封装POST请求的参数
   postParamsCheck (ctx, paramsArray) {
     if (ctx.request.method !== 'POST') {
-      ctx.body = '接口请求方式必须为POST'
+      // ctx.body = '接口请求方式必须为POST'
       return null
     }
     let requestData = ctx.request.body

@@ -2,8 +2,10 @@ const session = require('koa-session-minimal')
 const MysqlSession = require('koa-mysql-session')
 const LoginController = require('./controllers/LoginController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
+const { LoginCodes, loginErrorRes, loginSuccRes } = require('./libs/msgCodes/LoginErrorCodes.js')
 const Koa = require('koa')
 const koaRouter = require('koa-router')()
+const cors = require('koa-cors')
 const koaBody = require('koa-body')
 const jwt = require('jsonwebtoken')
 
@@ -24,15 +26,16 @@ let cookie = {
   // maxAge: '', // cookie有效时长
   // expires: '',  // cookie失效时间
   // path: '', // 写cookie所在的路径
-  // domain: '', // 写cookie所在的域名
-  httpOnly: false, // 是否只用于http请求中获取
-  overwrite: true,  // 是否允许重写
+  // domain: '*', // 写cookie所在的域名
+  httpOnly: true, // 是否只用于http请求中获取
+  overwrite: false,  // 是否允许重写
   // secure: '',
   // sameSite: '',
   // signed: ''
 }
 
 app.use(koaBody())
+app.use(cors())
 
 // 使用session中间件
 app.use(session({
@@ -49,10 +52,10 @@ function geneToken (ctx) {
     token,
     {
       domain: 'localhost', // 写cookie所在的域名
-      path: '', // 写cookie所在的路径
-      maxAge: 60 * 1000, // cookie有效时长
-      // expires: new Date('2017-02-15'),  // cookie失效时间
-      httpOnly: false, // 是否只用于http请求中获取
+      // path: '', // 写cookie所在的路径
+      // maxAge: 60 * 1000, // cookie有效时长
+      // expires: new Date() + 60*1000,  // cookie失效时间
+      httpOnly: true, // 是否只用于http请求中获取
       overwrite: false // 是否允许重写
     }
   )
@@ -92,23 +95,48 @@ koaRouter.get('/userLogin', async (ctx) => {
 koaRouter.get('/userGeneCode', async (ctx) => {
   let code = Math.ceil(Math.random()*10000)
   let email = ctx.query['email']
+  let res = null
   ctx.session = {
     email: email,
     code: code
   }
-  sendCodeFromMail(email, code)
+  console.log(ctx.session)
+  await sendCodeFromMail(email, code).then(v => {
+    res = loginSuccRes(LoginCodes.Mail_Send_Succ, {})
+  }).catch(e => {
+    res = loginErrorRes(LoginCodes.Mail_Send_Error)
+  })
+  ctx.body = res
 })
 
 // 注册
 koaRouter.post('/userRegister', async (ctx) => {
-  let code = ctx.request.body['code']
-  if (ctx.session && ctx.session.code === code) {
-    loginController.userRegister(ctx)
+  let code = null
+  if (ctx.request.body && ctx.request.body.code) {
+    code = ctx.request.body.code
+  }
+  let res = null
+  if (ctx.session && ctx.session.code === parseInt(code)) {
+    let data = loginController.userRegister(ctx)
+    await data.then(v => {
+      res = v
+    })
   } else {
-
-  } 
+    res = loginErrorRes(LoginCodes.Code_Error)
+  }
+  ctx.body = res
 })
 
+// 验证码验证
+koaRouter.get('/checkCode', (ctx) => {
+  let code = ctx.query['code']
+  console.log(ctx.session)
+  if (ctx.session && ctx.session.code === parseInt(code)) {
+    ctx.body = loginSuccRes(LoginCodes.Code_Correct)
+  } else {
+    ctx.body = loginErrorRes(LoginCodes.Code_Error)
+  }
+})
 // 更改登陆密码
 koaRouter.get('/changeLoginPass', async (ctx) => {
   await checkToken(ctx)
