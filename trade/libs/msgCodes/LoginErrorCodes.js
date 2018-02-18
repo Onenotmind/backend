@@ -13,7 +13,14 @@ let LoginCodes = {
   'Mail_Send_Succ': '邮件发送成功！',
   'Mail_Send_Error': '邮件发送失败,请稍后再试',
   'Code_Error': '验证码错误！',
-  'Code_Correct': '验证码正确！'
+  'Code_Correct': '验证码正确！',
+  'Reset_Pass_Succ': '重置密码成功！',
+  'Token_Fail': 'Token失效'
+}
+
+let AssetsCodes = {
+	'Assets_Data_Normal': '资产数据返回正常！',
+	'Assets_Data_Null': '资产数据返回错误！'
 }
 /**
 	{
@@ -86,6 +93,30 @@ function loginSuccRes (msg, data) {
 	return response
 }
 
+function errorRes (msg) {
+	let response = {
+		status: 0,
+    res: {
+      status: 1,
+      msg: msg,
+      data: {}
+    }
+	}
+	return response
+}
+
+function succRes (msg, data) {
+	let response = {
+		status: 0,
+    res: {
+      status: 0,
+      msg: msg,
+      data: data
+    }
+	}
+	return response
+}
+
 function serviceError () {
 	let response = {
 		status: 1,
@@ -112,5 +143,8 @@ module.exports = {
 	loginSucc: loginSucc,
 	loginErrorRes: loginErrorRes,
 	loginSuccRes: loginSuccRes,
-	serviceError: serviceError
+	serviceError: serviceError,
+	succRes: succRes,
+	errorRes: errorRes,
+	AssetsCodes:AssetsCodes
 }

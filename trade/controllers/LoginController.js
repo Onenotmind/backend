@@ -59,7 +59,7 @@ class LoginController {
       return loginModel.userLogin(loginData.email, loginData.pwd)
       .then((v) => {
         if (v.length > 0) {
-          return loginSuccRes(LoginCodes.Login_Succ, {id: 1})
+          return loginSuccRes(LoginCodes.Login_Succ, {})
         } else {
           return loginErrorRes(LoginCodes.Login_No_Account)
         }
@@ -72,8 +72,26 @@ class LoginController {
       return loginErrorRes(LoginCodes.Login_IllegalData)
     })
   }
-
+  // 重置登陆密码
   changeLoginPass (ctx) {
+    let params = [UserClientModel.email, UserClientModel.pwd]
+    let changeLoginData = this.postParamsCheck(ctx, params)
+    let ctxRes = null
+    return loginVali.checkLoginData(changeLoginData)
+    .then(v => {
+      return loginModel.changeLoginPwd(changeLoginData.email, changeLoginData.pwd)
+      .then(v => {
+        return loginSuccRes(LoginCodes.Reset_Pass_Succ)
+      })
+      .catch(e => {
+        console.log(e)
+        return serviceError()
+      })
+    })
+    .catch(e => {
+      console.log(e)
+      return loginErrorRes(LoginCodes.Login_IllegalData)
+    })
 
   }
 

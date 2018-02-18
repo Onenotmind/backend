@@ -1,6 +1,8 @@
 const session = require('koa-session-minimal')
 const MysqlSession = require('koa-mysql-session')
 const LoginController = require('./controllers/LoginController.js')
+const AssetsController = require('./controllers/AssetsController.js')
+const AssetsRollInController = require('./controllers/AssetsRollInController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
 const { LoginCodes, loginErrorRes, loginSuccRes } = require('./libs/msgCodes/LoginErrorCodes.js')
 const Koa = require('koa')
@@ -12,7 +14,8 @@ const jwt = require('jsonwebtoken')
 const app = new Koa()
 const port = 7007
 const loginController = new LoginController()
-
+const assetsController = new AssetsController()
+const assetsRollInController = new AssetsRollInController()
 // 配置存储session信息的mysql
 let store = new MysqlSession({
   user: 'root',
@@ -28,14 +31,18 @@ let cookie = {
   // path: '', // 写cookie所在的路径
   // domain: '*', // 写cookie所在的域名
   httpOnly: true, // 是否只用于http请求中获取
-  overwrite: false,  // 是否允许重写
-  // secure: '',
+  // overwrite: false,  // 是否允许重写
+  // secure: 'true',
   // sameSite: '',
   // signed: ''
 }
+const cookieCryp = uuid()
 
 app.use(koaBody())
-app.use(cors())
+app.use(cors({
+  origin: 'http://localhost:9101',
+  credentials: true
+}))
 
 // 使用session中间件
 app.use(session({
@@ -45,21 +52,21 @@ app.use(session({
 }))
 
 function geneToken (ctx) {
-  let tempNum = uuid()
-  let token = jwt.sign({ uid: tempNum }, 'id')
+  let email = ctx.query['email']
+  let token = jwt.sign({ uid: email }, cookieCryp)
   ctx.cookies.set(
     'token',
     token,
     {
-      domain: 'localhost', // 写cookie所在的域名
+      // domain: '*', // 写cookie所在的域名
       // path: '', // 写cookie所在的路径
       // maxAge: 60 * 1000, // cookie有效时长
       // expires: new Date() + 60*1000,  // cookie失效时间
       httpOnly: true, // 是否只用于http请求中获取
-      overwrite: false // 是否允许重写
+      // overwrite: false // 是否允许重写
     }
   )
-  ctx.cookies.set('uuid', tempNum, { httpOnly: false })
+  ctx.cookies.set('uuid', email, { httpOnly: false })
 }
 
 function uuid (a) {
@@ -72,7 +79,7 @@ function checkToken (ctx) {
     let uuid = ctx.cookies.get('uuid')
     let token = ctx.cookies.get('token')
     if (!token) reject(new Error('token is  null.'))
-    jwt.verify(token, 'id', function (err, decoded) {
+    jwt.verify(token, cookieCryp, function (err, decoded) {
       if (err) reject(new Error(err))
       if (decoded.uid !== uuid) reject('token is out')
       resolve(decoded)
@@ -100,7 +107,6 @@ koaRouter.get('/userGeneCode', async (ctx) => {
     email: email,
     code: code
   }
-  console.log(ctx.session)
   await sendCodeFromMail(email, code).then(v => {
     res = loginSuccRes(LoginCodes.Mail_Send_Succ, {})
   }).catch(e => {
@@ -128,19 +134,116 @@ koaRouter.post('/userRegister', async (ctx) => {
 })
 
 // 验证码验证
-koaRouter.get('/checkCode', (ctx) => {
+koaRouter.get('/userCheckCode', (ctx) => {
   let code = ctx.query['code']
-  console.log(ctx.session)
   if (ctx.session && ctx.session.code === parseInt(code)) {
     ctx.body = loginSuccRes(LoginCodes.Code_Correct)
+    geneToken(ctx)
   } else {
     ctx.body = loginErrorRes(LoginCodes.Code_Error)
   }
 })
+
 // 更改登陆密码
-koaRouter.get('/changeLoginPass', async (ctx) => {
+koaRouter.post('/userChangeLoginPass', async (ctx) => {
+  let email = ''
+  let res = null
   await checkToken(ctx)
-  loginController.changeLoginPass(ctx)
+  .catch(e => {
+    res = loginErrorRes(LoginCodes.Code_Error)
+  })
+  if (res !== null) {
+    ctx.body = res
+    return
+  }
+  if (ctx.request.body && ctx.request.body.email) {
+    email = ctx.request.body.email
+  }
+  if (email !== ctx.cookies.get('uuid')) {
+    res = loginErrorRes(LoginCodes.Code_Error)
+  } else {
+    let data = loginController.changeLoginPass(ctx)
+    await data.then(v => {
+      res = v
+    })
+  }
+  ctx.body = res
+})
+
+// assets查询所有资产
+koaRouter.get('/queryAllAssets', async (ctx) => {
+  let res = null
+  await assetsController.queryAllAssets()
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// RollInAssets查询所有订单
+koaRouter.get('/queryAllRollInAssets', async (ctx) => {
+  let res = null
+  await assetsRollInController.queryAllRollInAssets()
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// 查询某一特定用户的转入资产
+koaRouter.get('/queryRollInAssetsByAddr', async (ctx) => {
+  let res = null
+  await assetsRollInController.queryRollInAssetsByAddr(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// 转入订单确认
+koaRouter.post('/checkOverRollInOrder', async (ctx) => {
+  let res = null
+  let type = parseInt(ctx.request.body.assetsData.type)
+  let flag = false
+  console.log(ctx.request.body.assetsData)
+  if (type === 1) {
+    await assetsController.setEthAssets(ctx)
+    .then(v => {
+      flag = true
+    })
+    .catch(e => {
+      res = e
+    })
+  } else if (type === 2) {
+    await assetsController.setEosAssets(ctx)
+    .then(v => {
+      flag = true
+    })
+    .catch(e => {
+      res = e
+    })
+  } else {}
+  if (!flag) {
+    ctx.body = res
+    return
+  }
+  await assetsRollInController.checkOverRollInOrder(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
 })
 
 app.use(koaRouter.routes())
