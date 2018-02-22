@@ -1,11 +1,11 @@
-let AssetsRollInClientModel = {
+let AssetsRollOutClientModel = {
   orderId: 'orderId',
   addr: 'addr',
   assetsType: 'assetsType',
   amount: 'amount',
   state: 'state'
 }
-let AssetsRollInServerModel = {
+let AssetsRollOutServerModel = {
   orderId: 'orderId',
   addr: 'uaddr',
   assetsType: 'uassetsType',
@@ -13,6 +13,6 @@ let AssetsRollInServerModel = {
   state: 'ustate'
 }
 module.exports = {
-  AssetsRollInClientModel: AssetsRollInClientModel,
-  AssetsRollInServerModel: AssetsRollInServerModel
+  AssetsRollOutClientModel: AssetsRollOutClientModel,
+  AssetsRollOutServerModel: AssetsRollOutServerModel
 }

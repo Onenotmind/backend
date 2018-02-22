@@ -1,10 +1,9 @@
-const AssetsRollInModel = require('../models/AssetsRollInModel.js')
-const assetsRollInModel = new AssetsRollInModel()
+const AssetsRollOutModel = require('../models/AssetsRollOutModel.js')
+const assetsRollOutModel = new AssetsRollOutModel()
 
-const { assetsRollIn } = require('../sqlModel/assetsRollIn.js')
 const { AssetsCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
-class AssetsRollInController {
+class AssetsRollOutController {
 	constructor () {
 
 	}
@@ -14,10 +13,10 @@ class AssetsRollInController {
 
 	}
 
-	// 查询数据库中资产用户
-	queryAllRollInAssets (ctx) {
+	// 查询数据库中提现订单
+	queryAllRollOutAssets (ctx) {
 		let ctxRes = null
-		return assetsRollInModel.queryAllRollInAssets()
+		return assetsRollOutModel.queryAllRollOutAssets()
 		.then(v => {
 			return succRes(AssetsCodes.Assets_Data_Normal, v)
 		})
@@ -27,11 +26,11 @@ class AssetsRollInController {
 		})
 	}
 
-	// 查询某一特定用户的转入资产
-	queryRollInAssetsByAddr (ctx) {
+	// 查询某一特定用户的提现订单
+	queryRollOutAssetsByAddr (ctx) {
 		let ctxRes = null
 		let addr = ctx.query['addr']
-		return assetsRollInModel.queryRollInAssetsByAddr(addr)
+		return assetsRollOutModel.queryRollOutAssetsByAddr(addr)
 		.then(v => {
 			return succRes(AssetsCodes.Assets_Data_Normal, v)
 		})
@@ -41,13 +40,13 @@ class AssetsRollInController {
 		}) 
 	}
 
-	// 转入订单确认
-	checkOverRollInOrder (ctx) {
+	// 提现订单确认
+	checkOverRollOutOrder (ctx) {
 		let ctxRes = null
 		let assetsData = ctx.request.body.assetsData
 		let orderId = parseInt(assetsData.orderId)
 		let state = assetsData.state
-		return assetsRollInModel.changeRollInOrderState(orderId, state)
+		return assetsRollOutModel.changeRollOutOrderState(orderId, state)
 		.then(v => {
 			return succRes(AssetsCodes.Assets_Data_Normal, v)
 		})
@@ -57,13 +56,13 @@ class AssetsRollInController {
 		}) 
 	}
 
-	// 转入订单取消 TODO 与转入订单确认逻辑一样
-	deleteRollInOrder (ctx) {
+	// 提现订单取消 TODO 与提现订单确认逻辑一样
+	deleteRollOutOrder (ctx) {
 		let ctxRes = null
 		let assetsData = ctx.request.body.assetsData
 		let orderId = parseInt(assetsData.orderId)
 		let state = assetsData.state
-		return assetsRollInModel.changeRollInOrderState(orderId, state)
+		return assetsRollOutModel.changeRollOutOrderState(orderId, state)
 		.then(v => {
 			return succRes(AssetsCodes.Assets_Data_Normal, v)
 		})
@@ -74,4 +73,4 @@ class AssetsRollInController {
 	}
 }
 
-module.exports = AssetsRollInController
+module.exports = AssetsRollOutController

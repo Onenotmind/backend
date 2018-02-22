@@ -14,16 +14,14 @@ class AssetsModel {
   // 【资产确认】重置ETH资产
   async setEthAssets (count, id) {
   	let val = ['assets', count, id]
-    console.log(val)
-    let sql = 'UPDATE ?? SET ueth = ? WHERE uid = ?'
+    let sql = 'UPDATE ?? SET ueth = ueth + ? WHERE uid = ?'
     return db.query(sql, val)
   }
 
   // 【资产确认】重置EOS资产
   async setEosAssets (count, id) {
   	let val = ['assets', count, id]
-    console.log(val)
-    let sql = 'UPDATE ?? SET ueos = ? WHERE uid = ?'
+    let sql = 'UPDATE ?? SET ueos = ueos + ? WHERE uid = ?'
     return db.query(sql, val)
   }
 

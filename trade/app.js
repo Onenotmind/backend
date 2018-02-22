@@ -3,8 +3,9 @@ const MysqlSession = require('koa-mysql-session')
 const LoginController = require('./controllers/LoginController.js')
 const AssetsController = require('./controllers/AssetsController.js')
 const AssetsRollInController = require('./controllers/AssetsRollInController.js')
+const AssetsRollOutController = require('./controllers/AssetsRollOutController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
-const { LoginCodes, loginErrorRes, loginSuccRes } = require('./libs/msgCodes/LoginErrorCodes.js')
+const { LoginCodes, errorRes, succRes } = require('./libs/msgCodes/StatusCodes.js')
 const Koa = require('koa')
 const koaRouter = require('koa-router')()
 const cors = require('koa-cors')
@@ -16,6 +17,7 @@ const port = 7007
 const loginController = new LoginController()
 const assetsController = new AssetsController()
 const assetsRollInController = new AssetsRollInController()
+const assetsRollOutController = new AssetsRollOutController()
 // 配置存储session信息的mysql
 let store = new MysqlSession({
   user: 'root',
@@ -108,9 +110,9 @@ koaRouter.get('/userGeneCode', async (ctx) => {
     code: code
   }
   await sendCodeFromMail(email, code).then(v => {
-    res = loginSuccRes(LoginCodes.Mail_Send_Succ, {})
+    res = succRes(LoginCodes.Mail_Send_Succ, {})
   }).catch(e => {
-    res = loginErrorRes(LoginCodes.Mail_Send_Error)
+    res = errorRes(LoginCodes.Mail_Send_Error)
   })
   ctx.body = res
 })
@@ -128,7 +130,7 @@ koaRouter.post('/userRegister', async (ctx) => {
       res = v
     })
   } else {
-    res = loginErrorRes(LoginCodes.Code_Error)
+    res = errorRes(LoginCodes.Code_Error)
   }
   ctx.body = res
 })
@@ -137,10 +139,10 @@ koaRouter.post('/userRegister', async (ctx) => {
 koaRouter.get('/userCheckCode', (ctx) => {
   let code = ctx.query['code']
   if (ctx.session && ctx.session.code === parseInt(code)) {
-    ctx.body = loginSuccRes(LoginCodes.Code_Correct)
+    ctx.body = succRes(LoginCodes.Code_Correct, {})
     geneToken(ctx)
   } else {
-    ctx.body = loginErrorRes(LoginCodes.Code_Error)
+    ctx.body = errorRes(LoginCodes.Code_Error)
   }
 })
 
@@ -150,7 +152,7 @@ koaRouter.post('/userChangeLoginPass', async (ctx) => {
   let res = null
   await checkToken(ctx)
   .catch(e => {
-    res = loginErrorRes(LoginCodes.Code_Error)
+    res = errorRes(LoginCodes.Code_Error)
   })
   if (res !== null) {
     ctx.body = res
@@ -160,7 +162,7 @@ koaRouter.post('/userChangeLoginPass', async (ctx) => {
     email = ctx.request.body.email
   }
   if (email !== ctx.cookies.get('uuid')) {
-    res = loginErrorRes(LoginCodes.Code_Error)
+    res = errorRes(LoginCodes.Code_Error)
   } else {
     let data = loginController.changeLoginPass(ctx)
     await data.then(v => {
@@ -214,7 +216,6 @@ koaRouter.post('/checkOverRollInOrder', async (ctx) => {
   let res = null
   let type = parseInt(ctx.request.body.assetsData.type)
   let flag = false
-  console.log(ctx.request.body.assetsData)
   if (type === 1) {
     await assetsController.setEthAssets(ctx)
     .then(v => {
@@ -237,6 +238,94 @@ koaRouter.post('/checkOverRollInOrder', async (ctx) => {
     return
   }
   await assetsRollInController.checkOverRollInOrder(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// 转入订单取消
+koaRouter.post('/deleteRollInOrder', async (ctx) => {
+  let res = null
+  await assetsRollInController.deleteRollInOrder(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// RollOutAssets查询所有订单
+koaRouter.get('/queryAllRollOutAssets', async (ctx) => {
+  let res = null
+  await assetsRollOutController.queryAllRollOutAssets()
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// 查询某一特定用户的提现订单
+koaRouter.get('/queryRollOutAssetsByAddr', async (ctx) => {
+  let res = null
+  await assetsRollOutController.queryRollOutAssetsByAddr(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// 提现订单确认
+koaRouter.post('/checkOverRollOutOrder', async (ctx) => {
+  let res = null
+  let type = parseInt(ctx.request.body.assetsData.type)
+  let flag = false
+  if (type === 1) {
+    await assetsController.setEthAssets(ctx)
+    .then(v => {
+      flag = true
+    })
+    .catch(e => {
+      res = e
+    })
+  } else if (type === 2) {
+    await assetsController.setEosAssets(ctx)
+    .then(v => {
+      flag = true
+    })
+    .catch(e => {
+      res = e
+    })
+  } else {}
+  if (!flag) {
+    ctx.body = res
+    return
+  }
+  await assetsRollOutController.checkOverRollOutOrder(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// 提现订单取消
+koaRouter.post('/deleteRollOutOrder', async (ctx) => {
+  let res = null
+  await assetsRollOutController.deleteRollOutOrder(ctx)
   .then(v => {
     res = v
   })

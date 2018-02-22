@@ -2,7 +2,7 @@ const AssetsModel = require('../models/AssetsModel.js')
 const assetsModel = new AssetsModel()
 
 const { AssetsClientModel } = require('../sqlModel/assets.js')
-const { AssetsCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/LoginErrorCodes.js')
+const { AssetsCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 class AssetsController {
 	constructor () {

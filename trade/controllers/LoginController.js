@@ -5,7 +5,7 @@ const LoginVali = require('./LoginVali.js')
 const loginModel = new LoginModel()
 const loginVali = new LoginVali()
 const { UserClientModel } = require('../sqlModel/user.js')
-const { LoginCodes, loginErrorRes, serviceError, loginSuccRes } = require('../libs/msgCodes/LoginErrorCodes.js')
+const { LoginCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 class LoginController {
   constructor () {
@@ -30,13 +30,13 @@ class LoginController {
         if (v.length === 0) { // 邮箱未注册过
           return loginModel.insertUser(registerData.email, registerData.pwd)
           .then((v) => {
-            return loginSuccRes(LoginCodes.Register_Succ, {})
+            return succRes(LoginCodes.Register_Succ, {})
           })
           .catch((e) => {
-            return loginErrorRes(LoginCodes.Register_Failed)
+            return errorRes(LoginCodes.Register_Failed)
           })
         } else {
-          return loginErrorRes(LoginCodes.Email_Exist)
+          return errorRes(LoginCodes.Email_Exist)
         }
       })
       .catch((e) => {
@@ -45,7 +45,7 @@ class LoginController {
     })
     .catch(e => {
       console.log(e)
-      return loginErrorRes(LoginCodes.Params_Check_Fail)
+      return errorRes(LoginCodes.Params_Check_Fail)
     })
   }
 
@@ -59,9 +59,9 @@ class LoginController {
       return loginModel.userLogin(loginData.email, loginData.pwd)
       .then((v) => {
         if (v.length > 0) {
-          return loginSuccRes(LoginCodes.Login_Succ, {})
+          return succRes(LoginCodes.Login_Succ, {})
         } else {
-          return loginErrorRes(LoginCodes.Login_No_Account)
+          return errorRes(LoginCodes.Login_No_Account)
         }
       })
       .catch((e) => {
@@ -69,7 +69,7 @@ class LoginController {
       })
     })
     .catch((e) => {
-      return loginErrorRes(LoginCodes.Login_IllegalData)
+      return errorRes(LoginCodes.Login_IllegalData)
     })
   }
   // 重置登陆密码
@@ -81,7 +81,7 @@ class LoginController {
     .then(v => {
       return loginModel.changeLoginPwd(changeLoginData.email, changeLoginData.pwd)
       .then(v => {
-        return loginSuccRes(LoginCodes.Reset_Pass_Succ)
+        return succRes(LoginCodes.Reset_Pass_Succ, {})
       })
       .catch(e => {
         console.log(e)
@@ -90,7 +90,7 @@ class LoginController {
     })
     .catch(e => {
       console.log(e)
-      return loginErrorRes(LoginCodes.Login_IllegalData)
+      return errorRes(LoginCodes.Login_IllegalData)
     })
 
   }

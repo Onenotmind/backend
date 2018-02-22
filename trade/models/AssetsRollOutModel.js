@@ -1,36 +1,36 @@
 const Db = require('./Db.js')
 const db = new Db()
 
-const { assetsRollIn } = require('../sqlModel/assetsRollIn.js')
+const { assetsRollOut } = require('../sqlModel/assetsRollOut.js')
 
-class AssetsRollInModel {
+class AssetsRollOutModel {
 	
 	// 查询数据库中所有数据
-  async queryAllRollInAssets () {
-    let sql = 'SELECT * FROM assetsRollIn'
+  async queryAllRollOutAssets () {
+    let sql = 'SELECT * FROM assetsRollOut'
     return db.query(sql)
   }
 
   // 查询指定订单号
-  async queryAssetsRollInById (orderId) {
-    let val = ['assetsRollIn', orderId]
+  async queryAssetsRollOutById (orderId) {
+    let val = ['assetsRollOut', orderId]
     let sql = 'SELECT * FROM ?? WHERE orderId = ?'
     return db.query(sql, val)
   }
 
   // 查询某一特定用户的转入资产
-  queryRollInAssetsByAddr (addr) {
-    let val = ['assetsRollIn', addr]
+  queryRollOutAssetsByAddr (addr) {
+    let val = ['assetsRollOut', addr]
     let sql = 'SELECT * FROM ?? WHERE uaddr = ?'
     return db.query(sql, val)
   }
 
   // 改变订单状态
-  changeRollInOrderState (orderId, state) {
-    let val = ['assetsRollIn', state, orderId]
+  changeRollOutOrderState (orderId, state) {
+    let val = ['assetsRollOut', state, orderId]
     let sql = 'UPDATE ?? SET ustate = ? WHERE orderId = ?'
     return db.query(sql, val)
   }
 }
 
-module.exports = AssetsRollInModel
+module.exports = AssetsRollOutModel
