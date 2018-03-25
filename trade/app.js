@@ -4,6 +4,9 @@ const LoginController = require('./controllers/LoginController.js')
 const AssetsController = require('./controllers/AssetsController.js')
 const AssetsRollInController = require('./controllers/AssetsRollInController.js')
 const AssetsRollOutController = require('./controllers/AssetsRollOutController.js')
+const LandProductController = require('./controllers/LandProductController.js')
+const PandaOwnerController = require('./controllers/PandaOwnerController.js')
+const LandAssetsController = require('./controllers/LandAssetsController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
 const { LoginCodes, errorRes, succRes } = require('./libs/msgCodes/StatusCodes.js')
 const Koa = require('koa')
@@ -18,6 +21,14 @@ const loginController = new LoginController()
 const assetsController = new AssetsController()
 const assetsRollInController = new AssetsRollInController()
 const assetsRollOutController = new AssetsRollOutController()
+const landProductController = new LandProductController()
+const pandaOwnerController = new PandaOwnerController()
+const landAssetsController = new LandAssetsController()
+
+let currentEthPrice = 3000
+let currentBambooPrice = 1
+let currentWaterPrice = 3
+
 // 配置存储session信息的mysql
 let store = new MysqlSession({
   user: 'root',
@@ -326,6 +337,149 @@ koaRouter.post('/checkOverRollOutOrder', async (ctx) => {
 koaRouter.post('/deleteRollOutOrder', async (ctx) => {
   let res = null
   await assetsRollOutController.deleteRollOutOrder(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+// Ethland -- Land 部分
+
+koaRouter.get('/getEthlandProduct', async (ctx) => {
+  let addr = ''
+  let bamboo = ctx.query['bamboo']
+  let pandaGen = ctx.query['pandaGen']
+  let attrParams = []
+  let speed = 0
+  let hungry = 0
+  let baseBamboo = 100
+  let longitude = 0
+  let latitude = 0
+  let baseSpeed = 80
+  let res = null
+  let itemRes = []
+  let mostValRes = []
+
+  let getDiffValue = (type) => {
+  if (type === 'ETH') {
+    return currentEthPrice
+  }
+  if (type === 'BAMBOO') {
+    return currentBambooPrice
+  }
+  if (type === 'WATER') {
+    return currentWaterPrice
+  }
+}
+
+  // 根据熊猫基因查询用户和熊猫属性
+  await pandaOwnerController.queryPandaInfo(ctx)
+  .then(v => {
+    if (v.res && v.res.data[0] && v.res.data[0].ownerAddr) {
+      addr = v.res.data[0].ownerAddr
+      speed = parseFloat(v.res.data[0].speed)
+      hungry = parseFloat(v.res.data[0].hungry)
+      attrParams = {
+        'gold': v.res.data[0].goldCatch,
+        'wood': v.res.data[0].woodCatch,
+        'water': v.res.data[0].waterCatch,
+        'fire': v.res.data[0].fireCatch,
+        'earth': v.res.data[0].earthCatch
+      }
+    } else {
+      return
+    }
+  })
+  .catch(e => {
+    console.log(e)
+  })
+
+  // 根据用户addr查询用户经纬度
+  await loginController.getUserInfoByAddr(addr)
+  .then(v => {
+    if (v.res && v.res.data[0]) {
+      longitude = v.res.data[0].longitude
+      latitude = v.res.data[0].latitude
+    } else {
+      return
+    }
+  })
+  .catch(e => {
+    console.log(e)
+  })
+
+  // 根据用户地址查询用户资产
+  await landAssetsController.queryAssetsByAddr(addr)
+  .then(async v => {
+    if (v.res && v.res.data && v.res.data[0].bamboo) {
+      if (bamboo > v.res.data[0].bamboo) {
+        return
+      } else {
+        let tmpSpeed = parseInt(baseSpeed * speed)
+        let tmpHungry = parseInt(baseBamboo * (1- hungry))
+        let tmpTime = parseInt(bamboo / (tmpSpeed + tmpHungry))
+        // 根据经纬度查询周围物品
+        await landProductController.findProductByGeo(longitude, latitude, tmpSpeed, tmpTime)
+        .then(v => {
+          if (v.res && v.res.data) {
+            if (v.res.data.length >= 3) {
+              mostValRes = v.res.data.sort((a, b) => {
+                let aVal = getDiffValue(a.value.split('/')[1]) * parseInt(a.value.split('/')[0])
+                let bVal = getDiffValue(b.value.split('/')[1]) * parseInt(b.value.split('/')[0])
+                return bVal - aVal
+              }).slice(0,3)
+            }
+            console.log(v.res.data)
+            v.res.data.forEach(data => {
+              let dataTypeArr = data.type.split('|')
+              for (let index in dataTypeArr) {
+                // if (true) {
+                if (Math.random() < attrParams[dataTypeArr[index]]) {
+                  itemRes.push(data)
+                  let finalAttrVal = attrParams[dataTypeArr[index]] + 0.1* Math.random().toFixed(4)
+                  pandaOwnerController.updatePandaAttr(dataTypeArr[index] + 'Catch', finalAttrVal, pandaGen)
+                } else {
+
+                }
+              }
+            })
+            console.log('itemRes', itemRes)
+          } else {
+            return
+          }
+        })
+        .catch(e => {
+          console.log(e)
+        })
+      }
+    } else {
+      return
+    } 
+  })
+  .catch(e => {
+    console.log(e)
+  })
+})
+
+koaRouter.get('/genePandaRandom', async (ctx) => {
+  let addr = ctx.query['addr']
+  let res = null
+  await pandaOwnerController.genePandaRandom(addr)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+koaRouter.get('/userRegisterByRandom', async (ctx) => {
+  let res = null
+  await loginController.userRegisterByRandom(ctx)
   .then(v => {
     res = v
   })

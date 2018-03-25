@@ -2,15 +2,6 @@ const Db = require('./Db.js')
 const db = new Db()
 
 const { UserServerModel } = require('../sqlModel/user.js')
-/*
-  table: user
-  colume:
-    - uid 用户id
-    - uemail 用户注册邮箱
-    - upwd 用户登陆密码
-    - utradePwd 用户交易密码
-    - ustate 用户状态
-*/
 
 class LoginModel {
   // 查询数据库中所有数据
@@ -27,14 +18,40 @@ class LoginModel {
     return db.query(sql, val)
   }
 
+  // 查询指定addr的用户信息
+  async queryUserByAdde (addr) {
+    let columns = [UserServerModel.id, UserServerModel.email, UserServerModel.state]
+    let val = [columns, 'user', addr]
+    let sql = 'SELECT ?? FROM ?? WHERE uaddr = ?'
+    return db.query(sql, val)
+  }
+
   // 插入注册用户数据
   async insertUser (email, pwd) {
     let insertData = {
       uemail: email,
       upwd: pwd,
       utradePwd: '',
-      ustate: 'registed'
+      ustate: 'registed',
+      uaddr: '',
+      longitude: '',
+      latitude: ''
     }
+    let sql = 'INSERT INTO user SET ?'
+    return db.query(sql, insertData)
+  }
+
+  async insertUserByAddr (addr, longtitude, latitude) {
+    let insertData = {
+      uemail:'',
+      upass: '',
+      utradePass: '',
+      ustate: 'registed',
+      uaddr: addr,
+      longitude: longtitude,
+      latitude: latitude
+    }
+    console.log(insertData)
     let sql = 'INSERT INTO user SET ?'
     return db.query(sql, insertData)
   }
@@ -70,6 +87,14 @@ class LoginModel {
   async updateUserState (email, newState) {
     let val = ['user', newState, email]
     let sql = 'UPDATE ?? SET ustate = ? WHERE uemail = ?'
+    return db.query(sql, val)
+  }
+
+  // 通过用户addr查询用户经纬度
+  async getUserInfoByAddr (addr) {
+    let columns = [UserServerModel.longitude, UserServerModel.latitude]
+    let val = [columns, 'user', addr]
+    let sql = 'SELECT ?? FROM ?? WHERE uaddr = ?'
     return db.query(sql, val)
   }
 }

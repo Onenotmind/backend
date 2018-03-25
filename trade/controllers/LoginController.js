@@ -49,6 +49,30 @@ class LoginController {
     })
   }
 
+  // 用户随机注册通过地址
+  userRegisterByRandom (ctx) {
+    let addr = parseInt(Math.random() * 100000)
+    let longitude = parseInt(Math.random() * 360) - 180
+    let latitude = parseInt(Math.random() * 360) - 180
+    return loginModel.queryUserByAdde(addr)
+    .then((v) => {
+      if (v.length === 0) { 
+        return loginModel.insertUserByAddr(addr.toString(), longitude.toString(), latitude.toString())
+        .then((v) => {
+          return succRes(LoginCodes.Register_Succ, {})
+        })
+        .catch((e) => {
+          return errorRes(LoginCodes.Register_Failed)
+        })
+      } else {
+        return errorRes(LoginCodes.Email_Exist)
+      }
+    })
+    .catch((e) => {
+      return serviceError()
+    })
+  }
+
   // 用户登陆
   userLogin (ctx) {
     let params = [UserClientModel.email, UserClientModel.pwd]
@@ -93,6 +117,19 @@ class LoginController {
       return errorRes(LoginCodes.Login_IllegalData)
     })
 
+  }
+
+  // 通过用户addr查询用户经纬度
+  getUserInfoByAddr (addr) {
+    let ctxRes = null
+    return loginModel.getUserInfoByAddr(addr)
+    .then(v => {
+      return succRes('getUserInfoByAddr', v)
+    })
+    .catch(e => {
+      console.log(e)
+      return serviceError()
+    })
   }
 
   // 封装GET请求的参数
