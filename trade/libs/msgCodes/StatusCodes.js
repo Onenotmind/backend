@@ -22,6 +22,10 @@ let AssetsCodes = {
 	'Assets_Data_Normal': '资产数据返回正常！',
 	'Assets_Data_Null': '资产数据返回错误！'
 }
+
+let PandaOwnerCodes = {
+	'Query_Panda_Info_Normal': '查询熊猫信息成功！'
+}
 /**
 	{
 		status: 0 || 1, // 0为正常返回
@@ -146,5 +150,6 @@ module.exports = {
 	serviceError: serviceError,
 	succRes: succRes,
 	errorRes: errorRes,
-	AssetsCodes:AssetsCodes
+	AssetsCodes:AssetsCodes,
+	PandaOwnerCodes: PandaOwnerCodes
 }

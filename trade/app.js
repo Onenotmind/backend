@@ -14,6 +14,7 @@ const koaRouter = require('koa-router')()
 const cors = require('koa-cors')
 const koaBody = require('koa-body')
 const jwt = require('jsonwebtoken')
+const async = require('async')
 
 const app = new Koa()
 const port = 7007
@@ -24,7 +25,12 @@ const assetsRollOutController = new AssetsRollOutController()
 const landProductController = new LandProductController()
 const pandaOwnerController = new PandaOwnerController()
 const landAssetsController = new LandAssetsController()
+const testControllers = {
+  'pandaOwnerController': pandaOwnerController
+}
 
+const { PandaOwnerClientModel } = require('./sqlModel/pandaOwner.js')
+const { LandAssetsClientModel } = require('./sqlModel/landAssets.js')
 let currentEthPrice = 3000
 let currentBambooPrice = 1
 let currentWaterPrice = 3
@@ -97,6 +103,21 @@ function checkToken (ctx) {
       if (decoded.uid !== uuid) reject('token is out')
       resolve(decoded)
     })
+  })
+}
+
+// 封装GET请求的参数
+function getParamsCheck (ctx, paramsArray) {
+  return new Promise((resolve, reject) => {
+    let params = []
+    paramsArray.forEach((element) => {
+      if (ctx.query[element]) {
+        params.push(ctx.query[element])
+      } else {
+        reject(new Error(`参数${element}不为空！`))
+      }
+    })
+    resolve(params)
   })
 }
 
@@ -347,120 +368,119 @@ koaRouter.post('/deleteRollOutOrder', async (ctx) => {
 })
 
 // Ethland -- Land 部分
-
+// testApi getEthlandProduct?pandaGeni=0x12987uhvr453buyvu3u89&bamboo=300
 koaRouter.get('/getEthlandProduct', async (ctx) => {
-  let addr = ''
-  let bamboo = ctx.query['bamboo']
-  let pandaGen = ctx.query['pandaGen']
-  let attrParams = []
-  let speed = 0
-  let hungry = 0
-  let baseBamboo = 100
-  let longitude = 0
-  let latitude = 0
-  let baseSpeed = 80
-  let res = null
-  let itemRes = []
-  let mostValRes = []
-
-  let getDiffValue = (type) => {
-  if (type === 'ETH') {
-    return currentEthPrice
-  }
-  if (type === 'BAMBOO') {
-    return currentBambooPrice
-  }
-  if (type === 'WATER') {
-    return currentWaterPrice
-  }
-}
-
-  // 根据熊猫基因查询用户和熊猫属性
-  await pandaOwnerController.queryPandaInfo(ctx)
-  .then(v => {
-    if (v.res && v.res.data[0] && v.res.data[0].ownerAddr) {
-      addr = v.res.data[0].ownerAddr
-      speed = parseFloat(v.res.data[0].speed)
-      hungry = parseFloat(v.res.data[0].hungry)
-      attrParams = {
-        'gold': v.res.data[0].goldCatch,
-        'wood': v.res.data[0].woodCatch,
-        'water': v.res.data[0].waterCatch,
-        'fire': v.res.data[0].fireCatch,
-        'earth': v.res.data[0].earthCatch
-      }
-    } else {
-      return
-    }
-  })
-  .catch(e => {
-    console.log(e)
-  })
-
-  // 根据用户addr查询用户经纬度
-  await loginController.getUserInfoByAddr(addr)
-  .then(v => {
-    if (v.res && v.res.data[0]) {
-      longitude = v.res.data[0].longitude
-      latitude = v.res.data[0].latitude
-    } else {
-      return
-    }
-  })
-  .catch(e => {
-    console.log(e)
-  })
-
-  // 根据用户地址查询用户资产
-  await landAssetsController.queryAssetsByAddr(addr)
-  .then(async v => {
-    if (v.res && v.res.data && v.res.data[0].bamboo) {
-      if (bamboo > v.res.data[0].bamboo) {
-        return
-      } else {
-        let tmpSpeed = parseInt(baseSpeed * speed)
-        let tmpHungry = parseInt(baseBamboo * (1- hungry))
-        let tmpTime = parseInt(bamboo / (tmpSpeed + tmpHungry))
-        // 根据经纬度查询周围物品
-        await landProductController.findProductByGeo(longitude, latitude, tmpSpeed, tmpTime)
-        .then(v => {
-          if (v.res && v.res.data) {
-            if (v.res.data.length >= 3) {
-              mostValRes = v.res.data.sort((a, b) => {
-                let aVal = getDiffValue(a.value.split('/')[1]) * parseInt(a.value.split('/')[0])
-                let bVal = getDiffValue(b.value.split('/')[1]) * parseInt(b.value.split('/')[0])
-                return bVal - aVal
-              }).slice(0,3)
-            }
-            console.log(v.res.data)
-            v.res.data.forEach(data => {
-              let dataTypeArr = data.type.split('|')
-              for (let index in dataTypeArr) {
-                // if (true) {
-                if (Math.random() < attrParams[dataTypeArr[index]]) {
-                  itemRes.push(data)
-                  let finalAttrVal = attrParams[dataTypeArr[index]] + 0.1* Math.random().toFixed(4)
-                  pandaOwnerController.updatePandaAttr(dataTypeArr[index] + 'Catch', finalAttrVal, pandaGen)
-                } else {
-
-                }
-              }
-            })
-            console.log('itemRes', itemRes)
-          } else {
-            return
+  let geni = [PandaOwnerClientModel.pandaGeni.label]
+  const paramCheck = await getParamsCheck(ctx, geni).catch(err => { return err})
+  if (!paramCheck) return
+  async.waterfall([
+    function (callback) {
+      // 根据熊猫基因查询用户和熊猫属性
+      pandaOwnerController.queryPandaInfo(...paramCheck)
+      .then(v => {
+        if (v.res && v.res.data[0] && v.res.data[0].ownerAddr) {
+          let addr = v.res.data[0].ownerAddr
+          let attrParams = {
+            'speed': parseFloat(v.res.data[0].speed),
+            'hungry': parseFloat(v.res.data[0].hungry),
+            'gold': v.res.data[0].goldCatch,
+            'wood': v.res.data[0].woodCatch,
+            'water': v.res.data[0].waterCatch,
+            'fire': v.res.data[0].fireCatch,
+            'earth': v.res.data[0].earthCatch
           }
-        })
-        .catch(e => {
-          console.log(e)
-        })
-      }
-    } else {
-      return
-    } 
-  })
-  .catch(e => {
-    console.log(e)
+          callback(null, addr, attrParams)
+        } else {
+          callback(new Error('No Such Panda.'))
+        }
+      })
+      .catch(e => {
+        console.log(e)
+      })
+    },
+    function (addr, attrs, callback) {
+      loginController.getUserInfoByAddr(addr)
+      .then(v => {
+        if (v.res && v.res.data[0]) {
+          let longitude = v.res.data[0].longitude
+          let latitude = v.res.data[0].latitude
+          callback(null, addr, attrs, longitude,latitude)
+        } else {
+          return
+        }
+      })
+      .catch(e => {
+        console.log(e)
+      })
+    },
+    function (addr, attrs, longitude,latitude, callback) {
+      landAssetsController.queryAssetsByAddr(addr)
+      .then(v => {
+        let bamboo = ctx.query[LandAssetsClientModel.bamboo]
+        if (v.res && v.res.data && v.res.data[0].bamboo) {
+          if (bamboo > v.res.data[0].bamboo) {
+            console.log('..11..')
+            callback('More Bamboo Than user Has.')
+          } else {
+            callback(null, addr, attrs, longitude,latitude, bamboo)
+          }
+        }
+      })
+    },
+    function (addr, attrs, longitude,latitude, bamboo, callback) {
+      let baseSpeed = 80
+      let baseBamboo = 100
+      let tmpSpeed = parseInt(baseSpeed * (attrs.speed))
+      let tmpHungry = parseInt(baseBamboo * (10 - attrs.hungry))
+      let tmpTime = parseInt(bamboo / (tmpSpeed + tmpHungry))
+      landProductController.findProductByGeo(longitude, latitude, tmpSpeed, tmpTime)
+      .then(v => {
+        let getDiffValue = (type) => {
+          if (type === 'ETH') {
+            return currentEthPrice
+          }
+          if (type === 'BAMBOO') {
+            return currentBambooPrice
+          }
+          if (type === 'WATER') {
+            return currentWaterPrice
+          }
+        }
+        let mostValRes = []
+        let itemRes = []
+        if (v.res && v.res.data) {
+          if (v.res.data.length >= 3) {
+            mostValRes = v.res.data.sort((a, b) => {
+              let aVal = getDiffValue(a.value.split('/')[1]) * parseInt(a.value.split('/')[0])
+              let bVal = getDiffValue(b.value.split('/')[1]) * parseInt(b.value.split('/')[0])
+              return bVal - aVal
+            }).slice(0,3)
+          }
+          console.log(v.res.data)
+          v.res.data.forEach(data => {
+            let dataTypeArr = data.type.split('|')
+            for (let index in dataTypeArr) {
+              // if (true) {
+              if (Math.random() < attrs[dataTypeArr[index]]) {
+                itemRes.push(data)
+                let finalAttrVal = attrs[dataTypeArr[index]] + 0.1* Math.random().toFixed(4)
+                pandaOwnerController.updatePandaAttr(dataTypeArr[index] + 'Catch', finalAttrVal, geni)
+              } else {
+
+              }
+            }
+          })
+          callback(null, itemRes)
+        } else {
+          return
+        }
+      })
+    }
+  ], function (err, res) {
+    if (err){
+      console.log(err)
+    }
+    console.log(res)
   })
 })
 
@@ -488,6 +508,23 @@ koaRouter.get('/userRegisterByRandom', async (ctx) => {
   })
   ctx.body = res
 })
+
+koaRouter.get('/testApi', async (ctx) => {
+  let res = null
+  let testController = ctx.query['controller']
+  let api = ctx.query['api']
+  if (testControllers[testController].testApi) {
+    await testControllers[testController].testApi(api)
+    .then(v => {
+      res = v
+    })
+    .catch(e => {
+      res = e
+    })
+    ctx.body = res
+  }
+})
+
 
 app.use(koaRouter.routes())
 
