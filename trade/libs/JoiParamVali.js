@@ -19,7 +19,7 @@ class JoiParamVali {
         if (err === null) {
           resolve()
         } else {
-          reject(new Error('参数校验失败', err))
+          reject(new Error('参数校验失败'))
         }
       })
     })

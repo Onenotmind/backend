@@ -15,6 +15,7 @@ const cors = require('koa-cors')
 const koaBody = require('koa-body')
 const jwt = require('jsonwebtoken')
 const async = require('async')
+const winston = require('winston')
 
 const app = new Koa()
 const port = 7007
@@ -34,6 +35,21 @@ const { LandAssetsClientModel } = require('./sqlModel/landAssets.js')
 let currentEthPrice = 3000
 let currentBambooPrice = 1
 let currentWaterPrice = 3
+
+const logger = new (winston.Logger)({
+  transports: [
+    new (winston.transports.File)({
+      name: 'info-file',
+      filename: 'filelog-info.log',
+      level: 'info'
+    }),
+    new (winston.transports.File)({
+      name: 'error-file',
+      filename: 'filelog-error.log',
+      level: 'error'
+    })
+  ]
+})
 
 // 配置存储session信息的mysql
 let store = new MysqlSession({
@@ -370,6 +386,7 @@ koaRouter.post('/deleteRollOutOrder', async (ctx) => {
 // Ethland -- Land 部分
 // testApi getEthlandProduct?pandaGeni=0x12987uhvr453buyvu3u89&bamboo=300
 koaRouter.get('/getEthlandProduct', async (ctx) => {
+  logger.error('/getEthlandProduct')
   let geni = [PandaOwnerClientModel.pandaGeni.label]
   const paramCheck = await getParamsCheck(ctx, geni).catch(err => { return err})
   if (!paramCheck) return

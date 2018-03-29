@@ -31,6 +31,7 @@
     "jsonwebtoken": "^8.1.1",
     "koa-cors": "^0.0.16",
     "koa-mysql-session": "^0.0.2",
-    "koa-session-minimal": "^3.0.4"
+    "koa-session-minimal": "^3.0.4",
+    "winston": "^2.4.1"
   }
 }

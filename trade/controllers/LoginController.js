@@ -7,6 +7,12 @@ const loginVali = new LoginVali()
 const { UserClientModel } = require('../sqlModel/user.js')
 const { LoginCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
+/**
+  LoginController:
+    - 注册
+      - eth addr注册
+    - 
+*/
 class LoginController {
   constructor () {
     // loginModel.selectAllData()

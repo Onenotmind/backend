@@ -24,6 +24,7 @@ const { PandaOwnerCodes, errorRes, serviceError, succRes } = require('../libs/ms
    	- 固定范围内随机值产生 geneAttrVal
    	- 繁殖后代时属性值混合产生 mixAttrBySire
    	- 繁殖后代时type混合产生 mixTypeBySire
+   	- 校验参数是否合法 valiParams TODO
 */
 
 class PandaOwnerController {
@@ -31,16 +32,15 @@ class PandaOwnerController {
 	}
 
 	// 根据熊猫基因查询熊猫
-	queryPandaInfo (gen) {
-		if (joiParamVali[PandaOwnerClientModel.pandaGeni.type]) {
-			joiParamVali[PandaOwnerClientModel.pandaGeni.type](gen)
-			.then(v => {
-			})
-			.catch(e => {
-				console.log(e)
-				return
-			})
-		}
+	async queryPandaInfo (gen) {
+		let paramsArr = [
+			{
+				val: gen,
+				model: PandaOwnerClientModel.pandaGeni
+			}
+		]
+		const paramsVali = await this.valiParams(paramsArr)
+		if (!paramsVali) return
 		return pandaOwnerModel.queryPandaInfo(gen)
 		.then(v => {
 			return succRes(PandaOwnerCodes.Query_Panda_Info_Normal, v)
@@ -217,6 +217,13 @@ class PandaOwnerController {
   		}
   	}
   	return fathTypeArr.join('|')
+  }
+
+  async valiParams (params) {
+		for (let param of params) {
+			await joiParamVali[param.model.type](param.val)
+		}
+		return true
   }
 
 
