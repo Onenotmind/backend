@@ -4,15 +4,23 @@ const landProductModel = new LandProductModel()
 const { LandProductClientModel } = require('../sqlModel/landProduct.js')
 const { AssetsCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
+/**
+	业务函数:
+		- findProductByGeo  // 根据经纬度查询ethland物品
+	辅助函数:
+		- cacl 计算最终的经纬度与长宽
+*/
 class LandProductController {
 	constructor () {
 	}
 
-	// 根据经纬度查询ethland物品
-	findProductByGeo (longitude, latitude, wid, height) {
+	findProductByGeo (longitude, latitude, rate, direction, hungry, speed) {
+		// TODO 参数校验
+		let geoParams = this.cacl(longitude, latitude, rate, direction, hungry, speed)
 		let ctxRes = null
-		return landProductModel.findProductByGeo(longitude, latitude, wid, height)
+		return landProductModel.findProductByGeo(geoParams.longitude, geoParams.latitude, geoParams.width, geoParams.height)
 		.then(v => {
+			console.log(v)
 			return succRes('findProductByGeo', v)
 		})
 		.catch(e => {
@@ -20,6 +28,52 @@ class LandProductController {
 			return serviceError()
 		})
 	}
+
+	cacl (long, lati, rate, direction, hungry, speed) {
+    let tmpWidth = 0
+    let tmpHeight = 0
+    if (direction === 'east') {
+      tmpWidth = rate * (hungry / 100)
+      tmpHeight = rate * (speed / 100)
+      lati = lati + 0.5 * tmpHeight > 90 ? 90 : lati + 0.5 * tmpHeight
+    } else if (direction === 'west') {
+      tmpWidth = rate * (hungry / 100)
+      tmpHeight = rate * (speed / 100)
+      lati = lati + 0.5 * tmpHeight > 90 ? 90 : lati + 0.5 * tmpHeight
+      long = long - tmpWidth < -180 ? 360 + long -tmpWidth : long - tmpWidth
+    } else if (direction === 'north') {
+      tmpWidth = rate * (speed / 100)
+      tmpHeight = rate * (hungry / 100)
+      long = long - tmpWidth* 0.5 < -180 ? 360 + long -tmpWidth* 0.5 : long - tmpWidth* 0.5
+      lati = lati + tmpHeight > 90 ? 90 : lati + tmpHeight
+    } else if (direction === 'south') {
+      tmpWidth = rate * (speed / 100)
+      tmpHeight = rate * (hungry / 100)
+      long = long - tmpWidth* 0.5 < -180 ? 360 + long -tmpWidth* 0.5 : long - tmpWidth* 0.5
+    } else if (direction === 'northEast') {
+      tmpWidth = rate * (speed / 100)
+      tmpHeight = rate * (hungry / 100)
+      lati = lati + tmpHeight > 90 ? 90 : lati + tmpHeight
+    } else if (direction === 'northWest') {
+      tmpWidth = rate * (speed / 100)
+      tmpHeight = rate * (hungry / 100)
+      lati = lati + tmpHeight > 90 ? 90 : lati + tmpHeight
+      long = long - tmpWidth < -180 ? 360 + long -tmpWidth : long - tmpWidth
+    } else if (direction === 'southEast') {
+      tmpWidth = rate * (speed / 100)
+      tmpHeight = rate * (hungry / 100)
+    } else if (direction === 'southWest') {
+      tmpWidth = rate * (speed / 100)
+      tmpHeight = rate * (hungry / 100)
+      long = long - tmpWidth < -180 ? 360 + long -tmpWidth : long - tmpWidth
+    } else {}
+    return {
+      longitude: long,
+      latitude: lati,
+      width: tmpWidth,
+      height: tmpHeight
+    }
+  }
 
 	// 封装GET请求的参数
   getParamsCheck (ctx, paramsArray) {

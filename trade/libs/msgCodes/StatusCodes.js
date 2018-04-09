@@ -24,7 +24,10 @@ let AssetsCodes = {
 }
 
 let PandaOwnerCodes = {
-	'Query_Panda_Info_Normal': '查询熊猫信息成功！'
+	'Query_Panda_Info_Normal': '查询熊猫信息成功！',
+	'Already_Gene_Free_Panda': '已经生成过一只G10的熊猫',
+	'Gene_Free_Panda_Succ': '生成G10熊猫成功',
+	'Query_Panda_By_Addr': 'Query_Panda_By_Addr'
 }
 /**
 	{

@@ -1,7 +1,7 @@
 let PandaOwnerServerModel = {
 	pandaGeni: {
 		label: 'pandaGen',
-		type: 'VARCHAR(60)'
+		type: 'VARCHAR(100)'
 	},
 	ownerAddr: {
 		label: 'ownerAddr',
@@ -84,7 +84,7 @@ let PandaOwnerClientModel = {
 	},
 	goldCatch: {
 		label: 'goldCatch',
-		type: 'FLOAT'
+		type: 'valiAttr'
 	},
 	waterCatch: {
 		label: 'waterCatch',
@@ -123,7 +123,10 @@ let PandaOwnerClientModel = {
 		type: 'PRIMARY KEY (pandaGen))'
 	}
 }
+
+let AttrList = ['goldCatch', 'waterCatch', 'fireCatch', 'earthCatch', 'woodCatch']
 module.exports = {
 	PandaOwnerServerModel: PandaOwnerServerModel,
-	PandaOwnerClientModel: PandaOwnerClientModel
+	PandaOwnerClientModel: PandaOwnerClientModel,
+	AttrList: AttrList
 }

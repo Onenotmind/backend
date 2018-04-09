@@ -10,7 +10,8 @@ const { LoginCodes, errorRes, serviceError, succRes } = require('../libs/msgCode
 /**
   LoginController:
     - 注册
-      - eth addr注册
+      - eth addr注册 userRegisterByRandom
+      - ethland addr登陆 landLogin
     - 
 */
 class LoginController {
@@ -56,8 +57,7 @@ class LoginController {
   }
 
   // 用户随机注册通过地址
-  userRegisterByRandom (ctx) {
-    let addr = parseInt(Math.random() * 100000)
+  userRegisterByRandom (addr) {
     let longitude = parseInt(Math.random() * 360) - 180
     let latitude = parseInt(Math.random() * 360) - 180
     return loginModel.queryUserByAdde(addr)
@@ -138,6 +138,7 @@ class LoginController {
     })
   }
 
+
   // 封装GET请求的参数
   getParamsCheck (ctx, paramsArray) {
     if (ctx.request.method !== 'GET') {
@@ -164,6 +165,7 @@ class LoginController {
     })
     return params
   }
+
 }
 
 module.exports = LoginController

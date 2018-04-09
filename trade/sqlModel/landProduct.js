@@ -15,10 +15,26 @@ let LandProductClientModel = {
 	value: 'value'
 }
 let LandProductServerModel = {
-	longitude: 'longitude',
-	latitude: 'latitude',
-	type: 'type',
-	value: 'value'
+	longitude: {
+		label: 'longitude',
+		type: 'FLOAT'
+	},
+	latitude: {
+		label: 'latitude',
+		type: 'FLOAT'
+	},
+	type: {
+		label: 'type',
+		type: 'VARCHAR(10)'
+	},
+	value: {
+		label: 'value',
+		type: 'VARCHAR(20)'
+	},
+	other: {
+		label: 'other',
+		type: ')'
+	}
 }
 module.exports = {
 	LandProductServerModel: LandProductServerModel,

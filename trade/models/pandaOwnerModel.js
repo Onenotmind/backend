@@ -18,6 +18,8 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 查询某个addr下的所有熊猫 queryAllPandaByAddr()
     - 查询某只熊猫的详细信息 queryPandaInfo()
     - 改变熊猫的oweraddr transferPandaOwner()
+    - 查询某只熊猫外出回归带的物品 getPandaBackAssets()
+    - 出售熊猫 sellPanda
 */
 
 class PandaOwnerModel {
@@ -82,7 +84,7 @@ class PandaOwnerModel {
   async genePanda (gen, addr, type, speed, hungry, gold, water, wood, fire, earth, special, integral, state, price) {
     let insertData = {
       pandaGen: gen,
-      owenrAddr: addr,
+      ownerAddr: addr,
       type: type,
       speed: speed,
       hungry: hungry,
@@ -115,6 +117,18 @@ class PandaOwnerModel {
   async delPandaByGen (gen) {
     let val = ['pandaowner', gen]
     let sql = 'DELETE FROM ?? WHERE pandaGen = ?'
+    return db.query(sql, val)
+  }
+
+  async getPandaBackAssets (gen) {
+    let val = ['backpandaassets', gen]
+    let sql = 'SELECT * FROM ?? WHERE pandaGeni = ?'
+    return db.query(sql, val)
+  }
+
+  async sellPanda (gen, price) {
+    let val = ['pandaowner', price, gen]
+    let sql = 'UPDATE ?? SET price = ? WHERE pandaGen = ?'
     return db.query(sql, val)
   }
 }
