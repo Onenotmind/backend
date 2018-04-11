@@ -12,11 +12,10 @@ class LandAssetsController {
 	queryAssetsByAddr (addr) {
 		return landAssetsModel.queryAssetsByAddr(addr)
 		.then(v => {
-			return succRes('queryAssetsByAddr', v)
+			return v[0]
 		})
 		.catch(e => {
-			console.log(e)
-			return serviceError()
+			return e
 		})
 	}
 
@@ -31,6 +30,22 @@ class LandAssetsController {
       params[element] = ctx.query[element]
     })
     return params
+  }
+
+  // todo 测试model层接口
+  testApi (api) {
+  	if (landAssetsModel[api]) {
+  		return landAssetsModel[api]()
+			.then(v => {
+				return succRes('testApi', v)
+			})
+			.catch(e => {
+				console.log(e)
+				return serviceError()
+			})
+  	} else {
+  		console.log('api')
+  	}
   }
 }
 

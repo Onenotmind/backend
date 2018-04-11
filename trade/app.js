@@ -1,5 +1,8 @@
-const session = require('koa-session-minimal')
-const MysqlSession = require('koa-mysql-session')
+const _ = require('lodash')
+// const session = require('koa-session-minimal')
+// const MysqlSession = require('koa-mysql-session')
+const Db = require('./models/Db.js')
+const db = new Db()
 const LoginController = require('./controllers/LoginController.js')
 const AssetsController = require('./controllers/AssetsController.js')
 const AssetsRollInController = require('./controllers/AssetsRollInController.js')
@@ -30,7 +33,8 @@ const landAssetsController = new LandAssetsController()
 const transactionController = new TransactionController()
 const testControllers = {
   'pandaOwnerController': pandaOwnerController,
-  'transactionController': transactionController
+  'transactionController': transactionController,
+  'landAssetsController': landAssetsController
 }
 
 const { PandaOwnerClientModel } = require('./sqlModel/pandaOwner.js')
@@ -40,6 +44,10 @@ let currentBambooPrice = 1
 let currentWaterPrice = 3
 let bambooTitudeRate = 1000 // 竹子/经纬度 比例
 
+/**
+  @日志系统
+
+*/
 const logger = new (winston.Logger)({
   transports: [
     new (winston.transports.File)({
@@ -55,26 +63,40 @@ const logger = new (winston.Logger)({
   ]
 })
 
-// 配置存储session信息的mysql
-let store = new MysqlSession({
-  user: 'root',
-  password: 'chenye8685800',
-  database: 'trade',
-  host: 'localhost',
-})
+/**
+  @token与session/cookie
+    - token/session方案 暂时不用
+    - geneToken 生成token
+    - checkToken 验证token
+*/
 
-// 存放sessionId的cookie配置
-let cookie = {
-  // maxAge: '', // cookie有效时长
-  // expires: '',  // cookie失效时间
-  // path: '', // 写cookie所在的路径
-  // domain: '*', // 写cookie所在的域名
-  httpOnly: true, // 是否只用于http请求中获取
-  // overwrite: false,  // 是否允许重写
-  // secure: 'true',
-  // sameSite: '',
-  // signed: ''
-}
+// 配置存储session信息的mysql
+// let store = new MysqlSession({
+//   user: 'root',
+//   password: 'chenye8685800',
+//   database: 'trade',
+//   host: 'localhost',
+// })
+
+// // 使用session中间件
+// app.use(session({
+//   key: 'SESSION_ID',
+//   store: store,
+//   cookie: cookie
+// }))
+
+// // 存放sessionId的cookie配置
+// let cookie = {
+//   // maxAge: '', // cookie有效时长
+//   // expires: '',  // cookie失效时间
+//   // path: '', // 写cookie所在的路径
+//   // domain: '*', // 写cookie所在的域名
+//   httpOnly: true, // 是否只用于http请求中获取
+//   // overwrite: false,  // 是否允许重写
+//   // secure: 'true',
+//   // sameSite: '',
+//   // signed: ''
+// }
 const cookieCryp = uuid()
 
 app.use(koaBody())
@@ -83,50 +105,50 @@ app.use(cors({
   credentials: true
 }))
 
-// 使用session中间件
-app.use(session({
-  key: 'SESSION_ID',
-  store: store,
-  cookie: cookie
-}))
-
-function geneToken (ctx) {
-  let email = ctx.query['email']
-  let token = jwt.sign({ uid: email }, cookieCryp)
-  ctx.cookies.set(
-    'token',
-    token,
-    {
-      // domain: '*', // 写cookie所在的域名
-      // path: '', // 写cookie所在的路径
-      // maxAge: 60 * 1000, // cookie有效时长
-      // expires: new Date() + 60*1000,  // cookie失效时间
-      httpOnly: true, // 是否只用于http请求中获取
-      // overwrite: false // 是否允许重写
-    }
-  )
-  ctx.cookies.set('uuid', email, { httpOnly: false })
+function geneToken (addr) {
+  // let token = jwt.sign({ uid: addr }, cookieCryp)
+  // ctx.cookies.set(
+  //   'token',
+  //   token,
+  //   {
+  //     // domain: '*', // 写cookie所在的域名
+  //     // path: '', // 写cookie所在的路径
+  //     // maxAge: 60 * 1000, // cookie有效时长
+  //     // expires: new Date() + 60*1000,  // cookie失效时间
+  //     httpOnly: true, // 是否只用于http请求中获取
+  //     // overwrite: false // 是否允许重写
+  //   }
+  // )
+  // ctx.cookies.set('uuid', email, { httpOnly: false })
+  return jwt.sign({ uid: addr }, cookieCryp)
 }
+
+function checkToken (token, addr) {
+  return new Promise((resolve, reject) => {
+    // let uuid = ctx.cookies.get('uuid')
+    // let token = ctx.cookies.get('token')
+    if (!token) reject(new Error('token is  null.'))
+    jwt.verify(token, cookieCryp, function (err, decoded) {
+      if (err) reject(new Error(err))
+      if (decoded.uid !== addr) reject('token is out')
+      resolve(decoded)
+    })
+  })
+}
+
+
+/**
+  @公用方法：
+    - 生成唯一标识id uuid
+    - 封装GET请求的参数 getParamsCheck
+*/
 
 function uuid (a) {
   return a ? (a ^ Math.random() * 16 >> a / 4).toString(16)
     : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, uuid)
 }
 
-function checkToken (ctx) {
-  return new Promise((resolve, reject) => {
-    let uuid = ctx.cookies.get('uuid')
-    let token = ctx.cookies.get('token')
-    if (!token) reject(new Error('token is  null.'))
-    jwt.verify(token, cookieCryp, function (err, decoded) {
-      if (err) reject(new Error(err))
-      if (decoded.uid !== uuid) reject('token is out')
-      resolve(decoded)
-    })
-  })
-}
 
-// 封装GET请求的参数
 function getParamsCheck (ctx, paramsArray) {
   return new Promise((resolve, reject) => {
     let params = []
@@ -140,6 +162,74 @@ function getParamsCheck (ctx, paramsArray) {
     resolve(params)
   })
 }
+/**
+  @登陆
+    - userLogin 用户登陆
+    - userRegister 用户注册 只需要地址与密码即可
+    - userGeneCode 发送验证码给邮箱
+    - userCheckCode 验证验证码正确与否
+    - userChangeLoginPass 更改登陆密码
+    - userChangeTradePass 更改交易密码
+    - userRegisterByRandom 用户随机注册
+    - testTrans 测试user事务
+  @个人资产管理
+    - 获取用户详细信息和资产 getUserInfoAndAssetsByAddr
+*/
+
+koaRouter.get('/testTrans', async (ctx) => {
+  const connection = await db.startTransaction()
+  if (!connection) return
+  connection.beginTransaction(function (err) {
+    if(err) return
+    async.series([
+      function (callback) {
+        var sql1 = "update user set upass=? where uaddr= ?"
+        var param1 = ['12345', '123']
+        connection.query(sql1, param1, function (qErr, rows, fields) {
+          if (qErr) {
+            connection.rollback(function () {
+              connection.release()
+            })
+          } else {
+            console.log('succRes')
+            callback(null)
+          }
+        })
+      },
+      function (callback) {
+        var sql1 = "update user set utradePass=? where uaddr= ?"
+        var param1 = ['12345', '123']
+        connection.query(sql1, param1, function (qErr, rows, fields) {
+          // if (qErr) {
+            connection.rollback(function () {
+              connection.release()
+            })
+          // } else {
+          //   callback(null)
+          // }
+        })
+      }
+    ], function (tErr, res) {
+      if (tErr) {
+        connection.rollback(function () {
+          console.log("transaction error: " + tErr)
+          connection.release()
+        })
+      } else {
+        connection.commit(function (err, info) {
+          if (err) {
+            connection.rollback(function (err) {
+              console.log("transaction error: " + err)
+              connection.release()
+            })
+          } else {
+            connection.release()
+          }
+        })
+      }
+    })
+  })
+})
 
 // 登陆
 koaRouter.get('/userLogin', async (ctx) => {
@@ -223,6 +313,46 @@ koaRouter.post('/userChangeLoginPass', async (ctx) => {
   }
   ctx.body = res
 })
+
+koaRouter.get('/userRegisterByRandom', async (ctx) => {
+  let res = null
+  await loginController.userRegisterByRandom(ctx)
+  .then(v => {
+    res = v
+  })
+  .catch(e => {
+    res = e
+  })
+  ctx.body = res
+})
+
+koaRouter.get('/getUserInfoAndAssetsByAddr', async (ctx) => {
+  let addr = ctx.query['addr']
+  let res = null
+  const userInfo = await loginController.getUserInfoByAddr(addr)
+  if (!userInfo) {
+    ctx.body = errorRes('没有该用户')
+  }
+  const userAssets = await landAssetsController.queryAssetsByAddr(addr)
+  if (!userAssets) {
+    ctx.body = errorRes('服务器异常！')
+  }
+  const user = _.concat(userInfo, userAssets)
+  ctx.body = succRes('getUserInfoAndAssetsByAddr', user)
+})
+
+/**
+  @后台资产管理系统
+    - queryAllAssets 查询用户所有资产
+    - queryAllRollInAssets 查询转入所有订单
+    - queryRollInAssetsByAddr 查询某一用户的转入订单
+    - checkOverRollInOrder 转入订单确认
+    - deleteRollInOrder 删除转入订单
+    - queryAllRollOutAssets 查询所有提现订单
+    - queryRollOutAssetsByAddr 查询某一用户的提现订单
+    - checkOverRollOutOrder 提现订单确认
+    - deleteRollOutOrder 提现订单取消
+*/
 
 // assets查询所有资产
 koaRouter.get('/queryAllAssets', async (ctx) => {
@@ -499,33 +629,6 @@ koaRouter.get('/genePandaRandom', async (ctx) => {
   ctx.body = res
 })
 
-koaRouter.get('/userRegisterByRandom', async (ctx) => {
-  let res = null
-  await loginController.userRegisterByRandom(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
-})
-
-koaRouter.get('/testApi', async (ctx) => {
-  let res = null
-  let testController = ctx.query['controller']
-  let api = ctx.query['api']
-  if (testControllers[testController].testApi) {
-    await testControllers[testController].testApi(api)
-    .then(v => {
-      res = v
-    })
-    .catch(e => {
-      res = e
-    })
-    ctx.body = res
-  }
-})
 
 koaRouter.get('/serverTime', (ctx) => {
   let res = succRes('serverTime', Date.parse(new Date()) / 1000)
@@ -561,6 +664,23 @@ koaRouter.post('/buyPanda', async (ctx) => {
     res = e
   })
   ctx.body = res
+})
+
+
+koaRouter.get('/testApi', async (ctx) => {
+  let res = null
+  let testController = ctx.query['controller']
+  let api = ctx.query['api']
+  if (testControllers[testController].testApi) {
+    await testControllers[testController].testApi(api)
+    .then(v => {
+      res = v
+    })
+    .catch(e => {
+      res = e
+    })
+    ctx.body = res
+  }
 })
 
 app.use(koaRouter.routes())

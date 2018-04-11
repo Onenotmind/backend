@@ -20,9 +20,9 @@ class LoginModel {
 
   // 查询指定addr的用户信息
   async queryUserByAdde (addr) {
-    let columns = [UserServerModel.id, UserServerModel.email, UserServerModel.state]
-    let val = [columns, 'user', addr]
-    let sql = 'SELECT ?? FROM ?? WHERE uaddr = ?'
+    // let columns = [UserServerModel.id, UserServerModel.email, UserServerModel.state]
+    let val = ['user', addr]
+    let sql = 'SELECT * FROM ?? WHERE uaddr = ?'
     return db.query(sql, val)
   }
 

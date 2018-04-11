@@ -32,6 +32,7 @@
     "koa-cors": "^0.0.16",
     "koa-mysql-session": "^0.0.2",
     "koa-session-minimal": "^3.0.4",
+    "lodash": "^4.17.5",
     "winston": "^2.4.1"
   }
 }

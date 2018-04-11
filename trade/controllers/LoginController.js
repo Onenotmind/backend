@@ -12,7 +12,7 @@ const { LoginCodes, errorRes, serviceError, succRes } = require('../libs/msgCode
     - 注册
       - eth addr注册 userRegisterByRandom
       - ethland addr登陆 landLogin
-    - 
+    - getUserInfoByAddr 查询用户详细信息
 */
 class LoginController {
   constructor () {
@@ -135,6 +135,16 @@ class LoginController {
     .catch(e => {
       console.log(e)
       return serviceError()
+    })
+  }
+
+  getUserInfoByAddr (addr) {
+    return loginModel.queryUserByAdde(addr)
+    .then(v => {
+      return v[0]
+    })
+    .catch(e => {
+      return e
     })
   }
 
