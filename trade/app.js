@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const crypto = require('crypto')
 // const session = require('koa-session-minimal')
 // const MysqlSession = require('koa-mysql-session')
 const Db = require('./models/Db.js')
@@ -11,8 +12,9 @@ const LandProductController = require('./controllers/LandProductController.js')
 const PandaOwnerController = require('./controllers/PandaOwnerController.js')
 const LandAssetsController = require('./controllers/LandAssetsController.js')
 const TransactionController = require('./controllers/TransactionController.js')
+const UserDetailController = require('./controllers/UserDetailController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
-const { LoginCodes, errorRes, succRes } = require('./libs/msgCodes/StatusCodes.js')
+const { LoginCodes, CommonCodes, errorRes, succRes } = require('./libs/msgCodes/StatusCodes.js')
 const Koa = require('koa')
 const koaRouter = require('koa-router')()
 const cors = require('koa-cors')
@@ -31,6 +33,7 @@ const landProductController = new LandProductController()
 const pandaOwnerController = new PandaOwnerController()
 const landAssetsController = new LandAssetsController()
 const transactionController = new TransactionController()
+const userDetailController = new UserDetailController()
 const testControllers = {
   'pandaOwnerController': pandaOwnerController,
   'transactionController': transactionController,
@@ -141,6 +144,7 @@ function checkToken (token, addr) {
   @公用方法：
     - 生成唯一标识id uuid
     - 封装GET请求的参数 getParamsCheck
+    - 封装POST请求的参数 postParamsCheck
 */
 
 function uuid (a) {
@@ -151,12 +155,34 @@ function uuid (a) {
 
 function getParamsCheck (ctx, paramsArray) {
   return new Promise((resolve, reject) => {
+    if (ctx.request.method !== 'GET') {
+      reject(CommonCodes.Request_Method_Wrong)
+    }
     let params = []
     paramsArray.forEach((element) => {
       if (ctx.query[element]) {
         params.push(ctx.query[element])
       } else {
-        reject(new Error(`参数${element}不为空！`))
+        reject(`参数${element}不为空！`)
+      }
+    })
+    resolve(params)
+  })
+}
+
+function postParamsCheck (ctx, paramsArray) {
+  return new Promise((resolve, reject) => {
+    if (ctx.request.method !== 'POST') {
+      // ctx.body = '接口请求方式必须为POST'
+      reject(CommonCodes.Request_Method_Wrong)
+    }
+    let requestData = ctx.request.body
+    let params = []
+    paramsArray.forEach((element) => {
+      if (requestData[element]) {
+        params.push(requestData[element])
+      } else {
+        reject(`参数${element}不为空！`)
       }
     })
     resolve(params)
@@ -174,6 +200,10 @@ function getParamsCheck (ctx, paramsArray) {
     - testTrans 测试user事务
   @个人资产管理
     - 获取用户详细信息和资产 getUserInfoAndAssetsByAddr
+  @通用函数
+    - 产生验证码 geneEmailCode
+    - 加密算法 encrypt
+    - 解密算法 decrypt
 */
 
 koaRouter.get('/testTrans', async (ctx) => {
@@ -231,62 +261,102 @@ koaRouter.get('/testTrans', async (ctx) => {
   })
 })
 
-// 登陆
+/**
+   * 用户登录 userLogin
+   * @property {string} addr
+   * @property {string} pwd
+   */
 koaRouter.get('/userLogin', async (ctx) => {
-  let res = loginController.userLogin(ctx)
-  let response = null
-  await res.then((v) => {
-    response = v
-  })
-  ctx.body = response
-  geneToken(ctx)
-})
-
-// 产生验证码
-koaRouter.get('/userGeneCode', async (ctx) => {
-  let code = Math.ceil(Math.random()*10000)
-  let email = ctx.query['email']
-  let res = null
-  ctx.session = {
-    email: email,
-    code: code
+  let params = await getParamsCheck(['addr', 'pwd'])
+  if (!params) {
+    ctx.body = errorRes(CommonCodes.Params_Check_Fail)
+    return
   }
-  await sendCodeFromMail(email, code).then(v => {
-    res = succRes(LoginCodes.Mail_Send_Succ, {})
-  }).catch(e => {
-    res = errorRes(LoginCodes.Mail_Send_Error)
-  })
-  ctx.body = res
+  const login = userDetailController.userLogin(...params)
+  if (!login) {
+    ctx.body = errorRes(LoginCodes.Login_No_Account)
+    return
+  } else {
+    ctx.body = succRes(LoginCodes.Login_Succ, login)
+  }
 })
 
-// 注册
+
+/**
+   * 产生验证码 userGeneCode
+   * @property {string} email 
+   */
+koaRouter.get('/userGeneCode', async (ctx) => {
+  let email = ctx.query['email']
+  const geneCode = await geneEmailCode()
+  if (!geneCode) {
+    ctx.body = errorRes(LoginCodes.Mail_Send_Error)
+  } else {
+    ctx.body = succRes(LoginCodes.Mail_Send_Succ, {})
+  }
+
+})
+
+/**
+   * 产生验证码 geneEmailCode 工具函数
+   * @property {string} email 
+   */
+async function geneEmailCode (email) {
+  let code = Math.ceil(Math.random()*10000)
+  let encryptCode = encrypt(code + 1, email)
+  ctx.cookies.set(
+    'tmpUserId',
+    encryptCode,
+    {
+      // expires: new Date() + 60*1000,  // cookie失效时间
+      httpOnly: true
+    }
+  )
+  const sendCode = await sendCodeFromMail(email, code)
+  if (!sendCode) return false
+  return true
+}
+
+
+/**
+   * 用户注册 userRegister
+   * @property {string} addr
+   * @property {string} pwd
+   * @property {string} email 非必要
+   * @property {string} code 非必要
+   */
 koaRouter.post('/userRegister', async (ctx) => {
   let code = null
-  if (ctx.request.body && ctx.request.body.code) {
-    code = ctx.request.body.code
+  let params = await postParamsCheck(['addr', 'pwd'])
+  if (!params) {
+    ctx.body = errorRes(CommonCodes.Params_Check_Fail)
+    return
   }
-  let res = null
-  if (ctx.session && ctx.session.code === parseInt(code)) {
-    let data = loginController.userRegister(ctx)
-    await data.then(v => {
-      res = v
-    })
-  } else {
-    res = errorRes(LoginCodes.Code_Error)
+  let clientCode = parseInt(ctx.query.body.code)
+  let email = ctx.query.body.email
+  if (email !== '') {
+    if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
+      code = ctx.cookies.get('tmpUserId')
+    }
+    let decryptRes = parseInt(decrypt(code, email))
+    if (decryptRes - 1 !== clientCode) {
+      ctx.body = errorRes(LoginCodes.Code_Error)
+      return
+    }
   }
-  ctx.body = res
+  const login = userDetailController.userLogin(...params)
+  if (login) {
+    ctx.body = errorRes(LoginCodes.Email_Exist)
+    return
+  }
+  const register = await userDetailController.userRegister(...params, email)
+  if (!register) {
+    ctx.body = errorRes(LoginCodes.Register_Failed)
+    return
+  }
+  ctx.body = succRes(LoginCodes.Login_Succ, {})
 })
 
-// 验证码验证
-koaRouter.get('/userCheckCode', (ctx) => {
-  let code = ctx.query['code']
-  if (ctx.session && ctx.session.code === parseInt(code)) {
-    ctx.body = succRes(LoginCodes.Code_Correct, {})
-    geneToken(ctx)
-  } else {
-    ctx.body = errorRes(LoginCodes.Code_Error)
-  }
-})
 
 // 更改登陆密码
 koaRouter.post('/userChangeLoginPass', async (ctx) => {
@@ -340,6 +410,21 @@ koaRouter.get('/getUserInfoAndAssetsByAddr', async (ctx) => {
   const user = _.concat(userInfo, userAssets)
   ctx.body = succRes('getUserInfoAndAssetsByAddr', user)
 })
+
+
+function encrypt(str,secret){
+  let cipher = crypto.createCipher('aes192',secret)
+  let enc = cipher.update(str,'utf8','hex')
+  enc += cipher.final('hex')
+  return enc
+}
+
+function decrypt(str,secret){
+  var decipher = crypto.createDecipher('aes192',secret)
+  var dec = decipher.update(str,'hex','utf8')
+  dec += decipher.final('utf8')
+  return dec
+}
 
 /**
   @后台资产管理系统

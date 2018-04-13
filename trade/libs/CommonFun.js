@@ -44,6 +44,76 @@ function cacl (long, lati, rate, direction, hungry, speed) {
   }
 }
 
+
+/**
+  @公用方法：
+    - 生成唯一标识id uuid
+    - 封装GET请求的参数 getParamsCheck
+    - 封装POST请求的参数 postParamsCheck
+*/
+
+function uuid (a) {
+  return a ? (a ^ Math.random() * 16 >> a / 4).toString(16)
+    : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, uuid)
+}
+
+
+function getParamsCheck (ctx, paramsArray) {
+  return new Promise((resolve, reject) => {
+    if (ctx.request.method !== 'GET') {
+      reject(CommonCodes.Request_Method_Wrong)
+    }
+    let params = []
+    paramsArray.forEach((element) => {
+      if (ctx.query[element] !== undefined) {
+        params.push(ctx.query[element])
+      } else {
+        reject(`参数${element}不存在！`)
+      }
+    })
+    resolve(params)
+  })
+}
+
+function postParamsCheck (ctx, paramsArray) {
+  return new Promise((resolve, reject) => {
+    if (ctx.request.method !== 'POST') {
+      // ctx.body = '接口请求方式必须为POST'
+      reject(CommonCodes.Request_Method_Wrong)
+    }
+    let requestData = ctx.request.body
+    let params = []
+    paramsArray.forEach((element) => {
+      if (requestData[element] !== undefined) {
+        params.push(requestData[element])
+      } else {
+        reject(`参数${element}不存在！`)
+      }
+    })
+    resolve(params)
+  })
+}
+
+
+function encrypt(str,secret){
+  let cipher = crypto.createCipher('aes192',secret)
+  let enc = cipher.update(str,'utf8','hex')
+  enc += cipher.final('hex')
+  return enc
+}
+
+function decrypt(str,secret){
+  var decipher = crypto.createDecipher('aes192',secret)
+  var dec = decipher.update(str,'hex','utf8')
+  dec += decipher.final('utf8')
+  return dec
+}
+
 module.exports = {
-	cacl: cacl
+	cacl: cacl,
+  uuid: uuid,
+  getParamsCheck: getParamsCheck,
+  postParamsCheck: postParamsCheck,
+  encrypt: encrypt,
+  decrypt: decrypt
 }

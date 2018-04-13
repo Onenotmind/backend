@@ -1,6 +1,7 @@
 let CommonCodes = {
 	'Service_Wrong': '服务器忙，请稍后再试',
 	'Params_Check_Fail': '参数校验失败',
+	'Request_Method_Wrong': '请求方式错误！'
 }
 let LoginCodes = {
   'Email_Exist': '你的邮件已经注册了！', // 重复邮箱注册
