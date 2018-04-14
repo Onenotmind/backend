@@ -15,37 +15,47 @@ class JoiParamVali {
 
 	async valiPandaGeni (geni) {
 		const schema = Joi.string().alphanum().required().optional()
-		await this.joiDataCheck(geni, schema)
+		return this.joiDataCheck(geni, schema)
 	}
 
   async valiAddr (addr) {
     const schema = Joi.string().alphanum().required().optional()
-    await this.joiDataCheck(addr, schema)
+    return this.joiDataCheck(addr, schema)
   }
 
   async valiAttr(attr) {
     const schema = Joi.number().min(0).max(100).precision(4).required().optional()
-    await this.joiDataCheck(attr, schema)
+    return this.joiDataCheck(attr, schema)
+  }
+
+  async valiBamboo(bamboo) {
+    const schema = Joi.number().min(0).max(10000).required().optional()
+    return this.joiDataCheck(bamboo, schema)
   }
 
   async valiEmail (email) {
     const schema = Joi.string().email().required().optional()
-    await this.joiDataCheck(email, schema)
+    return this.joiDataCheck(email, schema)
   }
 
   async valiPass (pass) {
     const schema = Joi.string().alphanum().required().optional()
-    await this.joiDataCheck(pass, schema)
+    return this.joiDataCheck(pass, schema)
   }
 
   async valiState (state, valiArr) {
     const schema = Joi.any().invalid(valiArr)
-    await this.joiDataCheck(state, schema)
+    return this.joiDataCheck(state, schema)
+  }
+
+  async valiDir (direct) {
+    const schema = Joi.string().alphanum().required().optional()
+    return this.joiDataCheck(direct, schema)
   }
 
   async valiTitude (titude) {
     const schema = Joi.number().min(-180).max(180).precision(2).required().optional()
-    await this.joiDataCheck(titude, schema)
+    return this.joiDataCheck(titude, schema)
   }
 
 	// joi参数校验函数Promise封装
@@ -53,8 +63,9 @@ class JoiParamVali {
     return new Promise((resolve, reject) => {
       Joi.validate(params, dataFormat, (err) => {
         if (err === null) {
-          resolve()
+          resolve(params)
         } else {
+          console.log('参数校验失败', err)
           reject(new Error('参数校验失败'))
         }
       })

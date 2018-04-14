@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken')
+
 function cacl (long, lati, rate, direction, hungry, speed) {
   let tmpWidth = 0
   let tmpHeight = 0
@@ -57,16 +59,16 @@ function uuid (a) {
     : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, uuid)
 }
 
-
+const cookieCryp = 'uuid'
 function getParamsCheck (ctx, paramsArray) {
   return new Promise((resolve, reject) => {
     if (ctx.request.method !== 'GET') {
       reject(CommonCodes.Request_Method_Wrong)
     }
-    let params = []
+    let params = {}
     paramsArray.forEach((element) => {
       if (ctx.query[element] !== undefined) {
-        params.push(ctx.query[element])
+        params[element] = ctx.query[element]
       } else {
         reject(`参数${element}不存在！`)
       }
@@ -82,10 +84,10 @@ function postParamsCheck (ctx, paramsArray) {
       reject(CommonCodes.Request_Method_Wrong)
     }
     let requestData = ctx.request.body
-    let params = []
+    let params = {}
     paramsArray.forEach((element) => {
       if (requestData[element] !== undefined) {
-        params.push(requestData[element])
+        params[element] = requestData[element]
       } else {
         reject(`参数${element}不存在！`)
       }
@@ -94,6 +96,22 @@ function postParamsCheck (ctx, paramsArray) {
   })
 }
 
+function checkToken (token, addr) {
+  return new Promise((resolve, reject) => {
+    // let uuid = ctx.cookies.get('uuid')
+    // let token = ctx.cookies.get('token')
+    if (!token) reject(new Error('token is  null.'))
+    jwt.verify(token, cookieCryp, function (err, decoded) {
+      if (err) reject(new Error(err))
+      if (decoded.uid !== addr) reject('token is out')
+      resolve(decoded)
+    })
+  })
+}
+
+function geneToken (addr) {
+  return jwt.sign({ uid: addr, exp: Math.floor(Date.now() / 1000) + (60 * 60) }, cookieCryp)
+}
 
 function encrypt(str,secret){
   let cipher = crypto.createCipher('aes192',secret)
@@ -115,5 +133,7 @@ module.exports = {
   getParamsCheck: getParamsCheck,
   postParamsCheck: postParamsCheck,
   encrypt: encrypt,
-  decrypt: decrypt
+  decrypt: decrypt,
+  checkToken: checkToken,
+  geneToken: geneToken
 }

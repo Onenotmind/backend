@@ -42,6 +42,21 @@ class Db {
       })
     })
   }
+
+  transQuery(connection, sql, value) {
+    return new Promise((resolve, reject) => {
+      connection.query(sql, value, (err, rows) => {
+        if (err) {
+          connection.rollback(function () {
+            connection.release()
+          })
+          reject(err)
+        } else {
+          resolve(rows)
+        }
+      })
+    })
+  }
 }
 
 module.exports = Db

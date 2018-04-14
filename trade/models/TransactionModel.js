@@ -15,6 +15,7 @@ const db = new Db()
 	- getInfoForProduct 熊猫搜查商品时所需详细信息
 	- findProductByGeo 根据经纬度查询物品
 	- updatePandaAttr 更新熊猫属性
+  - updatePandaLocationState 更新熊猫的状态与价钱
 	- updateLandAssetsByAddr 根据用户地址更新用户资产
   - updateBackPandaAssets 更新熊猫回去的资产
   - updateUserLandAssets 更新用户的ethland资产
@@ -30,11 +31,12 @@ class TransactionModel {
 	}
 
 	async getInfoForProduct (trans, pandaGen) {
+    let val = [pandaGen]
 		let sql = '' +
 		'select * from user '+
 		'inner join pandaowner on pandaowner.ownerAddr=user.uaddr ' +
 		' inner join landassets l on user.uaddr=l.uaddr '+
-		'where pandaowner.pandaGen="0x12987uhvdsffbuyvu3u89";'
+		'where pandaowner.pandaGen="0x12987u1vadahvbtyhvu3u89";'
     console.log(sql)
 		return db.transQuery(trans, sql)
 	}
@@ -62,6 +64,12 @@ class TransactionModel {
     return db.transQuery(trans, sql, val)
   }
 
+  async updatePandaLocationState (trans, state, price, pandaGen) {
+    let val = ['pandaowner', state, price, pandaGen]
+    let sql = 'UPDATE ?? SET state = ? , price = ? WHERE pandaGen = ?'
+    return db.transQuery(trans, sql, val)
+  }
+
   async updateLandAssetsByAddr (trans, addr, assetType, value) {
   	let val = ['landassets', value, addr]
     let sql = 'UPDATE ?? SET '+ assetType +' = ? WHERE uaddr = ?'
@@ -73,8 +81,6 @@ class TransactionModel {
   }
 
   async updateBackPandaAssets (trans, pandaGen, carryAssets, dropAssets) {
-    console.log('carryAssets', carryAssets)
-    console.log('dropAssets', dropAssets)
     dropAssets = '1/WATER'
     let sql = 'INSERT INTO backpandaassets (pandaGen, backAssets,dropAssets) VALUES (' + pandaGen +
               ',' + carryAssets + ',' + dropAssets + 
@@ -102,23 +108,23 @@ class TransactionModel {
     return db.transQuery(trans, sql)
   }
 
-  async queryPandaInfo (trans, pandaGen) {
+  async queryPandaInfo (pandaGen) {
     let val = [ pandaGen]
     let sql = 'SELECT * FROM pandaowner inner join landassets l on l.uaddr=pandaowner.ownerAddr WHERE pandaowner.pandaGen= ?'
-    return db.transQuery(trans, sql, val)
+    return db.query(sql, val)
   }
 
-  async queryAssetsByAddr (trans, addr) {
+  async queryAssetsByAddr (addr) {
     let val = ['landAssets', addr]
     let sql = 'SELECT * FROM ?? WHERE uaddr = ?'
-    return db.transQuery(trans, sql, val)
+    return db.query(sql, val)
   }
 
-  async updateAssetsByAddr (trans, addr, buybamboo, ownerAddr, ownerbamboo) {
+  async updateAssetsByAddr (addr, buybamboo, ownerAddr, ownerbamboo) {
     let val = [addr, buybamboo, ownerAddr, ownerbamboo]
     let sql = 'update landassets set bamboo = case uaddr' +
       ' when ? then ? when ? then ? end'
-    return db.transQuery(trans, sql, val)
+    return db.query(sql, val)
   }
 }
 

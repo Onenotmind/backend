@@ -1,15 +1,9 @@
+const _ = require('lodash')
 const async = require('async')
 const TransactionModel = require('../models/TransactionModel.js')
-const { cacl } = require('../libs/CommonFun.js')
-const { PandaOwnerCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
-// const LandProductController = require('./LandProductController.js')
-// const PandaOwnerController = require('./PandaOwnerController.js')
-// const LandAssetsController = require('./LandAssetsController.js')
-// const LoginController = require('./LoginController.js')
-// const loginController = new LoginController()
-// const landProductController = new LandProductController()
-// const pandaOwnerController = new PandaOwnerController()
-// const landAssetsController = new LandAssetsController()
+const JoiParamVali = require('../libs/JoiParamVali.js')
+const { cacl, geneToken, checkToken } = require('../libs/CommonFun.js')
+const { PandaOwnerCodes, PandaLandCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 const transactionModel = new TransactionModel()
 let bambooTitudeRate = 1000 // 竹子/经纬度 比例
@@ -25,147 +19,72 @@ let currentWaterPrice = 3
 
 class TransactionController {
 
-	buyPanda (addr, pandaGen, price) {
-		let trans = null
-		let tasks = [
-			function (callback) {
-				transactionModel.startTransaction()
-				.then(v => {
-					console.log('begin transaction!')
-					trans = v
-					callback(null, v)
-				})
-				.catch(err => {
-					callback(new Error('Transaction begin fail.'))
-				})
-			},
-			function (trans, callback) {
-				transactionModel.queryPandaInfo(trans, pandaGen)
-				.then(v => {
-					if (v.length > 0) {
-						if (v[0].state !== 'sold') {
-							callback(new Error('Not Sold.'))
-						}
-						callback(null, trans, v[0].ownerAddr, v[0].bamboo)
-					} else {
-						callback(new Error('No such Panda.'))
-					}
-				})
-				.catch(e => {
-					callback(e)
-				})
-			},
-			function (trans, ownerAddr, ownerbamboo, callback) {
-				transactionModel.queryAssetsByAddr(trans, addr)
-				.then(v => {
-					if (v.length > 0) {
-						if (v[0].bamboo > price) {
-							callback(null, trans, v[0].bamboo, ownerAddr, ownerbamboo)
-						} else {
-							callback(new Error('less bamboo.'))
-						}
-					} else {
-						callback(new Error('No such addr.'))
-					}
-				})
-				.catch(e => {
-					callback(e)
-				})
-			},
-			function (trans, buybamboo, ownerAddr, ownerbamboo, callback) {
-				let buyleft = parseFloat(buybamboo) - parseFloat(price) > 0 ? parseFloat(buybamboo) - parseFloat(price): 0
-				let ownerleft = parseFloat(ownerbamboo) + parseFloat(price)
-				transactionModel.updateAssetsByAddr(trans, addr, buyleft, ownerAddr, ownerleft)
-				.then(v => {
-					callback(null, v)
-				})
-				.catch(e => {
-					callback(e)
-				})
-			}
-		]
-		return new Promise((resolve, reject) => {
-			async.waterfall(tasks, function (err, res) {
-				if (err) {
-					console.log(err)
-					trans.rollback()
-					reject(errorRes(err))
-				}
-				trans.release()
-				resolve(succRes('buy panda', res))
-				// trans.rollback()
-			})
-		})
+	async buyPanda (addr, pandaGen, price) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('addr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const pandaInfo = await transactionModel.queryPandaInfo(pandaGen)
+		if (!pandaInfo || pandaInfo[0].state !== 'sold') return new Error(PandaLandCodes.Panda_Not_Sold)
+		const ownerAddr = pandaInfo[0].ownerAddr
+		const bamboo = pandaInfo[0].bamboo
+		const assets = await transactionModel.queryAssetsByAddr(addr)
+		if (!assets || assets[0].bamboo < price) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
+		const buyBamboo = assets[0].bamboo
+		let buyleft = parseFloat(buybamboo) - parseFloat(price) > 0 ? parseFloat(buybamboo) - parseFloat(price): 0
+		let ownerleft = parseFloat(ownerbamboo) + parseFloat(price)
+		const updateAssets = await transactionModel.updateAssetsByAddr(addr, buyleft, ownerAddr, ownerleft)
+		if (!updateAssets) return new Error(PandaLandCodes.Buy_Panda_Fail)
+		return updateAssets
 	}
 
-	getEthlandProduct (geni, bamboo, direction) {
-		let trans = null
+	async getEthlandProduct (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('addr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const paramsType = ['geni', 'bamboo', 'direction']
+		const params= await postParamsCheck(ctx, paramsType)
+		if (!params) return new Error(CommonCodes.Params_Check_Fail)
+		const geni = params.geni
+		const bamboo = params.bamboo
+		const direction = params.direction
+		const geniVali = await joiParamVali.valiPandaGeni(geni)
+		const bambooVali = await joiParamVali.valiBamboo(bamboo)
+		const directionVali = await joiParamVali.valiDir(direction)
+		if (!geniVali || !bambooVali || !directionVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const trans = await transactionModel.startTransaction()
+		if (!trans) return new Error(CommonCodes.Service_Wrong)
 		let tasks = [
-			function (callback) {
-				transactionModel.startTransaction()
-				.then(v => {
-					console.log('begin transaction!')
-					trans = v
-					callback(null, v)
-				})
-				.catch(err => {
-					callback(new Error('Transaction begin fail.'))
-				})
+			async function () {
+				const pandaInfo = await transactionModel.getInfoForProduct(trans, geni)
+				if (!pandaInfo || pandaInfo.length === 0) return new Error(PandaLandCodes.No_Such_Panda)
+				if (parseInt(pandaInfo[0].bamboo) < bamboo) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
+				let leftBamboo = parseInt(pandaInfo[0].bamboo) - bamboo
+				const updateLandAssets = await transactionModel.updateLandAssetsByAddr(trans, pandaInfo[0].ownerAddr, 'bamboo', leftBamboo)
+				if (!updateLandAssets) return new Error(CommonCodes.Service_Wrong)
+				return pandaInfo[0]
 			},
-			function (trans, callback) {
-				console.log('geni', geni)
-				transactionModel.getInfoForProduct(trans, geni)
-				.then(pandaInfo => {
-					console.log('pandaInfo', pandaInfo)
-					if (pandaInfo[0]) {
-						if (parseInt(pandaInfo[0].bamboo) < bamboo){
-							callback(new Error('More Bamboo Than user Has.'))
-						} else {
-							let leftBamboo = parseInt(pandaInfo[0].bamboo) - bamboo
-							transactionModel.updateLandAssetsByAddr(trans, pandaInfo[0].ownerAddr, 'bamboo', leftBamboo)
-							.then(v => {
-								console.log('get out panda detail info', pandaInfo[0])
-								callback(null, trans, pandaInfo[0])
-							})
-							.catch(e => {
-								callback(e)
-							})
-						}
-					} else {
-						callback(new Error('No Such Panda.'))
-					}
-				})
-				.catch(v => {
-					callback(v)
-				})
-			},
-			function (trans, pandaInfo, callback) {
+			async function (pandaInfo) {
 				let baseRate = parseFloat(bamboo / bambooTitudeRate)
 				let addr = pandaInfo.ownerAddr
 				let geoParams = cacl(pandaInfo.longitude, pandaInfo.latitude, baseRate, direction, pandaInfo.hungry, pandaInfo.speed)
-				transactionModel.findProductByGeo(trans, geoParams.longitude, geoParams.latitude, geoParams.width, geoParams.height)
-				.then(proArr => {
-					if (proArr.length === 0) {
-						callback(new Error('No Product'))
-					} else {
-						let attrArr = {
-	            'speed': parseFloat(pandaInfo.speed),
-	            'hungry': parseFloat(pandaInfo.hungry),
-	            'gold': pandaInfo.goldCatch,
-	            'wood': pandaInfo.woodCatch,
-	            'water': pandaInfo.waterCatch,
-	            'fire': pandaInfo.fireCatch,
-	            'earth': pandaInfo.earthCatch
-	          }
-	          console.log('get out panda product', proArr)
-						callback(null, trans, attrArr, addr, proArr)
-					}
-				})
-				.catch(e => {
-					callback(e)
-				})
+				const product = await transactionModel.findProductByGeo(trans, geoParams.longitude, geoParams.latitude, geoParams.width, geoParams.height)
+				if (!product || product.length === 0) return new Error(PandaLandCodes.No_Product_In_Land)
+				let attrArr = {
+          'speed': parseFloat(pandaInfo.speed),
+          'hungry': parseFloat(pandaInfo.hungry),
+          'gold': pandaInfo.goldCatch,
+          'wood': pandaInfo.woodCatch,
+          'water': pandaInfo.waterCatch,
+          'fire': pandaInfo.fireCatch,
+          'earth': pandaInfo.earthCatch
+        }
+        return [attrArr, addr, product]
 			},
-			function (trans, attrArr, addr, proArr, callback) {
+			async function ([attrArr, addr, proArr]) {
 				let getDiffValue = (type) => {
           if (type === 'ETH') {
             return currentEthPrice
@@ -184,15 +103,9 @@ class TransactionController {
         let itemsVal = 0 // 返回的商品总值
         let mostVal = 0 // 价值最高的商品总值
         let baseVal = 0 // 基本的商品组合
-        transactionModel.updatePandaAttr(trans, 'state', 'out', geni)
         let overTime = Date.parse(new Date()) / 1000 + 60 * 60 * 3
-        transactionModel.updatePandaAttr(trans, 'price', overTime, geni)
-        .then(v => {
-
-        })
-        .catch(e => {
-
-        })
+        const startOut = await transactionModel.updatePandaLocationState(trans, 'out', overTime, geni)
+        if (!startOut) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)
         if (proArr.length >= 3) {
         	mostValRes = proArr.sort((a, b) => {
             let aVal = getDiffValue(a.value.split('/')[1]) * parseInt(a.value.split('/')[0])
@@ -217,71 +130,65 @@ class TransactionController {
               let finalAttrVal = attrArr[dataTypeArr[index]] + 0.1* Math.random().toFixed(4)
               // TODO updatePandaAttr是否用await
               transactionModel.updatePandaAttr(trans, dataTypeArr[index] + 'Catch', finalAttrVal, geni)	
+							// if (!updateAttr) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)            
             } else {
             	dropRes.push(data.value)
             }
           }
         })
-        console.log('itemRes', itemRes)
-        // 更新用户资产 TODO
-        async.parallel([
-        		function (cb) {
-        			transactionModel.updateUserLandAssets(trans, addr, saveRes)
-        			.then(v => {
-        				console.log(v)
-        				cb(null)
-        			})
-        			.catch(e => {
-        				console.log('e', e)
-        				cb(e)
-        			})
-        		}
-        		// function (cb) {
-        		// 	transactionModel.updateBackPandaAssets(trans, geni, saveRes.join('|'), dropRes.join('|'))
-        		// 	.then(v => {
-        		// 		cb(null)
-        		// 	})
-        		// 	.catch(e => {
-        		// 		console.log('e', e)
-        		// 		cb(e)
-        		// 	})
-        		// }
-        	], 
-        	function (err, results) {
-        		if (err) {
-        			callback(err)
-        		}
-        	})
-        if (itemsVal > 0 && itemsVal < baseVal) {
-          transactionModel.updatePandaAttr(trans, 'integral', 10, geni)
+        const updateLandAssets = await transactionModel.updateUserLandAssets(trans, addr, saveRes)
+        if (!updateLandAssets) return new Error(PandaLandCodes.Update_Land_Assets_Fail)
+       //  const backAssets = await transactionModel.updateBackPandaAssets(trans, geni, saveRes.join('|'), dropRes.join('|'))
+      	// if (!backAssets) return new Error(PandaLandCodes.Back_Assets_Carry_Fail)
+      	let finalIntegral = 10
+      	if (itemsVal > 0 && itemsVal < baseVal) {
+          finalIntegral = 10
         }
         if (itemsVal > baseVal && itemsVal < mostVal) {
-          transactionModel.updatePandaAttr(trans, 'integral', 20, geni)
+          finalIntegral = 20
         }
         if (itemsVal >= mostVal) {
-          transactionModel.updatePandaAttr(trans, 'integral', 30, geni)
+          finalIntegral = 30
         }
-        callback(null, trans, itemRes)
+        const updateIntegral = await transactionModel.updatePandaAttr(trans, 'integral', 30, geni)
+        if (!updateIntegral) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)
+        // return new Error('PandaLandCodes.Update_Panda_Attr_Fail')
+        return itemRes
 			},
-			function (trans, itemRes, callback) {
-				trans.commit(function(err) {
-					if (err) {
-						callback(err)
-					}
-			    callback(null, itemRes)
-			  })
+			function (res, callback) {
+				if (_.isError(res)) {
+					callback(res)
+				} else {
+					callback(null, res)
+				}
 			}
 		]
 		return new Promise((resolve, reject) => {
-			async.waterfall(tasks, function (err, res) {
-				if (err) {
-					console.log(err)
-					trans.rollback()
-					reject(errorRes(err))
+			trans.beginTransaction(function (bErr) {
+				if (bErr) {
+					reject(bErr)
+					return
 				}
-				trans.release()
-				resolve(succRes('find product', res))
-				// trans.rollback()
+				async.waterfall(tasks, function (tErr, res) {
+		      if (tErr) {
+		        trans.rollback(function () {
+		          trans.release()
+		          reject(tErr)
+		        })
+		      } else {
+		        trans.commit(function (err, info) {
+		          if (err) {
+		            trans.rollback(function (err) {
+		              trans.release()
+		              reject(err)
+		            })
+		          } else {
+		            trans.release()
+		            resolve(res)
+		          }
+		        })
+		      }
+		    })
 			})
 		})
 	}
@@ -302,5 +209,61 @@ class TransactionController {
   	}
   }
 }
+
+
+// koaRouter.get('/testTrans', async (ctx) => {
+//   const connection = await db.startTransaction()
+//   if (!connection) return
+//   connection.beginTransaction(function (err) {
+//     if(err) return
+//     async.series([
+//       function (callback) {
+//         var sql1 = "update user set upass=? where uaddr= ?"
+//         var param1 = ['12345', '123']
+//         connection.query(sql1, param1, function (qErr, rows, fields) {
+//           if (qErr) {
+//             connection.rollback(function () {
+//               connection.release()
+//             })
+//           } else {
+//             console.log('succRes')
+//             callback(null)
+//           }
+//         })
+//       },
+//       function (callback) {
+//         var sql1 = "update user set utradePass=? where uaddr= ?"
+//         var param1 = ['12345', '123']
+//         connection.query(sql1, param1, function (qErr, rows, fields) {
+//           // if (qErr) {
+//             connection.rollback(function () {
+//               connection.release()
+//             })
+//           // } else {
+//           //   callback(null)
+//           // }
+//         })
+//       }
+//     ], function (tErr, res) {
+//       if (tErr) {
+//         connection.rollback(function () {
+//           console.log("transaction error: " + tErr)
+//           connection.release()
+//         })
+//       } else {
+//         connection.commit(function (err, info) {
+//           if (err) {
+//             connection.rollback(function (err) {
+//               console.log("transaction error: " + err)
+//               connection.release()
+//             })
+//           } else {
+//             connection.release()
+//           }
+//         })
+//       }
+//     })
+//   })
+// })
 
 module.exports = TransactionController

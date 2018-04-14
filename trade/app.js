@@ -15,6 +15,7 @@ const TransactionController = require('./controllers/TransactionController.js')
 const UserDetailController = require('./controllers/UserDetailController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
 const { LoginCodes, CommonCodes, errorRes, succRes } = require('./libs/msgCodes/StatusCodes.js')
+const { getParamsCheck, postParamsCheck, uuid, decrypt, encrypt, geneToken, checkToken } = require('./libs/CommonFun.js')
 const Koa = require('koa')
 const koaRouter = require('koa-router')()
 const cors = require('koa-cors')
@@ -108,86 +109,6 @@ app.use(cors({
   credentials: true
 }))
 
-function geneToken (addr) {
-  // let token = jwt.sign({ uid: addr }, cookieCryp)
-  // ctx.cookies.set(
-  //   'token',
-  //   token,
-  //   {
-  //     // domain: '*', // 写cookie所在的域名
-  //     // path: '', // 写cookie所在的路径
-  //     // maxAge: 60 * 1000, // cookie有效时长
-  //     // expires: new Date() + 60*1000,  // cookie失效时间
-  //     httpOnly: true, // 是否只用于http请求中获取
-  //     // overwrite: false // 是否允许重写
-  //   }
-  // )
-  // ctx.cookies.set('uuid', email, { httpOnly: false })
-  return jwt.sign({ uid: addr }, cookieCryp)
-}
-
-function checkToken (token, addr) {
-  return new Promise((resolve, reject) => {
-    // let uuid = ctx.cookies.get('uuid')
-    // let token = ctx.cookies.get('token')
-    if (!token) reject(new Error('token is  null.'))
-    jwt.verify(token, cookieCryp, function (err, decoded) {
-      if (err) reject(new Error(err))
-      if (decoded.uid !== addr) reject('token is out')
-      resolve(decoded)
-    })
-  })
-}
-
-
-/**
-  @公用方法：
-    - 生成唯一标识id uuid
-    - 封装GET请求的参数 getParamsCheck
-    - 封装POST请求的参数 postParamsCheck
-*/
-
-function uuid (a) {
-  return a ? (a ^ Math.random() * 16 >> a / 4).toString(16)
-    : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, uuid)
-}
-
-
-function getParamsCheck (ctx, paramsArray) {
-  return new Promise((resolve, reject) => {
-    if (ctx.request.method !== 'GET') {
-      reject(CommonCodes.Request_Method_Wrong)
-    }
-    let params = []
-    paramsArray.forEach((element) => {
-      if (ctx.query[element]) {
-        params.push(ctx.query[element])
-      } else {
-        reject(`参数${element}不为空！`)
-      }
-    })
-    resolve(params)
-  })
-}
-
-function postParamsCheck (ctx, paramsArray) {
-  return new Promise((resolve, reject) => {
-    if (ctx.request.method !== 'POST') {
-      // ctx.body = '接口请求方式必须为POST'
-      reject(CommonCodes.Request_Method_Wrong)
-    }
-    let requestData = ctx.request.body
-    let params = []
-    paramsArray.forEach((element) => {
-      if (requestData[element]) {
-        params.push(requestData[element])
-      } else {
-        reject(`参数${element}不为空！`)
-      }
-    })
-    resolve(params)
-  })
-}
 /**
   @登陆
     - userLogin 用户登陆
@@ -206,81 +127,52 @@ function postParamsCheck (ctx, paramsArray) {
     - 解密算法 decrypt
 */
 
-koaRouter.get('/testTrans', async (ctx) => {
-  const connection = await db.startTransaction()
-  if (!connection) return
-  connection.beginTransaction(function (err) {
-    if(err) return
-    async.series([
-      function (callback) {
-        var sql1 = "update user set upass=? where uaddr= ?"
-        var param1 = ['12345', '123']
-        connection.query(sql1, param1, function (qErr, rows, fields) {
-          if (qErr) {
-            connection.rollback(function () {
-              connection.release()
-            })
-          } else {
-            console.log('succRes')
-            callback(null)
-          }
-        })
-      },
-      function (callback) {
-        var sql1 = "update user set utradePass=? where uaddr= ?"
-        var param1 = ['12345', '123']
-        connection.query(sql1, param1, function (qErr, rows, fields) {
-          // if (qErr) {
-            connection.rollback(function () {
-              connection.release()
-            })
-          // } else {
-          //   callback(null)
-          // }
-        })
-      }
-    ], function (tErr, res) {
-      if (tErr) {
-        connection.rollback(function () {
-          console.log("transaction error: " + tErr)
-          connection.release()
-        })
-      } else {
-        connection.commit(function (err, info) {
-          if (err) {
-            connection.rollback(function (err) {
-              console.log("transaction error: " + err)
-              connection.release()
-            })
-          } else {
-            connection.release()
-          }
-        })
-      }
-    })
-  })
-})
 
-/**
-   * 用户登录 userLogin
-   * @property {string} addr
-   * @property {string} pwd
-   */
-koaRouter.get('/userLogin', async (ctx) => {
-  let params = await getParamsCheck(['addr', 'pwd'])
-  if (!params) {
-    ctx.body = errorRes(CommonCodes.Params_Check_Fail)
-    return
-  }
-  const login = userDetailController.userLogin(...params)
-  if (!login) {
-    ctx.body = errorRes(LoginCodes.Login_No_Account)
-    return
+koaRouter.post('/userRegister', async (ctx) => {
+  const res = await userDetailController.userRegister(ctx)
+  if (_.isError(res)) {
+    ctx.body = errorRes(res.message)
   } else {
-    ctx.body = succRes(LoginCodes.Login_Succ, login)
+    ctx.body = succRes(LoginCodes.Register_Succ, res)
   }
 })
 
+koaRouter.get('/userLogin', async (ctx) => {
+  const res = await userDetailController.userLogin(ctx)
+  if (!_.isError(res)) {
+    const token = geneToken(ctx.query['addr'])
+    ctx.cookies.set(
+    'userAddr',
+    '123',
+    {
+      // expires: new Date() + 60*1000,  // cookie失效时间
+      httpOnly: true
+    }
+  )
+    ctx.body = succRes(LoginCodes.Login_Succ, token)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.post('/userChangeLoginPass', async (ctx) => {
+  const res = await userDetailController.changeLoginPwd(ctx)
+  if (res) {
+    ctx.body = succRes(LoginCodes.Change_Login_Pwd_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+
+koaRouter.post('/userChangeTradePass', async (ctx) => {
+  const res = await userDetailController.changeTradePwd(ctx)
+  if (res) {
+    ctx.body = succRes(LoginCodes.Change_Trade_Pwd_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
 
 /**
    * 产生验证码 userGeneCode
@@ -294,7 +186,6 @@ koaRouter.get('/userGeneCode', async (ctx) => {
   } else {
     ctx.body = succRes(LoginCodes.Mail_Send_Succ, {})
   }
-
 })
 
 /**
@@ -318,113 +209,15 @@ async function geneEmailCode (email) {
 }
 
 
-/**
-   * 用户注册 userRegister
-   * @property {string} addr
-   * @property {string} pwd
-   * @property {string} email 非必要
-   * @property {string} code 非必要
-   */
-koaRouter.post('/userRegister', async (ctx) => {
-  let code = null
-  let params = await postParamsCheck(['addr', 'pwd'])
-  if (!params) {
-    ctx.body = errorRes(CommonCodes.Params_Check_Fail)
-    return
-  }
-  let clientCode = parseInt(ctx.query.body.code)
-  let email = ctx.query.body.email
-  if (email !== '') {
-    if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
-      code = ctx.cookies.get('tmpUserId')
-    }
-    let decryptRes = parseInt(decrypt(code, email))
-    if (decryptRes - 1 !== clientCode) {
-      ctx.body = errorRes(LoginCodes.Code_Error)
-      return
-    }
-  }
-  const login = userDetailController.userLogin(...params)
-  if (login) {
-    ctx.body = errorRes(LoginCodes.Email_Exist)
-    return
-  }
-  const register = await userDetailController.userRegister(...params, email)
-  if (!register) {
-    ctx.body = errorRes(LoginCodes.Register_Failed)
-    return
-  }
-  ctx.body = succRes(LoginCodes.Login_Succ, {})
-})
-
-
-// 更改登陆密码
-koaRouter.post('/userChangeLoginPass', async (ctx) => {
-  let email = ''
-  let res = null
-  await checkToken(ctx)
-  .catch(e => {
-    res = errorRes(LoginCodes.Code_Error)
-  })
-  if (res !== null) {
-    ctx.body = res
-    return
-  }
-  if (ctx.request.body && ctx.request.body.email) {
-    email = ctx.request.body.email
-  }
-  if (email !== ctx.cookies.get('uuid')) {
-    res = errorRes(LoginCodes.Code_Error)
-  } else {
-    let data = loginController.changeLoginPass(ctx)
-    await data.then(v => {
-      res = v
-    })
-  }
-  ctx.body = res
-})
-
-koaRouter.get('/userRegisterByRandom', async (ctx) => {
-  let res = null
-  await loginController.userRegisterByRandom(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
-})
-
 koaRouter.get('/getUserInfoAndAssetsByAddr', async (ctx) => {
-  let addr = ctx.query['addr']
-  let res = null
-  const userInfo = await loginController.getUserInfoByAddr(addr)
-  if (!userInfo) {
-    ctx.body = errorRes('没有该用户')
+  const res = await userDetailController.getUserInfoAndAssetsByAddr(ctx)
+  if (res) {
+    ctx.body = succRes(LoginCodes.Assets_Data_Normal, res)
+  } else {
+    ctx.body = errorRes(res.message)
   }
-  const userAssets = await landAssetsController.queryAssetsByAddr(addr)
-  if (!userAssets) {
-    ctx.body = errorRes('服务器异常！')
-  }
-  const user = _.concat(userInfo, userAssets)
-  ctx.body = succRes('getUserInfoAndAssetsByAddr', user)
 })
 
-
-function encrypt(str,secret){
-  let cipher = crypto.createCipher('aes192',secret)
-  let enc = cipher.update(str,'utf8','hex')
-  enc += cipher.final('hex')
-  return enc
-}
-
-function decrypt(str,secret){
-  var decipher = crypto.createDecipher('aes192',secret)
-  var dec = decipher.update(str,'hex','utf8')
-  dec += decipher.final('utf8')
-  return dec
-}
 
 /**
   @后台资产管理系统
@@ -673,16 +466,13 @@ koaRouter.get('/queryPandaInfo', async (ctx) => {
 // testApi getEthlandProduct?pandaGeni=0x12987uhvr453buyvu3u89&bamboo=300
 koaRouter.get('/getEthlandProduct', async (ctx) => {
   logger.error('/getEthlandProduct')
-  let geni = ctx.query['geni']
-  let bamboo = ctx.query['bamboo']
-  let direction = ctx.query['direction']
   let res = null
-  await transactionController.getEthlandProduct(geni, bamboo, direction)
+  await transactionController.getEthlandProduct(ctx)
   .then(v => {
     res = v
   })
   .catch(e => {
-    res = e
+    res = e.message
   })
   ctx.body = res
 })

@@ -1,7 +1,8 @@
 let CommonCodes = {
 	'Service_Wrong': '服务器忙，请稍后再试',
 	'Params_Check_Fail': '参数校验失败',
-	'Request_Method_Wrong': '请求方式错误！'
+	'Request_Method_Wrong': '请求方式错误！',
+	'Token_Fail': 'Token失效'
 }
 let LoginCodes = {
   'Email_Exist': '你的邮件已经注册了！', // 重复邮箱注册
@@ -17,7 +18,14 @@ let LoginCodes = {
   'Code_Error': '验证码错误！',
   'Code_Correct': '验证码正确！',
   'Reset_Pass_Succ': '重置密码成功！',
-  'Token_Fail': 'Token失效'
+  'Token_Fail': 'Token失效',
+  'Get_User_Info': '获取用户信息成功！',
+  'Change_Login_Pwd_Succ': '更改登陆密码成功！',
+  'Change_Trade_Pwd_Succ': '更改交易密码成功',
+  'Change_Login_Pwd_Fail': '更改登陆密码失败，请稍后再试！',
+  'Change_Trade_Pwd_Fail': '更改交易密码失败，请稍后再试！',
+  'Assets_Data_Normal': '资产数据返回正常！',
+	'Assets_Data_Null': '资产数据返回错误！'
 }
 
 let AssetsCodes = {
@@ -30,6 +38,17 @@ let PandaOwnerCodes = {
 	'Already_Gene_Free_Panda': '已经生成过一只G10的熊猫',
 	'Gene_Free_Panda_Succ': '生成G10熊猫成功',
 	'Query_Panda_By_Addr': 'Query_Panda_By_Addr'
+}
+
+let PandaLandCodes = {
+	'No_Such_Panda': '没有这只熊猫',
+	'No_More_Bamboo_For_Out': '没有足够的竹子！',
+	'No_Product_In_Land': '没有物品在搜索范围内！',
+	'Update_Panda_Attr_Fail': '更新用户属性失败！',
+	'Update_Land_Assets_Fail': '更新用户资产失败',
+	'Back_Assets_Carry_Fail': '带回来的商品失败！',
+	'Panda_Not_Sold': '熊猫并非出售',
+	'Buy_Panda_Fail': '购买熊猫失败'
 }
 /**
 	{
@@ -104,9 +123,9 @@ function loginSuccRes (msg, data) {
 
 function errorRes (msg) {
 	let response = {
-		status: 0,
+		status: 1,
     res: {
-      status: 1,
+      status: 0,
       msg: msg,
       data: {}
     }
@@ -116,9 +135,9 @@ function errorRes (msg) {
 
 function succRes (msg, data) {
 	let response = {
-		status: 0,
+		status: 1,
     res: {
-      status: 0,
+      status: 1,
       msg: msg,
       data: data
     }
@@ -128,7 +147,7 @@ function succRes (msg, data) {
 
 function serviceError () {
 	let response = {
-		status: 1,
+		status: 0,
     msg: CommonCodes.Service_Wrong
 	}
 	return response
@@ -157,5 +176,6 @@ module.exports = {
 	errorRes: errorRes,
 	AssetsCodes:AssetsCodes,
 	PandaOwnerCodes: PandaOwnerCodes,
-	CommonCodes: CommonCodes
+	CommonCodes: CommonCodes,
+	PandaLandCodes: PandaLandCodes
 }

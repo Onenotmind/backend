@@ -18,8 +18,8 @@ class UserDetailModel {
 	async userRegister (addr, pwd, tradePwd, email, longitude, latitude) {
 		let insertData = {
       uemail: email || '',
-      upwd: pwd,
-      utradePwd: '',
+      upass: pwd,
+      utradePass: '',
       ustate: 'registed',
       uaddr: addr,
       longitude: longitude,
@@ -31,7 +31,7 @@ class UserDetailModel {
 
 	async userLogin (addr, pwd) {
 		let val = ['user', addr, pwd]
-    let sql = 'SELECT * FROM ?? WHERE uaddr= ? && upwd= ?'
+    let sql = 'SELECT * FROM ?? WHERE uaddr= ? && upass= ?'
     return db.query(sql, val)
   }
 
@@ -43,13 +43,13 @@ class UserDetailModel {
 
   async changeLoginPwd (addr, newPwd) {
     let val = ['user', newPwd, addr]
-    let sql = 'UPDATE ?? SET upwd = ? WHERE uaddr = ?'
+    let sql = 'UPDATE ?? SET upass = ? WHERE uaddr = ?'
     return db.query(sql, val)
   }
 
   async changeTradePwd (addr, newPwd) {
     let val = ['user', newPwd, addr]
-    let sql = 'UPDATE ?? SET utradePwd = ? WHERE uaddr = ?'
+    let sql = 'UPDATE ?? SET utradePass = ? WHERE uaddr = ?'
     return db.query(sql, val)
   }
 

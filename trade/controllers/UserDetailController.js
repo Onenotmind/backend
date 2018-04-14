@@ -1,14 +1,14 @@
 const UserDetailModel = require('../models/UserDetailModel.js')
 const userDetailModel = new UserDetailModel()
-const { LoginCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+const { LoginCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const JoiParamVali = require('../libs/JoiParamVali.js')
-const { getParamsCheck, postParamsCheck, decrypt, encrypt } = require('../libs/CommonFun.js')
-const { sendCodeFromMail } = require('./libs/mailer.js')
+const { getParamsCheck, postParamsCheck, decrypt, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
+const { sendCodeFromMail } = require('../libs/mailer.js')
 const joiParamVali = new JoiParamVali()
 
 /**
 	@UserDetailController
-		查询指定addr的用户信息 queryUserByAddr
+		查询指定addr的用户信息 getUserInfoAndAssetsByAddr
 		用户注册,只需要地址与密码即可 userRegister
 		账号密码登陆 userLogin
 		更改用户密码 changeLoginPwd
@@ -31,35 +31,53 @@ class UserDetailController {
 	async userRegister (ctx) {
 		const paramsType = ['addr', 'pwd', 'email', 'code']
 		const params= await postParamsCheck(ctx, paramsType)
-		if (!params) return errorRes(LoginCodes.Params_Check_Fail)
-		const addrVali = await joiParamVali.valiAddr(params[0])
-		const pwdVali = await joiParamVali.valiPass(params[1])
+		if (!params) return new Error(LoginCodes.Params_Check_Fail)
+		const addr = params.addr
+		const pwd = params.pwd
+		const email = params.email
+		const code = params.code
+		let tmpCode = null
+		const addrVali = await joiParamVali.valiAddr(addr)
+		const pwdVali = await joiParamVali.valiPass(pwd)
+		console.log(addrVali)
 		if (!addrVali || !pwdVali) {
-			return errorRes(CommonCodes.Params_Check_Fail)
+			return new Error(CommonCodes.Params_Check_Fail)
 		}
-		if (email) {
-			const emailVali = await joiParamVali.valiEmail(params[3])
+		if (email !== '') {
+			const emailVali = await joiParamVali.valiEmail(email)
 			if (!emailVali) {
-				return errorRes(CommonCodes.Params_Check_Fail)
+				return new Error(CommonCodes.Params_Check_Fail)
 			}
 			if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
-	      code = ctx.cookies.get('tmpUserId')
+	      tmpCode = ctx.cookies.get('tmpUserId')
 	    }
-	    let decryptRes = parseInt(decrypt(code, email))
-	    if (decryptRes - 1 !== clientCode) {
-	      ctx.body = errorRes(LoginCodes.Code_Error)
-	      return
+	    let decryptRes = parseInt(decrypt(tmpCode, email))
+	    if (decryptRes - 1 !== code) {
+	      return new Error(LoginCodes.Code_Error)  
 	    }
 		}
-		const register = await userDetailModel.userRegister(addr, pwd, '', email, ...this.geneLocation)
+		const login = await userDetailModel.userLogin(addr, pwd)
+	  if (login && login.length > 0) {
+	    return new Error(LoginCodes.Email_Exist)
+	  }
+	  const location = this.geneLocation()
+		const register = await userDetailModel.userRegister(addr, pwd, '', email, ...location)
 		if (register) {
-			return register
+			return addr
 		} else {
-			return errorRes(register.message)
+			return new Error(register.message)
 		}
 	}
 
-	async userLogin (addr, pwd) {
+
+	/**
+   * 用户登陆 userLogin
+   * @property {string} addr
+   * @property {string} pwd
+   */
+	async userLogin (ctx) {
+		const addr = ctx.query['addr']
+		const pwd = ctx.query['pwd']
 		const addrVali = await joiParamVali.valiAddr(addr)
 		const pwdVali = await joiParamVali.valiPass(pwd)
 		if (!addrVali || !pwdVali) {
@@ -69,11 +87,27 @@ class UserDetailController {
 		if (login) {
 			return login
 		} else {
-			return new Error(login)
+			return new Error(login.message)
 		}
 	}
 
-	async changeLoginPwd (addr, oldPwd, newPwd) {
+	/**
+   * 修改登陆密码 changeLoginPwd
+   * @property {string} addr
+   * @property {string} oldPwd
+   * @property {string} newPwd
+   */
+	async changeLoginPwd (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const paramsType = ['addr', 'oldPwd', 'newPwd']
+		const params= await postParamsCheck(ctx, paramsType)
+		if (!params) return errorRes(LoginCodes.Params_Check_Fail)
+		const addr = params.addr
+		const oldPwd = params.oldPwd
+		const newPwd = params.newPwd
 		const addrVali = await joiParamVali.valiAddr(addr)
 		const oldPwdVali = await joiParamVali.valiPass(oldPwd)
 		const newPwdVali = await joiParamVali.valiPass(newPwd)
@@ -87,26 +121,63 @@ class UserDetailController {
 		if (newPwdChange) {
 			return newPwdChange
 		} else {
-			return new Error(newPwdChange)
+			return new Error(LoginCodes.Change_Login_Pwd_Fail)
 		}
 	}
 
-	async changeTradePwd (addr, oldPwd, newPwd) {
+	/**
+   * 修改交易密码 changeTradePwd
+   * @property {string} addr
+   * @property {string} oldPwd
+   * @property {string} newPwd
+   */
+	async changeTradePwd (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const paramsType = ['addr', 'oldPwd', 'newPwd', 'code', 'email']
+		const params= await postParamsCheck(ctx, paramsType)
+		if (!params) return errorRes(LoginCodes.Params_Check_Fail)
+		const addr = params.addr
+		const oldPwd = params.oldPwd
+		const newPwd = params.newPwd
+		const code = params.code
+		const email = params.email
 		const addrVali = await joiParamVali.valiAddr(addr)
 		const oldPwdVali = await joiParamVali.valiPass(oldPwd)
 		const newPwdVali = await joiParamVali.valiPass(newPwd)
 		if (!addrVali || !pwdVali || !newPwd) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
+		let tmpCode = null
+		if (email) {
+			const emailVali = await joiParamVali.valiEmail(email)
+			if (!emailVali) {
+				return errorRes(CommonCodes.Params_Check_Fail)
+			}
+			if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
+	      tmpCode = ctx.cookies.get('tmpUserId')
+	    }
+	    let decryptRes = parseInt(decrypt(tmpCode, email))
+	    if (decryptRes - 1 !== code) {
+	      return errorRes(LoginCodes.Code_Error)  
+	    }
+		}
 		const newPwdChange = await userDetailModel.changeTradePwd(addr, newPwd)
 		if (newPwdChange) {
 			return newPwdChange
 		} else {
-			return new Error(newPwdChange)
+			return new Error(LoginCodes.Change_Trade_Pwd_Fail)
 		}
 	}
 
-	async getUserLocationByAddr (addr) {
+	/**
+   * 通过用户addr查询用户经纬度 changeTradePwd
+   * @property {string} addr
+   */
+	async getUserLocationByAddr (ctx) {
+		const addr = ctx.query['addr']
 		const addrVali = await joiParamVali.valiAddr(addr)
 		if (!addrVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
@@ -120,23 +191,25 @@ class UserDetailController {
 	}
 
 	/**
-   * 产生验证码 geneEmailCode 工具函数
-   * @property {string} email 
+   * 通过用户addr查询用户详细信息 getUserInfoAndAssetsByAddr
+   * @property {string} addr
    */
-	async function geneEmailCode (email) {
-	  let code = Math.ceil(Math.random()*10000)
-	  let encryptCode = encrypt(code + 1, email)
-	  ctx.cookies.set(
-	    'tmpUserId',
-	    encryptCode,
-	    {
-	      // expires: new Date() + 60*1000,  // cookie失效时间
-	      httpOnly: true
-	    }
-	  )
-	  const sendCode = await sendCodeFromMail(email, code)
-	  if (!sendCode) return false
-	  return true
+	async getUserInfoAndAssetsByAddr (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const addr = ctx.query['addr']
+		const addrVali = await joiParamVali.valiAddr(addr)
+		if (!addrVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const userInfo = await userDetailModel.queryUserByAddr(addr)
+		if (userInfo) {
+			return userInfo[0]
+		} else {
+			return new Error(LoginCodes.Service_Wrong)
+		} 
 	}
 
 	geneLocation () {
