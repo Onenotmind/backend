@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 
 function cacl (long, lati, rate, direction, hungry, speed) {
   let tmpWidth = 0

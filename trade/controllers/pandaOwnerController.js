@@ -3,8 +3,9 @@ const PandaOwnerModel = require('../models/PandaOwnerModel.js')
 const pandaOwnerModel = new PandaOwnerModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
+const { getParamsCheck, postParamsCheck, decrypt, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
 const { PandaOwnerClientModel, AttrList } = require('../sqlModel/pandaOwner.js')
-const { PandaOwnerCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+const { PandaOwnerCodes, errorRes, CommonCodes, PandaLandCodes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 /*
   PandaOwnerController:
@@ -20,6 +21,7 @@ const { PandaOwnerCodes, errorRes, serviceError, succRes } = require('../libs/ms
    	- 查询某个addr下所有熊猫 queryAllPandaByAddr
    	- 查询某只熊猫外出回归带的物品 getPandaBackAssets
    	- 出售熊猫 sellPanda
+   	- 孵化熊猫 sirePanda
    - market
    	- 查询当前所有待售熊猫 queryAllPandaBeSold
    	- 购买熊猫 buyMarketPanda
@@ -36,45 +38,49 @@ class PandaOwnerController {
 	}
 
 	// 根据熊猫基因查询熊猫
-	async queryPandaInfo (gen) {
-		let paramsArr = [
-			{
-				val: gen,
-				model: PandaOwnerClientModel.pandaGeni
-			}
-		]
-		const paramsVali = await this.valiParams(paramsArr)
-		if (!paramsVali) return
-		return pandaOwnerModel.queryPandaInfo(gen)
-		.then(v => {
-			return succRes(PandaOwnerCodes.Query_Panda_Info_Normal, v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+	async queryPandaInfo (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const gen = ctx.query['gen']
+		const genVali = await joiParamVali.valiPandaGeni(gen)
+		if (!genVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const pandaInfo = await pandaOwnerModel.queryPandaInfo(gen)
+		return pandaInfo
 	}
 
-	async queryAllPandaByAddr (addr) {
-		return pandaOwnerModel.queryAllPandaByAddr(addr)
-		.then(async v => {
-			return succRes(PandaOwnerCodes.Query_Panda_By_Addr, v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+	async queryAllPandaByAddr (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const addr = ctx.query['addr']
+		const addrVali = await joiParamVali.valiAddr(addr)
+		if (!addrVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const allPanda = await pandaOwnerModel.queryAllPandaByAddr(addr)
+		if (!allPanda) return new Error(allPanda.message)
+		return allPanda
 	}
 
-	async getPandaBackAssets (gen) {
-		return pandaOwnerModel.getPandaBackAssets(gen)
-		.then(async v => {
-			return succRes('getPandaBackAssets', v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+	async getPandaBackAssets (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const gen = ctx.query['pandaGen']
+		const genVali = await joiParamVali.valiPandaGeni(gen)
+		if (!genVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const backPanda = await pandaOwnerModel.pandaBackHome(gen)
+		if (!backPanda) return backPanda
+		const backAssets = await pandaOwnerModel.getPandaBackAssets(gen)
+		return backAssets
 	}
 
 	// 增加熊猫对某种属性的探测属性
@@ -101,15 +107,13 @@ class PandaOwnerController {
 		})
 	}
 
-	queryAllPandaBeSold () {
-		return pandaOwnerModel.queryPandasByState('sold')
-		.then(v => {
-			return succRes('queryPandaAllBeSold', v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+	async queryAllPandaBeSold (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const soldPanda = await pandaOwnerModel.queryPandasByState('sold')
+		return soldPanda
 	}
 
 	buyMarketPanda (addr, pandaGen) {
@@ -155,6 +159,20 @@ class PandaOwnerController {
 			console.log(e)
 			return serviceError()
 		})
+	}
+
+	async sirePanda (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const gen = ctx.query['pandaGen']
+		const genVali = await joiParamVali.valiPandaGeni(gen)
+		if (!genVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const sirePanda = await pandaOwnerModel.pandaBackHome(gen)
+		return sirePanda
 	}
 
 	sireNewPanda (fPanda, mPanda) {
@@ -224,15 +242,24 @@ class PandaOwnerController {
 		}
 	}
 
-	sellPanda (gen, price) {
-		return pandaOwnerModel.sellPanda(gen, price)
-		.then(v => {
-			return succRes('sellPanda', v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+	async sellPanda (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const gen = ctx.query['pandaGen']
+		const price = ctx.query['price']
+		const tradePwd = ctx.query['tradePwd']
+		const genVali = await joiParamVali.valiPandaGeni(gen)
+		const priceVali = await joiParamVali.valiAttr(price)
+		const pwdVali = await joiParamVali.valiPass(tradePwd)
+		if (!genVali || !priceVali || !pwdVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
+		if (!checkPwd) return checkPwd
+		const sellPanda = await pandaOwnerModel.sellPanda(gen, price)
+		return sellPanda
 	}
 
   queryPandaBeSold () {
@@ -246,15 +273,22 @@ class PandaOwnerController {
 		})
   }
 
-  delPandaByGen (gen) {
-  	return pandaOwnerModel.delPandaByGen(gen)
-		.then(v => {
-			return succRes('delPandaByGen', v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+  async delPandaByGen (ctx) {
+  	const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const gen = ctx.query['pandaGen']
+		const tradePwd = ctx.query['tradePwd']
+		const genVali = await joiParamVali.valiPandaGeni(gen)
+		const pwdVali = await joiParamVali.valiPass(tradePwd)
+		if (!genVali || !pwdVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+		const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
+		if (!checkPwd) return checkPwd
+		const dropPanda = await pandaOwnerModel.delPandaByGen(gen)
+		return dropPanda
   }
   mixAttrBySire (fathVal, mathVal) {
   	let rate = parseFloat(Math.random().toFixed(3))

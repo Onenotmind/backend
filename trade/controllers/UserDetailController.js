@@ -13,6 +13,7 @@ const joiParamVali = new JoiParamVali()
 		账号密码登陆 userLogin
 		更改用户密码 changeLoginPwd
 		更改用户交易密码 changeTradePwd
+		检测验证码正确与否 CheckEmailCode
 		通过用户addr查询用户经纬度 getUserLocationByAddr
 	@通过方法
 		随机生成地址(经纬度) geneLocation
@@ -52,7 +53,8 @@ class UserDetailController {
 	      tmpCode = ctx.cookies.get('tmpUserId')
 	    }
 	    let decryptRes = parseInt(decrypt(tmpCode, email))
-	    if (decryptRes - 1 !== code) {
+	    console.log('decryptRes', decryptRes)
+	    if (decryptRes - 1 !== parseInt(code)) {
 	      return new Error(LoginCodes.Code_Error)  
 	    }
 		}
@@ -111,10 +113,10 @@ class UserDetailController {
 		const addrVali = await joiParamVali.valiAddr(addr)
 		const oldPwdVali = await joiParamVali.valiPass(oldPwd)
 		const newPwdVali = await joiParamVali.valiPass(newPwd)
-		if (!addrVali || !pwdVali || !newPwd) {
+		if (!addrVali || !oldPwdVali || !newPwdVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
-		const oldPwdCheck = await this.userLogin(addr, oldPwd)
+		const oldPwdCheck = await userDetailModel.userLogin(addr, oldPwd)
 		if (!oldPwdCheck) return new Error(oldPwdCheck)
 		if (oldPwdCheck.length === 0) return new Error('No such person')
 		const newPwdChange = await userDetailModel.changeLoginPwd(addr, newPwd)
@@ -211,6 +213,36 @@ class UserDetailController {
 			return new Error(LoginCodes.Service_Wrong)
 		} 
 	}
+
+	/**
+   * 用户注册 checkEmailCode
+   * @property {string} addr
+   * @property {string} code 
+   */
+
+   async checkEmailCode (ctx) {
+   	let tmpCode = null
+   	const email = ctx.query['email']
+   	const code = ctx.query['code']
+   	console.log('email', email)
+   	console.log('code', code)
+   	if (email !== '') {
+			const emailVali = await joiParamVali.valiEmail(email)
+			if (!emailVali) {
+				return new Error(CommonCodes.Params_Check_Fail)
+			}
+			if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
+	      tmpCode = ctx.cookies.get('tmpUserId')
+	    }
+	    let decryptRes = parseInt(decrypt(tmpCode, email))
+	    if (decryptRes - 1 !== parseInt(code)) {
+	      return new Error(LoginCodes.Code_Error)  
+	    }
+	    return {}
+		} else {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
+   }
 
 	geneLocation () {
 		return [123.1, -23.5]

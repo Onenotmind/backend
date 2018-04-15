@@ -20,6 +20,8 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 改变熊猫的oweraddr transferPandaOwner()
     - 查询某只熊猫外出回归带的物品 getPandaBackAssets()
     - 出售熊猫 sellPanda
+    - 判断用户的交易密码是否正确 checkOwnerTradePwd
+    - 将外出熊猫回归的状态更改为在家 pandaBackHome
 */
 
 class PandaOwnerModel {
@@ -122,13 +124,26 @@ class PandaOwnerModel {
 
   async getPandaBackAssets (gen) {
     let val = ['backpandaassets', gen]
-    let sql = 'SELECT * FROM ?? WHERE pandaGeni = ?'
+    let sql = 'SELECT * FROM ?? WHERE pandaGen = ?'
     return db.query(sql, val)
+  }
+
+  async checkOwnerTradePwd (gen, tradePwd) {
+    let val = ['pandaowner', gen, tradePwd]
+    let sql = "select * from user inner join pandaowner on pandaowner.ownerAddr=user.uaddr " +
+        "where pandaowner.pandaGen='0x12987u1vadahvbtyhvu3u89' AND user.utradePass='1234';"
+    return db.query(sql)
   }
 
   async sellPanda (gen, price) {
     let val = ['pandaowner', price, gen]
     let sql = 'UPDATE ?? SET price = ? WHERE pandaGen = ?'
+    return db.query(sql, val)
+  }
+
+  async pandaBackHome (gen) {
+    let val = ['pandaowner', 'home', gen]
+    let sql = 'UPDATE ?? SET state = ? WHERE pandaGen = ?'
     return db.query(sql, val)
   }
 }

@@ -14,7 +14,7 @@ const LandAssetsController = require('./controllers/LandAssetsController.js')
 const TransactionController = require('./controllers/TransactionController.js')
 const UserDetailController = require('./controllers/UserDetailController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
-const { LoginCodes, CommonCodes, errorRes, succRes } = require('./libs/msgCodes/StatusCodes.js')
+const { LoginCodes, CommonCodes, errorRes, succRes, PandaOwnerCodes, PandaLandCodes } = require('./libs/msgCodes/StatusCodes.js')
 const { getParamsCheck, postParamsCheck, uuid, decrypt, encrypt, geneToken, checkToken } = require('./libs/CommonFun.js')
 const Koa = require('koa')
 const koaRouter = require('koa-router')()
@@ -179,8 +179,7 @@ koaRouter.post('/userChangeTradePass', async (ctx) => {
    * @property {string} email 
    */
 koaRouter.get('/userGeneCode', async (ctx) => {
-  let email = ctx.query['email']
-  const geneCode = await geneEmailCode()
+  const geneCode = await geneEmailCode(ctx)
   if (!geneCode) {
     ctx.body = errorRes(LoginCodes.Mail_Send_Error)
   } else {
@@ -188,13 +187,23 @@ koaRouter.get('/userGeneCode', async (ctx) => {
   }
 })
 
+koaRouter.get('/userCheckCode', async (ctx) => {
+  const res = await userDetailController.checkEmailCode(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LoginCodes.Code_Correct, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
 /**
    * 产生验证码 geneEmailCode 工具函数
    * @property {string} email 
    */
-async function geneEmailCode (email) {
+async function geneEmailCode (ctx) {
   let code = Math.ceil(Math.random()*10000)
-  let encryptCode = encrypt(code + 1, email)
+  let email = ctx.query['email']
+  let encryptCode = encrypt((code + 1).toString(), email)
   ctx.cookies.set(
     'tmpUserId',
     encryptCode,
@@ -204,6 +213,7 @@ async function geneEmailCode (email) {
     }
   )
   const sendCode = await sendCodeFromMail(email, code)
+  console.log('sendCode', sendCode)
   if (!sendCode) return false
   return true
 }
@@ -405,89 +415,62 @@ koaRouter.post('/deleteRollOutOrder', async (ctx) => {
     - 查询某只熊猫外出回归带的物品 getPandaBackAssets
     - 出售熊猫 sellPanda
     - 丢弃熊猫 delPandaByGen
+    - 孵化熊猫 sirePanda
 */
 koaRouter.get('/queryAllPandaByAddr', async (ctx) => {
-  let addr = ctx.query['addr']
-  if (addr === undefined || addr === null) return 
-  let res = null
-  await pandaOwnerController.queryAllPandaByAddr(addr)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await pandaOwnerController.queryAllPandaByAddr(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaOwnerCodes.Query_Panda_By_Addr, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.get('/sellPanda', async (ctx) => {
-  let gen = ctx.query['pandaGen']
-  let price = ctx.query['price']
-  if (gen === undefined || gen === null) return 
-  let res = null
-  await pandaOwnerController.sellPanda(gen, price)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await pandaOwnerController.sellPanda(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Buy_Panda_Fail, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.get('/delPandaByGen', async (ctx) => {
-  let gen = ctx.query['pandaGen']
-  if (gen === undefined || gen === null) return 
-  let res = null
-  await pandaOwnerController.delPandaByGen(gen)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await pandaOwnerController.delPandaByGen(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Drop_Panda_Fail, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.get('/queryPandaInfo', async (ctx) => {
-  let gen = ctx.query['gen']
-  if (gen === undefined || gen === null) return 
-  let res = null
-  await pandaOwnerController.queryPandaInfo(gen)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await pandaOwnerController.queryPandaInfo(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaOwnerCodes.Query_Panda_Info_Normal, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 // testApi getEthlandProduct?pandaGeni=0x12987uhvr453buyvu3u89&bamboo=300
 koaRouter.get('/getEthlandProduct', async (ctx) => {
   logger.error('/getEthlandProduct')
-  let res = null
-  await transactionController.getEthlandProduct(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e.message
-  })
-  ctx.body = res
+  const res = await transactionController.getEthlandProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Panda_Out_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.get('/getPandaBackAssets', async (ctx) => {
-  let geni = ctx.query['pandaGen']
-  let res = null
-  await pandaOwnerController.getPandaBackAssets(geni)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await pandaOwnerController.getPandaBackAssets(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Back_Assets_Carry_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.get('/genePandaRandom', async (ctx) => {
@@ -504,10 +487,18 @@ koaRouter.get('/genePandaRandom', async (ctx) => {
   ctx.body = res
 })
 
-
 koaRouter.get('/serverTime', (ctx) => {
   let res = succRes('serverTime', Date.parse(new Date()) / 1000)
   ctx.body = res
+})
+
+koaRouter.get('/sirePanda', async (ctx) => {
+  const res = await pandaOwnerController.sirePanda(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Panda_Sire_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 /**
@@ -517,15 +508,12 @@ koaRouter.get('/serverTime', (ctx) => {
 */
 
 koaRouter.get('/queryAllPandaSold', async (ctx) => {
-  let res = null
-  await pandaOwnerController.queryAllPandaBeSold()
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await pandaOwnerController.queryAllPandaBeSold(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaOwnerCodes.Query_Panda_In_Sold, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.post('/buyPanda', async (ctx) => {

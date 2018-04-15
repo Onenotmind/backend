@@ -37,7 +37,8 @@ let PandaOwnerCodes = {
 	'Query_Panda_Info_Normal': '查询熊猫信息成功！',
 	'Already_Gene_Free_Panda': '已经生成过一只G10的熊猫',
 	'Gene_Free_Panda_Succ': '生成G10熊猫成功',
-	'Query_Panda_By_Addr': 'Query_Panda_By_Addr'
+	'Query_Panda_By_Addr': '查询地址下所有熊猫成功！',
+	'Query_Panda_In_Sold': '查询所有在售是熊猫！'
 }
 
 let PandaLandCodes = {
@@ -47,8 +48,12 @@ let PandaLandCodes = {
 	'Update_Panda_Attr_Fail': '更新用户属性失败！',
 	'Update_Land_Assets_Fail': '更新用户资产失败',
 	'Back_Assets_Carry_Fail': '带回来的商品失败！',
+	'Panda_Out_Succ': '熊猫外出搜索成功！',
 	'Panda_Not_Sold': '熊猫并非出售',
-	'Buy_Panda_Fail': '购买熊猫失败'
+	'Buy_Panda_Fail': '购买熊猫失败',
+	'Back_Assets_Carry_Succ': '熊猫带回商品成功!',
+	'Drop_Panda_Fail': '熊猫丢弃失败!',
+	'Panda_Sire_Succ': '熊猫孵化成功'
 }
 /**
 	{
@@ -126,8 +131,7 @@ function errorRes (msg) {
 		status: 1,
     res: {
       status: 0,
-      msg: msg,
-      data: {}
+      msg: msg
     }
 	}
 	return response
