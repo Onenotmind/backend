@@ -41,6 +41,11 @@ let PandaOwnerCodes = {
 	'Query_Panda_In_Sold': '查询所有在售是熊猫！'
 }
 
+let LandProductCodes = {
+	'Get_Star_Point_Succ': '得到商品产生中心成功！',
+	'Get_Star_Point_Fail': '商品中心获取失败'
+}
+
 let PandaLandCodes = {
 	'No_Such_Panda': '没有这只熊猫',
 	'No_More_Bamboo_For_Out': '没有足够的竹子！',
@@ -50,6 +55,7 @@ let PandaLandCodes = {
 	'Back_Assets_Carry_Fail': '带回来的商品失败！',
 	'Panda_Out_Succ': '熊猫外出搜索成功！',
 	'Panda_Not_Sold': '熊猫并非出售',
+	'Sell_Panda_Succ': '出售熊猫成功！',
 	'Buy_Panda_Fail': '购买熊猫失败',
 	'Back_Assets_Carry_Succ': '熊猫带回商品成功!',
 	'Drop_Panda_Fail': '熊猫丢弃失败!',
@@ -181,5 +187,6 @@ module.exports = {
 	AssetsCodes:AssetsCodes,
 	PandaOwnerCodes: PandaOwnerCodes,
 	CommonCodes: CommonCodes,
-	PandaLandCodes: PandaLandCodes
+	PandaLandCodes: PandaLandCodes,
+	LandProductCodes: LandProductCodes
 }

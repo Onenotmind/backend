@@ -136,8 +136,8 @@ class PandaOwnerModel {
   }
 
   async sellPanda (gen, price) {
-    let val = ['pandaowner', price, gen]
-    let sql = 'UPDATE ?? SET price = ? WHERE pandaGen = ?'
+    let val = ['pandaowner', 'sold', price, gen]
+    let sql = 'UPDATE ?? SET state = ? , price = ? WHERE pandaGen = ?'
     return db.query(sql, val)
   }
 

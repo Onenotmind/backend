@@ -249,15 +249,15 @@ class PandaOwnerController {
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const gen = ctx.query['pandaGen']
 		const price = ctx.query['price']
-		const tradePwd = ctx.query['tradePwd']
+		// const tradePwd = ctx.query['tradePwd']
 		const genVali = await joiParamVali.valiPandaGeni(gen)
 		const priceVali = await joiParamVali.valiAttr(price)
-		const pwdVali = await joiParamVali.valiPass(tradePwd)
-		if (!genVali || !priceVali || !pwdVali) {
+		// const pwdVali = await joiParamVali.valiPass(tradePwd)
+		if (!genVali || !priceVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
-		const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
-		if (!checkPwd) return checkPwd
+		// const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
+		// if (!checkPwd) return checkPwd
 		const sellPanda = await pandaOwnerModel.sellPanda(gen, price)
 		return sellPanda
 	}
@@ -279,14 +279,14 @@ class PandaOwnerController {
 		const tokenCheck = await checkToken(token, checkAddr)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const gen = ctx.query['pandaGen']
-		const tradePwd = ctx.query['tradePwd']
+		// const tradePwd = ctx.query['tradePwd']
 		const genVali = await joiParamVali.valiPandaGeni(gen)
-		const pwdVali = await joiParamVali.valiPass(tradePwd)
-		if (!genVali || !pwdVali) {
+		// const pwdVali = await joiParamVali.valiPass(tradePwd)
+		if (!genVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
-		const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
-		if (!checkPwd) return checkPwd
+		// const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
+		// if (!checkPwd) return checkPwd
 		const dropPanda = await pandaOwnerModel.delPandaByGen(gen)
 		return dropPanda
   }

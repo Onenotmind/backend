@@ -7,11 +7,18 @@ const { AssetsCodes, errorRes, serviceError, succRes } = require('../libs/msgCod
 /**
 	业务函数:
 		- findProductByGeo  // 根据经纬度查询ethland物品
+    - getStarPoint // 得到当前的star point列表
 	辅助函数:
 		- cacl 计算最终的经纬度与长宽
+    - geneStarPoint 商品产生核心点
 */
 class LandProductController {
 	constructor () {
+    this.starPoint = [] // 商品中心点数组
+    this.starCount = 5 // 中心点数量
+    setInterval(() => {
+      this.geneStarPoint()
+    }, 5000)
 	}
 
 	findProductByGeo (longitude, latitude, rate, direction, hungry, speed) {
@@ -28,6 +35,19 @@ class LandProductController {
 			return serviceError()
 		})
 	}
+
+  geneStarPoint () {
+    this.starPoint = []
+    for (let i = 0; i < this.starCount; i++) {
+      let longitude = parseFloat(Math.random().toFixed(3) * 360) - 180
+      let latitude = parseFloat(Math.random().toFixed(3) * 180) - 90
+      this.starPoint.push([ longitude, latitude])
+    }
+  }
+
+  getStarPoint () {
+    return this.starPoint
+  }
 
 	cacl (long, lati, rate, direction, hungry, speed) {
     let tmpWidth = 0

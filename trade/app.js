@@ -14,7 +14,7 @@ const LandAssetsController = require('./controllers/LandAssetsController.js')
 const TransactionController = require('./controllers/TransactionController.js')
 const UserDetailController = require('./controllers/UserDetailController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
-const { LoginCodes, CommonCodes, errorRes, succRes, PandaOwnerCodes, PandaLandCodes } = require('./libs/msgCodes/StatusCodes.js')
+const { LoginCodes, CommonCodes, errorRes, LandProductCodes, succRes, PandaOwnerCodes, PandaLandCodes } = require('./libs/msgCodes/StatusCodes.js')
 const { getParamsCheck, postParamsCheck, uuid, decrypt, encrypt, geneToken, checkToken } = require('./libs/CommonFun.js')
 const Koa = require('koa')
 const koaRouter = require('koa-router')()
@@ -108,6 +108,8 @@ app.use(cors({
   origin: 'http://localhost:9101',
   credentials: true
 }))
+
+
 
 /**
   @登陆
@@ -429,7 +431,7 @@ koaRouter.get('/queryAllPandaByAddr', async (ctx) => {
 koaRouter.get('/sellPanda', async (ctx) => {
   const res = await pandaOwnerController.sellPanda(ctx)
   if (!_.isError(res)) {
-    ctx.body = succRes(PandaLandCodes.Buy_Panda_Fail, res)
+    ctx.body = succRes(PandaLandCodes.Sell_Panda_Succ, res)
   } else {
     ctx.body = errorRes(res.message)
   }
@@ -543,6 +545,20 @@ koaRouter.get('/testApi', async (ctx) => {
       res = e
     })
     ctx.body = res
+  }
+})
+
+/**
+  @landProduct
+    - 查看当前的商品中心 getCurrentStarPoint
+*/
+
+koaRouter.get('/getCurrentStarPoint', (ctx) => {
+  let starArr = landProductController.getStarPoint()
+  if (starArr && starArr.length > 0) {
+    ctx.body = succRes(LandProductCodes.Get_Star_Point_Succ, starArr)
+  } else {
+    ctx.body = errorRes(LandProductCodes.Get_Star_Point_Fail)
   }
 })
 
