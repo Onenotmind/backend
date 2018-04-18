@@ -20,7 +20,7 @@ class TestController {
 				if (!userCreate) return userCreate
 			},
 			async function (res) {
-				if (!_.isError(res)) return res
+				if (_.isError(res)) return res
 				const assetsExist = await testModel.checkLandassetsTableExist()
 				if (!assetsExist) return assetsExist
 				if (assetsExist.length > 0) {
@@ -31,7 +31,7 @@ class TestController {
 				if (!assetsCreate) return assetsCreate
 			},
 			async function (res) {
-				if (!_.isError(res)) return res
+				if (_.isError(res)) return res
 				const pandaownerExist = await testModel.checkPandaownerTableExist()
 				if (!pandaownerExist) return pandaownerExist
 				if (pandaownerExist.length > 0) {
@@ -43,19 +43,19 @@ class TestController {
 				const pandaInsert = await testModel.insertDataToPandaOwner()
 				if (!pandaInsert) return pandaInsert
 			},
-			async function (res) {
-				if (!_.isError(res)) return res
-				const productExist = await testModel.checkLandProductTableExist()
-				if (!productExist) return productExist
-				if (productExist.length > 0) {
-					const productDrop = await testModel.dropLandProductTable()
-					if (!productDrop) return productDrop
-				}
-				const productCreate = await testModel.createLandProductTable()
-				if (!productCreate) return productCreate
-				const productInsert = await testModel.insertDataToLandProduct()
-				if (!productInsert) return productInsert
-			},
+			// async function (res) {
+			// 	if (_.isError(res)) return res
+			// 	const productExist = await testModel.checkLandProductTableExist()
+			// 	if (!productExist) return productExist
+			// 	if (productExist.length > 0) {
+			// 		const productDrop = await testModel.dropLandProductTable()
+			// 		if (!productDrop) return productDrop
+			// 	}
+			// 	const productCreate = await testModel.createLandProductTable()
+			// 	if (!productCreate) return productCreate
+			// 	const productInsert = await testModel.insertDataToLandProduct()
+			// 	if (!productInsert) return productInsert
+			// },
 			function (res, callback) {
 				if (_.isError(res)) {
 					callback(res)
@@ -79,6 +79,7 @@ class TestController {
 		      } else {
 		        trans.commit(function (err, info) {
 		          if (err) {
+		          	console.log('err', err)
 		            trans.rollback(function (err) {
 		              trans.release()
 		              reject(err)
