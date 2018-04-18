@@ -13,6 +13,7 @@ const PandaOwnerController = require('./controllers/PandaOwnerController.js')
 const LandAssetsController = require('./controllers/LandAssetsController.js')
 const TransactionController = require('./controllers/TransactionController.js')
 const UserDetailController = require('./controllers/UserDetailController.js')
+const TestController = require('./controllers/TestController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
 const { LoginCodes, CommonCodes, errorRes, LandProductCodes, succRes, PandaOwnerCodes, PandaLandCodes } = require('./libs/msgCodes/StatusCodes.js')
 const { getParamsCheck, postParamsCheck, uuid, decrypt, encrypt, geneToken, checkToken } = require('./libs/CommonFun.js')
@@ -35,6 +36,7 @@ const pandaOwnerController = new PandaOwnerController()
 const landAssetsController = new LandAssetsController()
 const transactionController = new TransactionController()
 const userDetailController = new UserDetailController()
+const testController = new TestController()
 const testControllers = {
   'pandaOwnerController': pandaOwnerController,
   'transactionController': transactionController,
@@ -132,20 +134,29 @@ app.use(cors({
 
 koaRouter.post('/userRegister', async (ctx) => {
   const res = await userDetailController.userRegister(ctx)
+  const token = geneToken(ctx.query['addr'])
   if (_.isError(res)) {
+    ctx.cookies.set(
+    'userAddr',
+    res,
+    {
+      // expires: new Date() + 60*1000,  // cookie失效时间
+      httpOnly: true
+    })
     ctx.body = errorRes(res.message)
   } else {
-    ctx.body = succRes(LoginCodes.Register_Succ, res)
+    ctx.body = succRes(LoginCodes.Register_Succ, token)
   }
 })
 
 koaRouter.get('/userLogin', async (ctx) => {
   const res = await userDetailController.userLogin(ctx)
   if (!_.isError(res)) {
-    const token = geneToken(ctx.query['addr'])
+    const userAddr = ctx.query['addr']
+    const token = geneToken(userAddr)
     ctx.cookies.set(
     'userAddr',
-    '123',
+    userAddr,
     {
       // expires: new Date() + 60*1000,  // cookie失效时间
       httpOnly: true
@@ -476,17 +487,12 @@ koaRouter.get('/getPandaBackAssets', async (ctx) => {
 })
 
 koaRouter.get('/genePandaRandom', async (ctx) => {
-  let addr = ctx.query['addr']
-  if (addr === undefined || addr === null) return
-  let res = null
-  await pandaOwnerController.genePandaRandom(addr)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await pandaOwnerController.genePandaRandom(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Gene_Free_Panda_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.get('/serverTime', (ctx) => {
@@ -532,6 +538,26 @@ koaRouter.post('/buyPanda', async (ctx) => {
 })
 
 
+/**
+  @landProduct
+    - 查看当前的商品中心 getCurrentStarPoint
+*/
+
+koaRouter.get('/getCurrentStarPoint', (ctx) => {
+  let starArr = landProductController.getStarPoint()
+  if (starArr && starArr.length > 0) {
+    ctx.body = succRes(LandProductCodes.Get_Star_Point_Succ, starArr)
+  } else {
+    ctx.body = errorRes(LandProductCodes.Get_Star_Point_Fail)
+  }
+})
+
+/**
+  @测试：
+    - api测试 testApi
+    - 创建测试表 createTestTable
+*/
+
 koaRouter.get('/testApi', async (ctx) => {
   let res = null
   let testController = ctx.query['controller']
@@ -548,17 +574,12 @@ koaRouter.get('/testApi', async (ctx) => {
   }
 })
 
-/**
-  @landProduct
-    - 查看当前的商品中心 getCurrentStarPoint
-*/
-
-koaRouter.get('/getCurrentStarPoint', (ctx) => {
-  let starArr = landProductController.getStarPoint()
-  if (starArr && starArr.length > 0) {
-    ctx.body = succRes(LandProductCodes.Get_Star_Point_Succ, starArr)
+koaRouter.get('/createTestTable', async (ctx) => {
+  const res = await testController.createTestTable(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes('测试数据插入成功!', res)
   } else {
-    ctx.body = errorRes(LandProductCodes.Get_Star_Point_Fail)
+    ctx.body = errorRes(res.message)
   }
 })
 

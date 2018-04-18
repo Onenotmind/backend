@@ -128,10 +128,19 @@ class PandaOwnerController {
 	}
 
 	// 随机产生一只G10的熊猫
-	async genePandaRandom (addr) {
+	async genePandaRandom (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const addr = ctx.query['addr']
+		const addrVali = await joiParamVali.valiAddr(addr)
+		if (!addrVali) {
+			return new Error(CommonCodes.Params_Check_Fail)
+		}
 		const pandaCount = await pandaOwnerModel.queryAllPandaByAddr(addr)
 		if (pandaCount && pandaCount.length > 0) {
-			return errorRes(PandaOwnerCodes.Already_Gene_Free_Panda)
+			return new Error(PandaOwnerCodes.Already_Gene_Free_Panda)
 		} 
 		let geni = ''
 		let pandaAttr = null
@@ -150,15 +159,8 @@ class PandaOwnerController {
 				spAttr.push(this.geneAttrVal(20))
 			}
 		}
-		return pandaOwnerModel.genePanda(geni, addr, pandaAttr.type, ...spAttr, '', integral, 'egg', 0)
-		.then(v => {
-			console.log('genePanda succ')
-			return succRes(PandaOwnerCodes.Gene_Free_Panda_Succ, v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+		const genePanda = await pandaOwnerModel.genePanda(geni, addr, pandaAttr.type, ...spAttr, '', integral, 'egg', 0)
+		return genePanda
 	}
 
 	async sirePanda (ctx) {

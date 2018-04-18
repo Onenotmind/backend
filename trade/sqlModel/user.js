@@ -9,14 +9,42 @@ let UserClientModel = {
   latitude: 'latitude'
 }
 let UserServerModel = {
-  id: 'uid',
-  addr: 'uaddr',
-  email: 'uemail',
-  pwd: 'upwd',
-  tradePwd: 'utradePwd',
-  state: 'ustate',
-  longitude: 'longitude',
-  latitude: 'latitude'
+  id: {
+    label: 'uid',
+    type: 'INT AUTO_INCREMENT'
+  },
+  addr: {
+    label: 'uaddr',
+    type: 'VARCHAR(20)'
+  },
+  email: {
+    label: 'uemail',
+    type: 'VARCHAR(20)'
+  },
+  pwd: {
+    label: 'upwd',
+    type: 'VARCHAR(20)'
+  },
+  tradePwd: {
+    label: 'utradePwd',
+    type: 'VARCHAR(20)'
+  },
+  state: {
+    label: 'ustate',
+    type: 'VARCHAR(10)'
+  },
+  longitude: {
+    label: 'longitude',
+    type: 'FLOAT'
+  },
+  latitude: {
+    label: 'latitude',
+    type: 'FLOAT'
+  },
+  other: {
+    label: 'other',
+    type: 'PRIMARY KEY (uid))ENGINE=InnoDB DEFAULT CHARSET=utf8'
+  }
 }
 module.exports = {
   UserClientModel: UserClientModel,

@@ -5,50 +5,13 @@ const { LandProductServerModel } = require('../sqlModel/landProduct.js')
 const { landProductTestData } = require('../mysqlData/landProduct/sqlData.js')
 /**
   LandProductModel:
-    - 测试操作:
-      - 新建LandProduct数据表 createLandProductTable()
-      - 删除LandProduct数据表 dropLandProductTable()
-      - 插入测试数据 insertDataToLandProduct()
+
     - 业务接口
       - 查询所有物品 selectAllData()
       - 插入物品 insertProduct()
       - 根据经纬度查询物品 findProductByGeo()
 */
 class LandProductModel {
-  /*  sql 测试接口 */
-  async createLandProductTable () {
-    let sql = 'CREATE TABLE landProduct('
-    for(let index in LandProductServerModel) {
-       if (LandProductServerModel.hasOwnProperty(index)) {
-          let obj = LandProductServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type + ','
-            }
-          }
-       }
-    }
-    return db.query(sql)
-  }
-
-  async dropLandProductTable() {
-    let sql = 'DROP TABLE landProduct'
-    return db.query(sql)
-  }
-
-  async insertDataToLandProduct () {
-    let sql = 'INSERT INTO pandaOwner VALUES '
-    for (let i = 0; i < landProductTestData.length; i++) {
-      if (i !== landProductTestData.length - 1) {
-        sql += landProductTestData[i] + ','
-      } else {
-        sql += landProductTestData[i]
-      }
-    }
-    return db.query(sql)
-  }
 
   /* 业务接口 */
 

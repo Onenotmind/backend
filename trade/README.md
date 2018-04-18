@@ -26,9 +26,12 @@
 	   	- 购买熊猫 buyMarketPanda
 	  - combo
 ### 当前问题
-	- app.js controller model 三层结构优化
-	- controller model 层事务处理
-	- getEthlandProduct 逻辑优化
+	- 后端数据库测试数据插入
+		- 数据表
+			- user
+			- pandaowner
+			- landassets
+			- landproduct
 
 
 

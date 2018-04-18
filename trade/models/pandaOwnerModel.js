@@ -5,10 +5,6 @@ const { PandaOwnerServerModel } = require('../sqlModel/pandaOwner.js')
 const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
 /*
   pandaOwnerModel:
-  - 测试操作:
-    - 新建pandaOwner数据表 createPandaOwnerTable()
-    - 删除pandaOwner数据表 dropPandaOwnerTable()
-    - 插入测试数据 insertDataToPandaOwner()
   - 业务操作：
     - 查询所有熊猫 selectAllData()
     - 查询某个状态下的所有熊猫 queryPandasByState
@@ -28,40 +24,6 @@ class PandaOwnerModel {
 
   async selectAllData () {
     let sql = 'SELECT * FROM pandaOwner'
-    return db.query(sql)
-  }
-
-  async dropPandaOwnerTable () {
-    let sql = 'DROP TABLE pandaOwner'
-    return db.query(sql)
-  }
-
-  async createPandaOwnerTable () {
-    let sql = 'CREATE TABLE pandaOwner('
-    for(let index in PandaOwnerServerModel) {
-       if (PandaOwnerServerModel.hasOwnProperty(index)) {
-          let obj = PandaOwnerServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type + ','
-            }
-          }
-       }
-    }
-    return db.query(sql)
-  }
-
-  async insertDataToPandaOwner () {
-    let sql = 'INSERT INTO pandaOwner VALUES '
-    for (let i = 0; i < pandaOwnerTestData.length; i++) {
-      if (i !== pandaOwnerTestData.length - 1) {
-        sql += pandaOwnerTestData[i] + ','
-      } else {
-        sql += pandaOwnerTestData[i]
-      }
-    }
     return db.query(sql)
   }
 
