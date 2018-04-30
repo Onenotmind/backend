@@ -54,7 +54,7 @@ let LandProductCodes = {
 	'Query_Product_Fail': '查询用户指定商品失败！',
 	'Insert_Product_Fail': '插入用户商品失败',
 	'Update_Product_Fail': '更新用户商品失败',
-	'User_Product_Null': '用户的商品为空！'，
+	'User_Product_Null': '用户的商品为空！',
 	'User_Product_Not_Null': '用户的商品不为空！'
 }
 
