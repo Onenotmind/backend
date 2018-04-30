@@ -128,6 +128,12 @@ function decrypt(str,secret){
   return dec
 }
 
+function checkUserToken (ctx) {
+  const token = ctx.request.headers['token']
+  const checkAddr = ctx.cookies.get('userAddr')
+  return checkToken(token, checkAddr)
+}
+
 module.exports = {
 	cacl: cacl,
   uuid: uuid,
@@ -136,5 +142,6 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt,
   checkToken: checkToken,
-  geneToken: geneToken
+  geneToken: geneToken,
+  checkUserToken: checkUserToken
 }

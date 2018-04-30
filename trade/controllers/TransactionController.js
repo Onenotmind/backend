@@ -68,6 +68,7 @@ class TransactionController {
 				return pandaInfo[0]
 			},
 			async function (pandaInfo) {
+				if (_.isError(pandaInfo)) return pandaInfo
 				let baseRate = parseFloat(bamboo / bambooTitudeRate)
 				let addr = pandaInfo.ownerAddr
 				let geoParams = cacl(pandaInfo.longitude, pandaInfo.latitude, baseRate, direction, pandaInfo.hungry, pandaInfo.speed)
@@ -82,9 +83,17 @@ class TransactionController {
           'fire': pandaInfo.fireCatch,
           'earth': pandaInfo.earthCatch
         }
-        return [attrArr, addr, product]
+        return {
+        	attrArr: attrArr,
+        	addr: addr,
+        	product: product
+        }
 			},
-			async function ([attrArr, addr, proArr]) {
+			async function (res) {
+				if (_.isError(res)) return res
+				const attrArr = res.attrArr
+				const addr = res.addr
+				const proArr = res.product
 				let getDiffValue = (type) => {
           if (type === 'ETH') {
             return currentEthPrice
@@ -99,7 +108,8 @@ class TransactionController {
         let mostValRes = [] // 价值最高的商品组合
         let itemRes = [] // 返回的商品组合
         let dropRes = [] // 丢弃的商品列表
-        let saveRes = [] // 保存进数据库的商品列表
+        let saveRes = [] // 保存进数据库的资产列表
+        let saveProRes = [] // 保存进数据库的商品列表
         let itemsVal = 0 // 返回的商品总值
         let mostVal = 0 // 价值最高的商品总值
         let baseVal = 0 // 基本的商品组合

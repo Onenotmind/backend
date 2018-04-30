@@ -10,6 +10,12 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
 const { LandProductServerModel } = require('../sqlModel/landProduct.js')
 const { landProductTestData } = require('../mysqlData/landProduct/sqlData.js')
 
+const { UserLandProductServerModel } = require('../sqlModel/userLandProduct.js')
+
+const { UserProductManagerServerModel } = require('../sqlModel/userProductManager.js')
+
+const { AssetsValueServerModel } = require('../sqlModel/assetsValue.js')
+
 /**
 	@TestModel 测试数据专用
 		- user
@@ -25,6 +31,18 @@ const { landProductTestData } = require('../mysqlData/landProduct/sqlData.js')
 	    - 删除LandProduct数据表 dropLandProductTable()
 	    - 判断LandProduct表是否存在 checkLandProductTableExist
 	    - 插入测试数据 insertDataToLandProduct()
+    - UserLandProduct
+      - 新建userLandProduct数据表 createUserLandProductTable()
+      - 删除userLandProduct数据表 dropUserLandProductTable()
+      - 判断userLandProduct表是否存在 checkUserLandProductExist
+    - userProductManager
+      - 新建userProductManager数据表 createUserProductManagerTable()
+      - 删除userProductManager数据表 dropUserProductManagerTable()
+      - 判断userProductManager表是否存在 checkUserProductManager
+    - assetsValue
+      - 新建assetsValue数据表 createAssetsValueTable()
+      - 删除assetsValue数据表 dropAssetsValueTable()
+      - 判断assetsValue表是否存在 checkAssetsValue
 	  - pandaowner
 	  	- 新建pandaOwner数据表 createPandaOwnerTable()
 	    - 删除pandaOwner数据表 dropPandaOwnerTable()
@@ -131,6 +149,92 @@ class TestModel {
 
   async checkLandProductTableExist () {
     let sql = 'show tables like "%landproduct%"'
+    return db.query(sql)
+  }
+
+  /* userLandProduct */
+
+  async checkUserLandProductExist () {
+    let sql = 'show tables like "%userLandproduct%"'
+    return db.query(sql)
+  }
+
+  async createUserLandProductTable () {
+    let sql = 'CREATE TABLE userLandProduct('
+    for(let index in UserLandProductServerModel) {
+       if (UserLandProductServerModel.hasOwnProperty(index)) {
+          let obj = UserLandProductServerModel[index]
+          if (obj) {
+            if (obj.label === 'other') {
+              sql += obj.type
+            } else {
+              sql = sql + obj.label + ' ' + obj.type
+            }
+          }
+       }
+    }
+    return db.query(sql)
+  }
+
+  async dropUserLandProductTable () {
+    let sql = 'DROP TABLE userLandProduct'
+    return db.query(sql)
+  }
+
+  /* userproductmanager */
+
+  async createUserProductManagerTable () {
+    let sql = 'CREATE TABLE userProductManager('
+    for(let index in UserProductManagerServerModel) {
+       if (UserProductManagerServerModel.hasOwnProperty(index)) {
+          let obj = UserProductManagerServerModel[index]
+          if (obj) {
+            if (obj.label === 'other') {
+              sql += obj.type
+            } else {
+              sql = sql + obj.label + ' ' + obj.type
+            }
+          }
+       }
+    }
+    return db.query(sql)
+  }
+
+  async dropUserProductManagerTable () {
+    let sql = 'DROP TABLE userProductManager'
+    return db.query(sql)
+  }
+
+  async checkUserProductManager () {
+    let sql = 'show tables like "%userProductManager%"'
+    return db.query(sql)
+  }
+
+  /* assetsvalue */
+  async createAssetsValueTable () {
+    let sql = 'CREATE TABLE assetsvalue('
+    for(let index in AssetsValueServerModel) {
+       if (AssetsValueServerModel.hasOwnProperty(index)) {
+          let obj = AssetsValueServerModel[index]
+          if (obj) {
+            if (obj.label === 'other') {
+              sql += obj.type
+            } else {
+              sql = sql + obj.label + ' ' + obj.type
+            }
+          }
+       }
+    }
+    return db.query(sql)
+  }
+
+  async dropAssetsValueTable () {
+    let sql = 'DROP TABLE assetsvalue'
+    return db.query(sql)
+  }
+
+  async checkAssetsValue () {
+    let sql = 'show tables like "%assetsvalue%"'
     return db.query(sql)
   }
 

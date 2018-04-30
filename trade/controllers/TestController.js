@@ -43,19 +43,54 @@ class TestController {
 				const pandaInsert = await testModel.insertDataToPandaOwner()
 				if (!pandaInsert) return pandaInsert
 			},
-			// async function (res) {
-			// 	if (_.isError(res)) return res
-			// 	const productExist = await testModel.checkLandProductTableExist()
-			// 	if (!productExist) return productExist
-			// 	if (productExist.length > 0) {
-			// 		const productDrop = await testModel.dropLandProductTable()
-			// 		if (!productDrop) return productDrop
-			// 	}
-			// 	const productCreate = await testModel.createLandProductTable()
-			// 	if (!productCreate) return productCreate
-			// 	const productInsert = await testModel.insertDataToLandProduct()
-			// 	if (!productInsert) return productInsert
-			// },
+		// @MYSQL LandProduct
+			async function (res) {
+				if (_.isError(res)) return res
+				const productExist = await testModel.checkLandProductTableExist()
+				if (!productExist) return productExist
+				if (productExist.length > 0) {
+					const productDrop = await testModel.dropLandProductTable()
+					if (!productDrop) return productDrop
+				}
+				const productCreate = await testModel.createLandProductTable()
+				return productCreate
+			},
+			// @MYSQL UserLandProduct
+			async function (res) {
+				if (_.isError(res)) return res
+				const productExist = await testModel.checkUserLandProductExist()
+				if (!productExist) return productExist
+				if (productExist.length > 0) {
+					const productDrop = await testModel.dropUserLandProductTable()
+					if (!productDrop) return productDrop
+				}
+				const productCreate = await testModel.createUserLandProductTable()
+				return productCreate
+			},
+			// @MYSQL UserProductManager
+			async function (res) {
+				if (_.isError(res)) return res
+				const productExist = await testModel.checkUserProductManager()
+				if (!productExist) return productExist
+				if (productExist.length > 0) {
+					const productDrop = await testModel.dropUserProductManagerTable()
+					if (!productDrop) return productDrop
+				}
+				const productCreate = await testModel.createUserProductManagerTable()
+				return productCreate
+			},
+			// @MYSQL assetsvalue
+			async function (res) {
+				if (_.isError(res)) return res
+				const productExist = await testModel.checkAssetsValue()
+				if (!productExist) return productExist
+				if (productExist.length > 0) {
+					const productDrop = await testModel.dropAssetsValueTable()
+					if (!productDrop) return productDrop
+				}
+				const productCreate = await testModel.createAssetsValueTable()
+				return productCreate
+			},
 			function (res, callback) {
 				if (_.isError(res)) {
 					callback(res)

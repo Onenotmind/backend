@@ -9,6 +9,7 @@ const { LandAssetsServerModel } = require('../sqlModel/landAssets.js')
     - 业务操作
   		- 查询指定addr的用户信息 queryUserByAddr
   		- 用户注册,只需要地址与密码即可 userRegister
+      - 用户资产初始化 createUserAsset
   		- 账号密码登陆 userLogin
   		- 更改用户密码 changeLoginPwd
   		- 更改用户交易密码 changeTradePwd
@@ -29,6 +30,20 @@ class UserDetailModel {
     let sql = 'INSERT INTO user SET ?'
     return db.query(sql, insertData)
 	}
+
+  async createUserAsset (addr) {
+    let insertData = {
+      uaddr: addr,
+      bamboo: 0,
+      bambooLock: 0,
+      eth: 0,
+      ethLock: 0,
+      eos: 0,
+      eosLock: 0
+    }
+    let sql = 'INSERT INTO landassets SET ?'
+    return db.query(sql, insertData) 
+  }
 
 	async userLogin (addr, pwd) {
 		let val = ['user', addr, pwd]

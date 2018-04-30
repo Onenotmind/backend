@@ -1,8 +1,16 @@
 const LandAssetsModel = require('../models/LandAssetsModel.js')
 const landAssetsModel = new LandAssetsModel()
 
+const JoiParamVali = require('../libs/JoiParamVali.js')
+const joiParamVali = new JoiParamVali()
+
 const { LandAssetsClientModel } = require('../sqlModel/landAssets.js')
-const { AssetsCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+const { CommonCodes, LandProductCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+
+/**
+	@LandAssetsController
+		
+*/
 
 class LandAssetsController {
 	constructor () {

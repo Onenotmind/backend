@@ -2,16 +2,12 @@ const _ = require('lodash')
 const crypto = require('crypto')
 // const session = require('koa-session-minimal')
 // const MysqlSession = require('koa-mysql-session')
-const Db = require('./models/Db.js')
-const db = new Db()
-const LoginController = require('./controllers/LoginController.js')
 const AssetsController = require('./controllers/AssetsController.js')
 const AssetsRollInController = require('./controllers/AssetsRollInController.js')
 const AssetsRollOutController = require('./controllers/AssetsRollOutController.js')
 const LandProductController = require('./controllers/LandProductController.js')
 const PandaOwnerController = require('./controllers/PandaOwnerController.js')
 const LandAssetsController = require('./controllers/LandAssetsController.js')
-const TransactionController = require('./controllers/TransactionController.js')
 const UserDetailController = require('./controllers/UserDetailController.js')
 const TestController = require('./controllers/TestController.js')
 const { sendCodeFromMail } = require('./libs/mailer.js')
@@ -27,19 +23,16 @@ const winston = require('winston')
 
 const app = new Koa()
 const port = 7007
-const loginController = new LoginController()
 const assetsController = new AssetsController()
 const assetsRollInController = new AssetsRollInController()
 const assetsRollOutController = new AssetsRollOutController()
 const landProductController = new LandProductController()
 const pandaOwnerController = new PandaOwnerController()
 const landAssetsController = new LandAssetsController()
-const transactionController = new TransactionController()
 const userDetailController = new UserDetailController()
 const testController = new TestController()
 const testControllers = {
   'pandaOwnerController': pandaOwnerController,
-  'transactionController': transactionController,
   'landAssetsController': landAssetsController
 }
 
@@ -135,7 +128,7 @@ app.use(cors({
 koaRouter.post('/userRegister', async (ctx) => {
   const res = await userDetailController.userRegister(ctx)
   const token = geneToken(ctx.query['addr'])
-  if (_.isError(res)) {
+  if (!_.isError(res)) {
     ctx.cookies.set(
     'userAddr',
     res,
@@ -143,9 +136,9 @@ koaRouter.post('/userRegister', async (ctx) => {
       // expires: new Date() + 60*1000,  // cookie失效时间
       httpOnly: true
     })
-    ctx.body = errorRes(res.message)
-  } else {
     ctx.body = succRes(LoginCodes.Register_Succ, token)
+  } else {
+    ctx.body = errorRes(res.message)
   }
 })
 
@@ -164,7 +157,7 @@ koaRouter.get('/userLogin', async (ctx) => {
   )
     ctx.body = succRes(LoginCodes.Login_Succ, token)
   } else {
-    ctx.body = errorRes(res.message)
+    ctx.body = errorRes(LoginCodes.Register_Failed)
   }
 })
 
@@ -234,7 +227,7 @@ async function geneEmailCode (ctx) {
 
 koaRouter.get('/getUserInfoAndAssetsByAddr', async (ctx) => {
   const res = await userDetailController.getUserInfoAndAssetsByAddr(ctx)
-  if (res) {
+  if (!_.isError(res)) {
     ctx.body = succRes(LoginCodes.Assets_Data_Normal, res)
   } else {
     ctx.body = errorRes(res.message)
@@ -420,7 +413,7 @@ koaRouter.post('/deleteRollOutOrder', async (ctx) => {
 
 
 /**
-  land:
+  pandaowner:
     - 查询某地址下所有熊猫 queryAllPandaByAddr
     - 熊猫外出获取宝物 getEthlandProduct
     - 查询某个熊猫的详细信息 queryPandaInfo
@@ -469,7 +462,7 @@ koaRouter.get('/queryPandaInfo', async (ctx) => {
 // testApi getEthlandProduct?pandaGeni=0x12987uhvr453buyvu3u89&bamboo=300
 koaRouter.get('/getEthlandProduct', async (ctx) => {
   logger.error('/getEthlandProduct')
-  const res = await transactionController.getEthlandProduct(ctx)
+  const res = await pandaOwnerController.getEthlandProduct(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Panda_Out_Succ, res)
   } else {
@@ -527,7 +520,7 @@ koaRouter.get('/queryAllPandaSold', async (ctx) => {
 koaRouter.post('/buyPanda', async (ctx) => {
   let requestData = ctx.request.body
   let res = null
-  await transactionController.buyPanda(requestData['addr'], requestData['pandaGen'], requestData['price'])
+  await pandaOwnerController.buyPanda(requestData['addr'], requestData['pandaGen'], requestData['price'])
   .then(v => {
     res = v
   })
@@ -541,6 +534,7 @@ koaRouter.post('/buyPanda', async (ctx) => {
 /**
   @landProduct
     - 查看当前的商品中心 getCurrentStarPoint
+    - 查询某个地址下所有商品 queryLandProductByAddr
 */
 
 koaRouter.get('/getCurrentStarPoint', (ctx) => {
@@ -549,6 +543,15 @@ koaRouter.get('/getCurrentStarPoint', (ctx) => {
     ctx.body = succRes(LandProductCodes.Get_Star_Point_Succ, starArr)
   } else {
     ctx.body = errorRes(LandProductCodes.Get_Star_Point_Fail)
+  }
+})
+
+koaRouter.get('/queryLandProductByAddr', (ctx) => {
+  let products = landProductController.queryLandProductByAddr()
+  if (products && products.length > 0) {
+    ctx.body = succRes(LandProductCodes.User_Product_Not_Null, products)
+  } else {
+    ctx.body = errorRes(LandProductCodes.User_Product_Null)
   }
 })
 

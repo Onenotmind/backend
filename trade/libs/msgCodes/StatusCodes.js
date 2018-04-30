@@ -2,7 +2,8 @@ let CommonCodes = {
 	'Service_Wrong': '服务器忙，请稍后再试',
 	'Params_Check_Fail': '参数校验失败',
 	'Request_Method_Wrong': '请求方式错误！',
-	'Token_Fail': 'Token失效'
+	'Token_Fail': 'Token失效',
+	'No_Access': '没有权限'
 }
 let LoginCodes = {
   'Email_Exist': '你的邮件已经注册了！', // 重复邮箱注册
@@ -30,7 +31,8 @@ let LoginCodes = {
 
 let AssetsCodes = {
 	'Assets_Data_Normal': '资产数据返回正常！',
-	'Assets_Data_Null': '资产数据返回错误！'
+	'Assets_Data_Null': '资产数据返回错误！',
+	'Assets_Null': '资产价值为空'
 }
 
 let PandaOwnerCodes = {
@@ -43,7 +45,17 @@ let PandaOwnerCodes = {
 
 let LandProductCodes = {
 	'Get_Star_Point_Succ': '得到商品产生中心成功！',
-	'Get_Star_Point_Fail': '商品中心获取失败'
+	'Get_Star_Point_Fail': '商品中心获取失败',
+	'Get_Prepare_Product_Fail': '获取投票中的商品失败！',
+	'Sell_Product_Fail': '出售商品失败！',
+	'Drop_Product_Fail': '下架商品失败',
+	'Del_Product_Fail': '删除商品失败!',
+	'User_No_Such_Product': '用户未集齐当前商品碎片！',
+	'Query_Product_Fail': '查询用户指定商品失败！',
+	'Insert_Product_Fail': '插入用户商品失败',
+	'Update_Product_Fail': '更新用户商品失败',
+	'User_Product_Null': '用户的商品为空！'，
+	'User_Product_Not_Null': '用户的商品不为空！'
 }
 
 let PandaLandCodes = {

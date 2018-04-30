@@ -64,11 +64,9 @@ class UserDetailController {
 	  }
 	  const location = this.geneLocation()
 		const register = await userDetailModel.userRegister(addr, pwd, '', email, ...location)
-		if (register) {
-			return addr
-		} else {
-			return new Error(register.message)
-		}
+		if (!register) return register
+		const assets = await userDetailModel.createUserAsset(addr)
+		return assets
 	}
 
 
@@ -86,11 +84,7 @@ class UserDetailController {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
 		const login = await userDetailModel.userLogin(addr, pwd)
-		if (login) {
-			return login
-		} else {
-			return new Error(login.message)
-		}
+		return login
 	}
 
 	/**
@@ -199,6 +193,8 @@ class UserDetailController {
 	async getUserInfoAndAssetsByAddr (ctx) {
 		const token = ctx.request.headers['token']
 		const checkAddr = ctx.cookies.get('userAddr')
+		console.log(token)
+		console.log(checkAddr)
 		const tokenCheck = await checkToken(token, checkAddr)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const addr = ctx.query['addr']

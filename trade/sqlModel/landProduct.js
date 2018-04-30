@@ -15,25 +15,25 @@ let LandProductClientModel = {
 	value: 'value'
 }
 let LandProductServerModel = {
-	longitude: {
-		label: 'longitude',
-		type: 'FLOAT'
-	},
-	latitude: {
-		label: 'latitude',
-		type: 'FLOAT'
+	productId: {
+		label: 'productId',
+		type: 'VARCHAR(10)'
 	},
 	type: {
 		label: 'type',
 		type: 'VARCHAR(10)'
 	},
-	value: {
-		label: 'value',
-		type: 'VARCHAR(20)'
+	state: {
+		label: 'state',
+		type: 'VARCHAR(10)'
+	},
+	time: {
+		label: 'time',
+		type: 'INT'
 	},
 	other: {
 		label: 'other',
-		type: ')'
+		type: 'PRIMARY KEY (productId))ENGINE=InnoDB DEFAULT CHARSET=utf8'
 	}
 }
 module.exports = {

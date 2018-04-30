@@ -14,14 +14,14 @@ const db = new Db()
 	@TransactionModel 事务model
 	- getInfoForProduct 熊猫搜查商品时所需详细信息
 	- findProductByGeo 根据经纬度查询物品
-	- updatePandaAttr 更新熊猫属性
-  - updatePandaLocationState 更新熊猫的状态与价钱
-	- updateLandAssetsByAddr 根据用户地址更新用户资产
-  - updateBackPandaAssets 更新熊猫回去的资产
-  - updateUserLandAssets 更新用户的ethland资产
+	- updatePandaAttrTrans 更新熊猫属性
+  - updatePandaLocationStateTrans 更新熊猫的状态与价钱
+	- updateLandAssetsByAddrTrans 根据用户地址更新用户资产
+  - updateBackPandaAssetsTrans 更新熊猫回去的资产
+  - updateUserLandAssetsTrans 更新用户的ethland资产
   - queryPandaInfo 查询熊猫详细信息
-  - queryAssetsByAddr 查询某个地址的资产
-  - updateAssetsByAddr 批量插入landassets表
+  - queryAssetsByAddrTrans 查询某个地址的资产
+  - updateAssetsByAddrTrans 批量插入landassets表
 */
 
 class TransactionModel {
