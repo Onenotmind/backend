@@ -11,6 +11,7 @@ const { LandAssetsServerModel } = require('../sqlModel/landAssets.js')
   		- 用户注册,只需要地址与密码即可 userRegister
       - 用户资产初始化 createUserAsset
   		- 账号密码登陆 userLogin
+      - 绑定邮箱 bindEmail
   		- 更改用户密码 changeLoginPwd
   		- 更改用户交易密码 changeTradePwd
   		- 通过用户addr查询用户经纬度 getUserLocationByAddr
@@ -57,6 +58,11 @@ class UserDetailModel {
   	return db.query(sql, val)
   }
 
+  async bindEmail (email, addr) {
+    let val = ['user', email, addr]
+    let sql = 'UPDATE ?? SET uemail = ? WHERE uaddr = ?'
+    return db.query(sql, val)
+  }
   async changeLoginPwd (addr, newPwd) {
     let val = ['user', newPwd, addr]
     let sql = 'UPDATE ?? SET upwd = ? WHERE uaddr = ?'

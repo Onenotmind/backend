@@ -131,7 +131,7 @@ koaRouter.post('/userRegister', async (ctx) => {
   if (!_.isError(res)) {
     ctx.cookies.set(
     'userAddr',
-    res,
+    ctx.query['addr'],
     {
       // expires: new Date() + 60*1000,  // cookie失效时间
       httpOnly: true
@@ -157,7 +157,7 @@ koaRouter.get('/userLogin', async (ctx) => {
   )
     ctx.body = succRes(LoginCodes.Login_Succ, token)
   } else {
-    ctx.body = errorRes(LoginCodes.Register_Failed)
+    ctx.body = errorRes(res.message)
   }
 })
 
@@ -190,6 +190,15 @@ koaRouter.get('/userGeneCode', async (ctx) => {
     ctx.body = errorRes(LoginCodes.Mail_Send_Error)
   } else {
     ctx.body = succRes(LoginCodes.Mail_Send_Succ, {})
+  }
+})
+
+koaRouter.get('/bindEmail', async (ctx) =>{
+  const res = await userDetailController.bindEmail(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LoginCodes.Code_Correct, res)
+  } else {
+    ctx.body = errorRes(res.message)
   }
 })
 
@@ -535,10 +544,13 @@ koaRouter.post('/buyPanda', async (ctx) => {
   @landProduct
     - 查看当前的商品中心 getCurrentStarPoint
     - 查询某个地址下所有商品 queryLandProductByAddr
+    - 获取当前投票中的商品 getCurrentVotedProduct
+    - 给商品投票 voteProduct
+    - 获得当前正在出售的商品 getCurrentProduct
 */
 
-koaRouter.get('/getCurrentStarPoint', (ctx) => {
-  let starArr = landProductController.getStarPoint()
+koaRouter.get('/getCurrentStarPoint', async (ctx) => {
+  let starArr = await landProductController.getStarPoint()
   if (starArr && starArr.length > 0) {
     ctx.body = succRes(LandProductCodes.Get_Star_Point_Succ, starArr)
   } else {
@@ -546,12 +558,39 @@ koaRouter.get('/getCurrentStarPoint', (ctx) => {
   }
 })
 
-koaRouter.get('/queryLandProductByAddr', (ctx) => {
-  let products = landProductController.queryLandProductByAddr()
-  if (products && products.length > 0) {
+koaRouter.get('/queryLandProductByAddr', async (ctx) => {
+  let products = await landProductController.queryLandProductByAddr(ctx)
+  if (!_.isError(products)) {
     ctx.body = succRes(LandProductCodes.User_Product_Not_Null, products)
   } else {
     ctx.body = errorRes(LandProductCodes.User_Product_Null)
+  }
+})
+
+koaRouter.get('/getCurrentVotedProduct', async (ctx) => {
+  const votedProduct = await landProductController.getCurrentVotedProduct(ctx)
+  if (votedProduct && votedProduct.length > 0) {
+    ctx.body = succRes(LandProductCodes.Get_Prepare_Product_Succ, votedProduct)
+  } else {
+    ctx.body = errorRes(LandProductCodes.Get_Prepare_Product_Fail)
+  }
+})
+
+koaRouter.get('/voteProduct', async (ctx) => {
+  const res = await landProductController.voteProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LandProductCodes.Vote_Product_Succ, res)
+  } else {
+    ctx.body = errorRes(LandProductCodes.Vote_Product_Fail)
+  }
+})
+
+koaRouter.get('/getCurrentProduct', async (ctx) => {
+  const res = await landProductController.getCurrentProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LandProductCodes.Get_Current_Product_Succ, res)
+  } else {
+    ctx.body = errorRes(LandProductCodes.Get_Current_Product_Fail)
   }
 })
 

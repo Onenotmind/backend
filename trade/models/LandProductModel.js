@@ -42,12 +42,13 @@ class LandProductModel {
     return db.query(sql)
   }
 
-  async addVoteProduct (productId, type) {
+  async addVoteProduct (productId, type, imgSrc) {
     let insertData = {
       productId: productId,
       type: type,
       state: 'prepare',
-      time: 0
+      time: 0,
+      imgSrc: imgSrc
     }
     let sql = 'INSERT INTO landProduct SET ?'
     return db.query(sql, insertData)

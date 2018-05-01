@@ -31,6 +31,22 @@ let LandProductServerModel = {
 		label: 'time',
 		type: 'INT'
 	},
+	imgSrc: {
+		label: 'imgSrc',
+		type: 'VARCHAR(100)'
+	},
+	name: {
+		label: 'name',
+		type: 'VARCHAR(100)'
+	},
+	value: {
+		label: 'value',
+		type: 'INT'
+	},
+	recommender: {
+		label: 'recommender',
+		type: 'VARCHAR(20)'
+	},
 	other: {
 		label: 'other',
 		type: 'PRIMARY KEY (productId))ENGINE=InnoDB DEFAULT CHARSET=utf8'

@@ -47,6 +47,7 @@ let LandProductCodes = {
 	'Get_Star_Point_Succ': '得到商品产生中心成功！',
 	'Get_Star_Point_Fail': '商品中心获取失败',
 	'Get_Prepare_Product_Fail': '获取投票中的商品失败！',
+	'Get_Prepare_Product_Succ': '获取投票中的商品成功！',
 	'Sell_Product_Fail': '出售商品失败！',
 	'Drop_Product_Fail': '下架商品失败',
 	'Del_Product_Fail': '删除商品失败!',
@@ -55,7 +56,11 @@ let LandProductCodes = {
 	'Insert_Product_Fail': '插入用户商品失败',
 	'Update_Product_Fail': '更新用户商品失败',
 	'User_Product_Null': '用户的商品为空！',
-	'User_Product_Not_Null': '用户的商品不为空！'
+	'User_Product_Not_Null': '用户的商品不为空！',
+	'Vote_Product_Succ': '商品投票成功！',
+	'Vote_Product_Fail': '商品投票失败！',
+	'Get_Current_Product_Succ': '获取当前商品成功！',
+	'Get_Current_Product_Fail':'获取当前商品失败！'
 }
 
 let PandaLandCodes = {

@@ -2,6 +2,8 @@ const LandProductModel = require('../models/LandProductModel.js')
 const _ = require('lodash')
 const async = require('async')
 const landProductModel = new LandProductModel()
+const JoiParamVali = require('../libs/JoiParamVali.js')
+const joiParamVali = new JoiParamVali()
 const { checkToken, checkUserToken } = require('../libs/CommonFun.js')
 const { LandProductClientModel } = require('../sqlModel/landProduct.js')
 const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
@@ -12,6 +14,7 @@ const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = requi
     - getStarPoint // 得到当前的star point列表
     - 查询某个地址下所有商品 queryLandProductByAddr
     - 增加待投票的商品 addVoteProduct
+    - 获取当前投票中的商品 getCurrentVotedProduct
     - 对商品进行投票 voteProduct
     - 商品投票结束 productVotedOver
     - 获得当前正在出售的商品 getCurrentProduct
@@ -39,12 +42,13 @@ class LandProductController {
     if (pwd !== 'chenye1234') return new Error(CommonCodes.No_Access)
     const productId = ctx.query['productId']
     const type = ctx.query['type']
+    const imgSrc = ctx.query['imgSrc']
     const productIdVali = await joiParamVali.valiProductId(productId)
     const typeVali = await joiParamVali.valiProductAttr(type)
     if (!productIdVali || !typeVali) {
       return new Error(CommonCodes.Params_Check_Fail)
     }
-    const addVote = await landProductModel.addVoteProduct(productId, type)
+    const addVote = await landProductModel.addVoteProduct(productId, type, imgSrc)
     return addVote
   }
 
@@ -60,7 +64,16 @@ class LandProductController {
   }
 
   /**
-   * 增加待投票的商品 voteProduct
+    * 获取当前投票中的商品 getCurrentVotedProduct
+    */
+  async getCurrentVotedProduct (ctx) {
+    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const voteProduct = await landProductModel.getPrepareProduct()
+    return voteProduct
+  }
+
+  /**
+   * 给商品投票 voteProduct
    */
 
   async voteProduct (ctx) {

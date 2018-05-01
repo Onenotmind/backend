@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const UserDetailModel = require('../models/UserDetailModel.js')
 const userDetailModel = new UserDetailModel()
 const { LoginCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
@@ -13,6 +14,7 @@ const joiParamVali = new JoiParamVali()
 		账号密码登陆 userLogin
 		更改用户密码 changeLoginPwd
 		更改用户交易密码 changeTradePwd
+		绑定邮箱 bindEmail
 		检测验证码正确与否 CheckEmailCode
 		通过用户addr查询用户经纬度 getUserLocationByAddr
 	@通过方法
@@ -40,7 +42,6 @@ class UserDetailController {
 		let tmpCode = null
 		const addrVali = await joiParamVali.valiAddr(addr)
 		const pwdVali = await joiParamVali.valiPass(pwd)
-		console.log(addrVali)
 		if (!addrVali || !pwdVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
@@ -53,7 +54,6 @@ class UserDetailController {
 	      tmpCode = ctx.cookies.get('tmpUserId')
 	    }
 	    let decryptRes = parseInt(decrypt(tmpCode, email))
-	    console.log('decryptRes', decryptRes)
 	    if (decryptRes - 1 !== parseInt(code)) {
 	      return new Error(LoginCodes.Code_Error)  
 	    }
@@ -84,6 +84,7 @@ class UserDetailController {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
 		const login = await userDetailModel.userLogin(addr, pwd)
+		if (!login || login.length === 0) return new Error(LoginCodes.Login_DataWrong)
 		return login
 	}
 
@@ -193,7 +194,7 @@ class UserDetailController {
 	async getUserInfoAndAssetsByAddr (ctx) {
 		const token = ctx.request.headers['token']
 		const checkAddr = ctx.cookies.get('userAddr')
-		console.log(token)
+		console.log('token:', token)
 		console.log(checkAddr)
 		const tokenCheck = await checkToken(token, checkAddr)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
@@ -208,6 +209,21 @@ class UserDetailController {
 		} else {
 			return new Error(LoginCodes.Service_Wrong)
 		} 
+	}
+
+	/**
+		*	绑定邮箱 bindEmail
+		*/
+	async bindEmail (ctx) {
+		const emailCheck = await this.checkEmailCode(ctx)
+		if (!_.isError(emailCheck)) {
+			const email = ctx.query['email']
+			const checkAddr = ctx.cookies.get('userAddr')
+			const emailBind = await userDetailModel.bindEmail(email, checkAddr)
+			return emailBind
+		} else {
+			return emailCheck
+		}
 	}
 
 	/**
