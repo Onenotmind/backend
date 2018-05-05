@@ -28,6 +28,9 @@ const { landProductTestData } = require('../mysqlData/landProduct/sqlData.js')
     - 业务接口
       - 插入一条商品兑换成功数据 insertUserProduct
       - 更新当前物流信息 updateUserProductInfo
+  @MYSQL landassets
+    - 业务接口
+      - 更新用户的竹子数量 updateUserBamboo
 */
 class LandProductModel {
 
@@ -132,7 +135,8 @@ class LandProductModel {
 
   async queryLandProductByAddr (addr) {
     let val = [addr]
-    let sql = 'SELECT * FROM userLandProduct WHERE userAddr = ?'
+    let sql = 'SELECT u.value, u.productId, l.imgSrc, l.name ' +
+      ' FROM userLandProduct u, landProduct l WHERE u.userAddr = ? AND u.productId = l.productId'
     return db.query(sql, val)
   }
 
@@ -175,6 +179,12 @@ class LandProductModel {
   async updateUserProductInfo (express, expressId) {
     let val = [express, expressId, 'send']
     let sql = 'UPDATE UserProductManager SET express = ?, expressId = ?, state = ? WHERE productId = ?'
+    return db.query(sql, val)
+  }
+
+  async updateUserBamboo (addr) {
+    let val = ['landassets', count, addr]
+    let sql = 'UPDATE ?? SET bamboo = bamboo + 1 WHERE uaddr = ?'
     return db.query(sql, val)
   }
 }

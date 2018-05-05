@@ -8,6 +8,7 @@ const { LandAssetsServerModel } = require('../sqlModel/landAssets.js')
 	@UserDetailModel (mysql_table @user @landassets)
     - 业务操作
   		- 查询指定addr的用户信息 queryUserByAddr
+      - 查询用户的邮箱 queryUserEmail
   		- 用户注册,只需要地址与密码即可 userRegister
       - 用户资产初始化 createUserAsset
   		- 账号密码登陆 userLogin
@@ -56,6 +57,12 @@ class UserDetailModel {
   	let val = ['user', addr]
   	let sql = 'select * from ?? inner join landassets l on user.uaddr=l.uaddr where user.uaddr = ?'
   	return db.query(sql, val)
+  }
+
+  async queryUserEmail (addr){
+    let val = ['uemail', 'user', addr]
+    let sql = 'select ?? from ?? where uaddr = ?'
+    return db.query(sql, val)
   }
 
   async bindEmail (email, addr) {

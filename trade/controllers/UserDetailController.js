@@ -3,7 +3,7 @@ const UserDetailModel = require('../models/UserDetailModel.js')
 const userDetailModel = new UserDetailModel()
 const { LoginCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const JoiParamVali = require('../libs/JoiParamVali.js')
-const { getParamsCheck, postParamsCheck, decrypt, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
+const { getParamsCheck, checkUserToken, postParamsCheck, decrypt, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
 const { sendCodeFromMail } = require('../libs/mailer.js')
 const joiParamVali = new JoiParamVali()
 
@@ -11,9 +11,11 @@ const joiParamVali = new JoiParamVali()
 	@UserDetailController
 		查询指定addr的用户信息 getUserInfoAndAssetsByAddr
 		用户注册,只需要地址与密码即可 userRegister
+		查询用户的邮箱 queryUserEmail
 		账号密码登陆 userLogin
 		更改用户密码 changeLoginPwd
 		更改用户交易密码 changeTradePwd
+		忘记密码 changePwdWhenForget
 		绑定邮箱 bindEmail
 		检测验证码正确与否 CheckEmailCode
 		通过用户addr查询用户经纬度 getUserLocationByAddr
@@ -112,7 +114,7 @@ class UserDetailController {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
 		const oldPwdCheck = await userDetailModel.userLogin(addr, oldPwd)
-		if (!oldPwdCheck) return new Error(oldPwdCheck)
+		if (!oldPwdCheck) return oldPwdCheck
 		if (oldPwdCheck.length === 0) return new Error('No such person')
 		const newPwdChange = await userDetailModel.changeLoginPwd(addr, newPwd)
 		if (newPwdChange) {
@@ -123,9 +125,43 @@ class UserDetailController {
 	}
 
 	/**
+		*	查询用户的邮箱 queryUserEmail
+		*/
+	async queryUserEmail (ctx) {
+		const addr = ctx.query['addr']
+		const addrVali = await joiParamVali.valiAddr(addr)
+		if (!addrVali) return new Error(CommonCodes.Params_Check_Fail)
+		const email = await userDetailModel.queryUserEmail(addr)
+		return email
+	}
+
+	/**
+		*	忘记密码 changePwdWhenForget
+		*/
+	async changePwdWhenForget (ctx) {
+		const pwd = ctx.query['pwd']
+		const addr = ctx.query['addr']
+		const code = ctx.query['code']
+		const pwdVali = await joiParamVali.valiPass(pwd)
+		const addrVali = await joiParamVali.valiAddr(addr)
+		if (!pwdVali || !addrVali) return new Error(CommonCodes.Params_Check_Fail)
+		const email = await userDetailModel.queryUserEmail(addr)
+		if (!email || email.length === 0) return new Error(LoginCodes.User_Not_Bind_Email)
+		let tmpCode = null
+		if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
+      tmpCode = ctx.cookies.get('tmpUserId')
+    }
+    let decryptRes = parseInt(decrypt(tmpCode, email[0].uemail))
+    if (decryptRes - 1 !== parseInt(code)) {
+      return new Error(LoginCodes.Code_Error)  
+    }
+    const newPwdChange = await userDetailModel.changeLoginPwd(addr, pwd)
+    return newPwdChange
+	}
+
+	/**
    * 修改交易密码 changeTradePwd
    * @property {string} addr
-   * @property {string} oldPwd
    * @property {string} newPwd
    */
 	async changeTradePwd (ctx) {
@@ -133,34 +169,27 @@ class UserDetailController {
 		const checkAddr = ctx.cookies.get('userAddr')
 		const tokenCheck = await checkToken(token, checkAddr)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
-		const paramsType = ['addr', 'oldPwd', 'newPwd', 'code', 'email']
+		const paramsType = ['addr', 'newPwd', 'code']
 		const params= await postParamsCheck(ctx, paramsType)
 		if (!params) return errorRes(LoginCodes.Params_Check_Fail)
 		const addr = params.addr
-		const oldPwd = params.oldPwd
 		const newPwd = params.newPwd
 		const code = params.code
-		const email = params.email
 		const addrVali = await joiParamVali.valiAddr(addr)
-		const oldPwdVali = await joiParamVali.valiPass(oldPwd)
 		const newPwdVali = await joiParamVali.valiPass(newPwd)
 		if (!addrVali || !pwdVali || !newPwd) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
+		const email = await userDetailModel.queryUserEmail(addr)
+		if (!email) return new Error(LoginCodes.User_Not_Bind_Email)
 		let tmpCode = null
-		if (email) {
-			const emailVali = await joiParamVali.valiEmail(email)
-			if (!emailVali) {
-				return errorRes(CommonCodes.Params_Check_Fail)
-			}
-			if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
-	      tmpCode = ctx.cookies.get('tmpUserId')
-	    }
-	    let decryptRes = parseInt(decrypt(tmpCode, email))
-	    if (decryptRes - 1 !== code) {
-	      return errorRes(LoginCodes.Code_Error)  
-	    }
-		}
+		if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
+      tmpCode = ctx.cookies.get('tmpUserId')
+    }
+    let decryptRes = parseInt(decrypt(tmpCode, email))
+    if (decryptRes - 1 !== parseInt(code)) {
+      return errorRes(LoginCodes.Code_Error)  
+    }
 		const newPwdChange = await userDetailModel.changeTradePwd(addr, newPwd)
 		if (newPwdChange) {
 			return newPwdChange
@@ -170,7 +199,7 @@ class UserDetailController {
 	}
 
 	/**
-   * 通过用户addr查询用户经纬度 changeTradePwd
+   * 通过用户addr查询用户经纬度
    * @property {string} addr
    */
 	async getUserLocationByAddr (ctx) {
@@ -194,8 +223,6 @@ class UserDetailController {
 	async getUserInfoAndAssetsByAddr (ctx) {
 		const token = ctx.request.headers['token']
 		const checkAddr = ctx.cookies.get('userAddr')
-		console.log('token:', token)
-		console.log(checkAddr)
 		const tokenCheck = await checkToken(token, checkAddr)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const addr = ctx.query['addr']
@@ -236,8 +263,6 @@ class UserDetailController {
    	let tmpCode = null
    	const email = ctx.query['email']
    	const code = ctx.query['code']
-   	console.log('email', email)
-   	console.log('code', code)
    	if (email !== '') {
 			const emailVali = await joiParamVali.valiEmail(email)
 			if (!emailVali) {

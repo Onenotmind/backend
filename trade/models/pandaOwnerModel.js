@@ -13,9 +13,9 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 删除特定gen下的熊猫 delPandaByGen()
     - 更新某只熊猫的某个属性 updatePandaAttr()
     - 查询某个addr下的所有熊猫 queryAllPandaByAddr()
+    - 查询某个addr下所有外出熊猫 queryAllOutPandaByAddr
     - 查询某只熊猫的详细信息 queryPandaInfo()
     - 改变熊猫的oweraddr transferPandaOwner()
-    - 查询某只熊猫外出回归带的物品 getPandaBackAssets()
     - 出售熊猫 sellPanda
     - 判断用户的交易密码是否正确 checkOwnerTradePwd
     - 将外出熊猫回归的状态更改为在家 pandaBackHome
@@ -26,10 +26,13 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
   - 事务处理
     - 熊猫搜查商品时所需详细信息 getInfoForProduct
     - 根据经纬度查询物品 findProductByGeo
+    - 获取当前land所有商品 findAllproduct
     - 更新熊猫属性 updatePandaAttrTrans
     - 更新熊猫的状态与价钱 updatePandaLocationStateTrans
     - 根据用户地址更新用户资产 updateLandAssetsByAddrTrans
     - 更新熊猫回去的资产 updateBackPandaAssetsTrans
+    - 查询backpandaassets是否还有特定熊猫的资产 queryBackPandaAssetsByGen
+    - 删除backpandaassets特定熊猫的资产 deleteBackPandaAssetsByGen
     - 更新用户的ethland资产 updateUserLandAssetsTrans
     - 根据用户地址更新用户商品 updateLandProductByAddrTrans
     - 批量插入landassets表 updateAssetsByAddrTrans
@@ -37,6 +40,10 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 插入一条商品记录 insertLandProductToUser
     - 更新商品记录 updateUserLandPro
     - 查询某个地址下某个商品的信息 querySpecifiedProByAddr
+  - @MYSQL backPandaAssets
+    - 查询某只熊猫外出回归带的物品 getPandaBackAssets()
+  - @MYSQL landproduct
+    - 查询某个商品的信息 queryLandProductInfo
 */
 
 class PandaOwnerModel {
@@ -102,10 +109,16 @@ class PandaOwnerModel {
   }
 
   async queryAllPandaByAddr (addr) {
-    let val = ['pandaowner', addr]
-    let sql = 'SELECT * FROM ?? WHERE ownerAddr = ?'
+    let val = ['pandaowner', addr, 'home']
+    let sql = 'SELECT * FROM ?? WHERE ownerAddr = ? AND state = ?'
     return db.query(sql, val)
   }
+
+  async queryAllOutPandaByAddr (addr) {
+    let val = ['pandaowner', addr, 'out']
+    let sql = 'SELECT * FROM ?? WHERE ownerAddr = ? AND state = ?'
+    return db.query(sql, val)
+  } 
 
   async delPandaByGen (gen) {
     let val = ['pandaowner', gen]
@@ -147,13 +160,11 @@ class PandaOwnerModel {
 
   async getInfoForProduct (trans, pandaGen) {
     let val = [pandaGen]
-    let sql = '' +
-    'select * from user '+
+    let sql = 'select * from user '+
     'inner join pandaowner on pandaowner.ownerAddr=user.uaddr ' +
     ' inner join landassets l on user.uaddr=l.uaddr '+
-    'where pandaowner.pandaGen="0x12987u1vadahvbtyhvu3u89";'
-    console.log(sql)
-    return db.transQuery(trans, sql)
+    'where pandaowner.pandaGen = ?'
+    return db.query(sql, val)
   }
 
   async findProductByGeo (trans, longitude, latitude, wid, height) {
@@ -192,13 +203,25 @@ class PandaOwnerModel {
   }
 
   async updateBackPandaAssetsTrans (trans, pandaGen, carryAssets, dropAssets) {
-    dropAssets = '1/WATER'
-    let sql = 'INSERT INTO backpandaassets (pandaGen, backAssets,dropAssets) VALUES (' + pandaGen +
-              ',' + carryAssets + ',' + dropAssets + 
-              ') ON DUPLICATE KEY UPDATE backAssets=' + carryAssets +
-              ', dropAssets=' + dropAssets
-              console.log('sql..', sql)
-    return db.transQuery(trans, sql)
+    let insertData = {
+      pandaGen: pandaGen,
+      backAssets: carryAssets,
+      dropAssets: dropAssets
+    }
+    let sql = 'INSERT INTO backpandaassets SET ?'
+    return db.transQuery(trans, sql, insertData)
+  }
+
+  async queryBackPandaAssetsByGen (pandaGen) {
+    let val = ['backpandaassets', pandaGen]
+    let sql = 'SELECT * FROM ?? WHERE pandaGen = ?'
+    return db.query(sql, val)
+  }
+
+  async deleteBackPandaAssetsByGen (trans, pandaGen) {
+    let val = ['backpandaassets', pandaGen]
+    let sql = 'DELETE FROM ?? WHERE pandaGen = ?'
+    return db.transQuery(trans, sql, val)
   }
 
   async updateUserLandAssetsTrans (trans, pandaowner, assetsArr) {
@@ -266,25 +289,37 @@ class PandaOwnerModel {
     return db.query(sql, val)
   }
 
-  async insertLandProductToUser (trans, userAddr, productId, value) {
+  async insertLandProductToUser (trans, userAddr, productId) {
     let insertData = {
       userAddr: userAddr,
       productId: productId,
-      value: value
+      value: 1
     }
     let sql = 'INSERT INTO userLandProduct SET ?'
     return db.transQuery(trans, sql, insertData)
   }
 
-  async updateUserLandPro (trans, userAddr, productId, value) {
-    let val = ['userlandproduct', value, userAddr, productId]
-    let sql = 'UPDATE ?? SET value = value + ? WHERE userAddr = ? AND productId = ?'
+  async updateUserLandPro (trans, userAddr, productId) {
+    let val = ['userlandproduct', userAddr, productId]
+    let sql = 'UPDATE ?? SET value = value + 1 WHERE userAddr = ? AND productId = ?'
     return db.transQuery(trans, sql, val)
   }
 
   async querySpecifiedProByAddr (addr, productId) {
     let val = [addr, productId]
     let sql = 'SELECT * FROM userLandProduct WHERE userAddr = ? AND productId = ?'
+    return db.query(sql, val)
+  }
+
+  async findAllproduct () {
+    let val = ['landproduct']
+    let sql = 'SELECT * FROM ?? '
+    return db.query(sql, val)
+  }
+
+  async queryLandProductInfo (productId) {
+    let val = ['landproduct', productId]
+    let sql = 'SELECT imgSrc FROM ?? WHERE productId = ?'
     return db.query(sql, val)
   }
 }

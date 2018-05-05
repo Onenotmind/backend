@@ -21,6 +21,7 @@ const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = requi
     - 下架过期商品 dropOffProduct
     - 删除过期商品 deleteExpiredProduct
     - 兑换商品 exchangeProduct
+    - 更新用户的竹子数量 updateUserBamboo
 	辅助函数:
 		- cacl 计算最终的经纬度与长宽
     - geneStarPoint 商品产生核心点
@@ -236,6 +237,17 @@ class LandProductController {
 			return serviceError()
 		})
 	}
+
+  async updateUserBamboo (ctx) {
+    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const addr = ctx.query['addr']
+    const addrVali = await joiParamVali.valiAddr(addr)
+    if (!addrVali) {
+      return new Error(CommonCodes.Params_Check_Fail)
+    }
+    const updateBamboo = await landProductModel.updateUserBamboo(addr)
+    return updateBamboo
+  }
 
   geneStarPoint () {
     this.starPoint = []

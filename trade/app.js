@@ -113,8 +113,10 @@ app.use(cors({
     - userGeneCode 发送验证码给邮箱
     - userCheckCode 验证验证码正确与否
     - userChangeLoginPass 更改登陆密码
+    - changePwdWhenForget 忘记密码
     - userChangeTradePass 更改交易密码
     - userRegisterByRandom 用户随机注册
+    - queryUserEmail 查询用户的邮箱 
     - testTrans 测试user事务
   @个人资产管理
     - 获取用户详细信息和资产 getUserInfoAndAssetsByAddr
@@ -170,13 +172,31 @@ koaRouter.post('/userChangeLoginPass', async (ctx) => {
   }
 })
 
+koaRouter.get('/changePwdWhenForget', async (ctx) => {
+  const res = await userDetailController.changePwdWhenForget(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LoginCodes.Change_Login_Pwd_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
 
 koaRouter.post('/userChangeTradePass', async (ctx) => {
   const res = await userDetailController.changeTradePwd(ctx)
-  if (res) {
+  if (!_.isError(res)) {
     ctx.body = succRes(LoginCodes.Change_Trade_Pwd_Succ, res)
   } else {
     ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/queryUserEmail', async (ctx) => {
+  const res = await userDetailController.queryUserEmail(ctx)
+  if (res) {
+    ctx.body = succRes(LoginCodes.Query_Email_Succ, res)
+  } else {
+    ctx.body = errorRes(LoginCodes.User_Not_Bind_Email)
   }
 })
 
@@ -427,7 +447,7 @@ koaRouter.post('/deleteRollOutOrder', async (ctx) => {
     - 熊猫外出获取宝物 getEthlandProduct
     - 查询某个熊猫的详细信息 queryPandaInfo
     - 随机产生一只g10熊猫 genePandaRandom
-    - 查询某只熊猫外出回归带的物品 getPandaBackAssets
+    - 查询熊猫外出回归带的物品 getPandaBackAssets
     - 出售熊猫 sellPanda
     - 丢弃熊猫 delPandaByGen
     - 孵化熊猫 sirePanda
@@ -471,7 +491,8 @@ koaRouter.get('/queryPandaInfo', async (ctx) => {
 // testApi getEthlandProduct?pandaGeni=0x12987uhvr453buyvu3u89&bamboo=300
 koaRouter.get('/getEthlandProduct', async (ctx) => {
   logger.error('/getEthlandProduct')
-  const res = await pandaOwnerController.getEthlandProduct(ctx)
+  const starArr = landProductController.getStarPoint()
+  const res = await pandaOwnerController.getEthlandProduct(ctx, starArr)
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Panda_Out_Succ, res)
   } else {
@@ -547,6 +568,8 @@ koaRouter.post('/buyPanda', async (ctx) => {
     - 获取当前投票中的商品 getCurrentVotedProduct
     - 给商品投票 voteProduct
     - 获得当前正在出售的商品 getCurrentProduct
+  @landassets
+    - 更新用户的竹子数量 updateUserBamboo
 */
 
 koaRouter.get('/getCurrentStarPoint', async (ctx) => {
@@ -591,6 +614,15 @@ koaRouter.get('/getCurrentProduct', async (ctx) => {
     ctx.body = succRes(LandProductCodes.Get_Current_Product_Succ, res)
   } else {
     ctx.body = errorRes(LandProductCodes.Get_Current_Product_Fail)
+  }
+})
+
+koaRouter.get('/updateUserBamboo', async (ctx) =>{
+  const res = await landProductController.updateUserBamboo(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LandProductCodes.Update_User_Bamboo_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
   }
 })
 

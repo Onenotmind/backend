@@ -16,6 +16,8 @@ let LoginCodes = {
   'Params_Check_Fail': '参数校验失败',
   'Mail_Send_Succ': '邮件发送成功！',
   'Mail_Send_Error': '邮件发送失败,请稍后再试',
+  'User_Not_Bind_Email': '用户未绑定邮箱',
+  'Query_Email_Succ': '查询用户邮箱成功！',
   'Code_Error': '验证码错误！',
   'Code_Correct': '验证码正确！',
   'Reset_Pass_Succ': '重置密码成功！',
@@ -26,7 +28,7 @@ let LoginCodes = {
   'Change_Login_Pwd_Fail': '更改登陆密码失败，请稍后再试！',
   'Change_Trade_Pwd_Fail': '更改交易密码失败，请稍后再试！',
   'Assets_Data_Normal': '资产数据返回正常！',
-	'Assets_Data_Null': '资产数据返回错误！'
+  'Assets_Data_Null': '资产数据返回错误！'
 }
 
 let AssetsCodes = {
@@ -40,7 +42,8 @@ let PandaOwnerCodes = {
 	'Already_Gene_Free_Panda': '已经生成过一只G10的熊猫',
 	'Gene_Free_Panda_Succ': '生成G10熊猫成功',
 	'Query_Panda_By_Addr': '查询地址下所有熊猫成功！',
-	'Query_Panda_In_Sold': '查询所有在售是熊猫！'
+	'Query_Panda_In_Sold': '查询所有在售是熊猫！',
+	'Not_Out_Panda': '该用户没有外出的熊猫'
 }
 
 let LandProductCodes = {
@@ -60,7 +63,8 @@ let LandProductCodes = {
 	'Vote_Product_Succ': '商品投票成功！',
 	'Vote_Product_Fail': '商品投票失败！',
 	'Get_Current_Product_Succ': '获取当前商品成功！',
-	'Get_Current_Product_Fail':'获取当前商品失败！'
+	'Get_Current_Product_Fail':'获取当前商品失败！',
+	'Update_User_Bamboo_Succ': '更新用户的竹子数量成功！'
 }
 
 let PandaLandCodes = {
@@ -70,6 +74,7 @@ let PandaLandCodes = {
 	'Update_Panda_Attr_Fail': '更新用户属性失败！',
 	'Update_Land_Assets_Fail': '更新用户资产失败',
 	'Back_Assets_Carry_Fail': '带回来的商品失败！',
+	'Delete_Back_Assets_Fail': '删除回归商品失败！',
 	'Panda_Out_Succ': '熊猫外出搜索成功！',
 	'Panda_Not_Sold': '熊猫并非出售',
 	'Sell_Panda_Succ': '出售熊猫成功！',

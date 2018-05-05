@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
+const { CommonCodes } = require('./msgCodes/StatusCodes.js')
 
 function cacl (long, lati, rate, direction, hungry, speed) {
   let tmpWidth = 0
