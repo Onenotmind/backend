@@ -79,6 +79,24 @@ function getParamsCheck (ctx, paramsArray) {
   })
 }
 
+function checkGetParams (ctx, paramsArray) {
+  return new Promise((resolve, reject) => {
+    if (ctx.request.method !== 'GET') {
+      reject(CommonCodes.Request_Method_Wrong)
+    }
+    let params = []
+    paramsArray.forEach((element) => {
+      if (ctx.query[element]) {
+        params.push(ctx.query[element])
+      } else {
+        reject(`参数${element}不存在！`)
+      }
+    })
+    resolve(params)
+  })
+}
+
+
 function postParamsCheck (ctx, paramsArray) {
   return new Promise((resolve, reject) => {
     if (ctx.request.method !== 'POST') {
@@ -140,6 +158,7 @@ module.exports = {
   uuid: uuid,
   getParamsCheck: getParamsCheck,
   postParamsCheck: postParamsCheck,
+  checkGetParams: checkGetParams,
   encrypt: encrypt,
   decrypt: decrypt,
   checkToken: checkToken,

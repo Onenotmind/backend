@@ -29,6 +29,7 @@ const { PandaOwnerCodes, AssetsCodes, errorRes, CommonCodes, PandaLandCodes, ser
    - market
    	- 查询当前所有待售熊猫 queryAllPandaBeSold
    	- 购买熊猫 buyMarketPanda
+   	- 取消出售熊猫 unSoldPanda
    - 辅助函数
    	- 随机属性产生 geneAttr
    	- 固定范围内随机值产生 geneAttrVal
@@ -109,6 +110,20 @@ class PandaOwnerController {
 					const backAssetsArr = backAssets[0].backAssets.split('|')
 					if (backAssetsArr.length > 0) {
 						backProducts = backProducts.concat(backAssetsArr)
+						for (let landPro of backAssetsArr) {
+		        	// 先查询需要更新的商品是否加入用户资产数据库
+		        	// 没有的话就insert
+		        	// 有的话就update
+		        	const specifiedPro = await pandaOwnerModel.querySpecifiedProByAddr(checkAddr, landPro)
+		        	if (!specifiedPro) return new Error(LandProductCodes.Query_Product_Fail)
+		        	if (specifiedPro.length === 0) {
+		        		const insertPro = await pandaOwnerModel.insertLandProductToUser(checkAddr, landPro)
+		        		if (!insertPro) return new Error(LandProductCodes.Insert_Product_Fail)
+		        	} else {
+		        		const updatePro = await pandaOwnerModel.updateUserLandPro(checkAddr, landPro)
+		        		if (!updatePro) return new Error(LandProductCodes.Update_Product_Fail)
+		        	}
+		        }
 					}
 				}
 				if (backAssets[0].dropAssets) {
@@ -182,6 +197,27 @@ class PandaOwnerController {
 			console.log(e)
 			return serviceError()
 		})
+	}
+
+	/**
+		*	取消出售熊猫 unSoldPanda
+		*/
+	async unSoldPanda (ctx) {
+		const token = ctx.request.headers['token']
+		const checkAddr = ctx.cookies.get('userAddr')
+		const tokenCheck = await checkToken(token, checkAddr)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const pandaGen = ctx.query['pandaGen']
+		const pandaGenVali = await joiParamVali.valiPandaGeni(pandaGen)
+		if (!pandaGenVali) return new Error(CommonCodes.Params_Check_Fail)
+		// 逻辑部分
+		// 判断这只熊猫是否在addr下
+		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
+		if (!pandaInfo || pandaInfo.length === 0) return new Error(PandaLandCodes.No_Such_Panda)
+		if (pandaInfo[0].ownerAddr !== checkAddr) return new Error(PandaLandCodes.No_Such_Panda)
+		// 取消出售熊猫
+		const cancelSoldPanda = await pandaOwnerModel.unSoldPanda(pandaGen)
+		return cancelSoldPanda
 	}
 
 	async queryAllPandaBeSold (ctx) {
@@ -336,6 +372,9 @@ class PandaOwnerController {
 		if (!genVali || !priceVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
+		// 查询某个地址所有未出售的熊猫，若熊猫总数只有一个，则不能卖熊猫
+		const unsoldPandas = await pandaOwnerModel.queryAllPandaByAddr(checkAddr)
+		if (!unsoldPandas || unsoldPandas.length < 2) return new Error(LandProductCodes.Only_One_Unsold_Panda)
 		// const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
 		// if (!checkPwd) return checkPwd
 		const sellPanda = await pandaOwnerModel.sellPanda(gen, price)
@@ -393,23 +432,81 @@ class PandaOwnerController {
 		return true
   }
 
-  async buyPanda (addr, pandaGen, price) {
+  async buyPanda (ctx) {
+  	const addr = ctx.query['addr']
+  	const pandaGen = ctx.query['pandaGen']
+  	const price = ctx.query['price']
 		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('addr')
+		const checkAddr = ctx.cookies.get('userAddr')
 		const tokenCheck = await checkToken(token, checkAddr)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
 		if (!pandaInfo || pandaInfo[0].state !== 'sold') return new Error(PandaLandCodes.Panda_Not_Sold)
 		const ownerAddr = pandaInfo[0].ownerAddr
-		const bamboo = pandaInfo[0].bamboo
+		const ownerAssets = await pandaOwnerModel.queryAssetsByAddr(ownerAddr)
+		if (!ownerAssets) return ownerAssets
+		const bamboo = ownerAssets[0].bamboo
 		const assets = await pandaOwnerModel.queryAssetsByAddr(addr)
 		if (!assets || assets[0].bamboo < price) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
 		const buyBamboo = assets[0].bamboo
-		let buyleft = parseFloat(buybamboo) - parseFloat(price) > 0 ? parseFloat(buybamboo) - parseFloat(price): 0
-		let ownerleft = parseFloat(ownerbamboo) + parseFloat(price)
-		const updateAssets = await pandaOwnerModel.updateAssetsByAddr(addr, buyleft, ownerAddr, ownerleft)
-		if (!updateAssets) return new Error(PandaLandCodes.Buy_Panda_Fail)
-		return updateAssets
+		let buyleft = parseFloat(buyBamboo) - parseFloat(price) > 0 ? parseFloat(buyBamboo) - parseFloat(price): 0
+		let ownerleft = parseFloat(bamboo) + parseFloat(price)
+		const trans = await pandaOwnerModel.startTransaction()
+		if (!trans) return new Error(CommonCodes.Service_Wrong)
+		let tasks = [
+			async function () {
+				const updateAssets = await pandaOwnerModel.updateAssetsByAddr(trans, addr, buyleft)
+				return updateAssets
+			},
+			async function (res) {
+				if (_.isError(res)) return res
+				console.log(ownerAddr)
+			console.log(ownerleft)
+				const updateOwnerAssets = await pandaOwnerModel.updateAssetsByAddr(trans, ownerAddr, ownerleft)
+				return updateOwnerAssets
+			},
+			async function (res) {
+				console.log(res)
+				if (_.isError(res)) return res
+				const transPanda = await pandaOwnerModel.transferPandaOwner(trans, addr, pandaGen)
+				return transPanda
+			},
+			function (res, callback) {
+				if (_.isError(res)) {
+					callback(res)
+				} else {
+					callback(null, res)
+				}
+			}
+		]
+		return new Promise((resolve, reject) => {
+			trans.beginTransaction(function (bErr) {
+				if (bErr) {
+					reject(bErr)
+					return
+				}
+				async.waterfall(tasks, function (tErr, res) {
+		      if (tErr) {
+		        trans.rollback(function () {
+		          trans.release()
+		          reject(tErr)
+		        })
+		      } else {
+		        trans.commit(function (err, info) {
+		          if (err) {
+		            trans.rollback(function (err) {
+		              trans.release()
+		              reject(err)
+		            })
+		          } else {
+		            trans.release()
+		            resolve(res)
+		          }
+		        })
+		      }
+		    })
+			})
+		})
 	}
 
 	async getEthlandProduct (ctx, starArr) {
@@ -549,20 +646,22 @@ class PandaOwnerController {
         	const updateLandAssets = await pandaOwnerModel.updateUserLandAssetsTrans(trans, addr, saveRes)
 	        if (!updateLandAssets) return new Error(PandaLandCodes.Update_Land_Assets_Fail)
 	      }
-        for (let landPro of saveProRes) {
-        	// 先查询需要更新的商品是否加入用户资产数据库
-        	// 没有的话就insert
-        	// 有的话就update
-        	const specifiedPro = await pandaOwnerModel.querySpecifiedProByAddr(addr, landPro)
-        	if (!specifiedPro) return new Error(LandProductCodes.Query_Product_Fail)
-        	if (specifiedPro.length === 0) {
-        		const insertPro = await pandaOwnerModel.insertLandProductToUser(trans, addr, landPro)
-        		if (!insertPro) return new Error(LandProductCodes.Insert_Product_Fail)
-        	} else {
-        		const updatePro = await pandaOwnerModel.updateUserLandPro(trans, addr, landPro)
-        		if (!updatePro) return new Error(LandProductCodes.Update_Product_Fail)
-        	}
-        }
+	    	// 将更新用户资产逻辑放到显示回家物品里 TODO
+        // for (let landPro of saveProRes) {
+        // 	// 先查询需要更新的商品是否加入用户资产数据库
+        // 	// 没有的话就insert
+        // 	// 有的话就update
+        // 	const specifiedPro = await pandaOwnerModel.querySpecifiedProByAddr(addr, landPro)
+        // 	if (!specifiedPro) return new Error(LandProductCodes.Query_Product_Fail)
+        // 	if (specifiedPro.length === 0) {
+        // 		const insertPro = await pandaOwnerModel.insertLandProductToUser(trans, addr, landPro)
+        // 		if (!insertPro) return new Error(LandProductCodes.Insert_Product_Fail)
+        // 	} else {
+        // 		const updatePro = await pandaOwnerModel.updateUserLandPro(trans, addr, landPro)
+        // 		if (!updatePro) return new Error(LandProductCodes.Update_Product_Fail)
+        // 	}
+        // }
+
         // 先查询该熊猫是否在backassets里还有数据
         // 若没有就插入
         // 有的话就删除这些数据再插入

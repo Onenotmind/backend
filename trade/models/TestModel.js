@@ -16,6 +16,8 @@ const { UserProductManagerServerModel } = require('../sqlModel/userProductManage
 
 const { AssetsValueServerModel } = require('../sqlModel/assetsValue.js')
 
+const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
+
 /**
 	@TestModel 测试数据专用
 		- user
@@ -48,6 +50,10 @@ const { AssetsValueServerModel } = require('../sqlModel/assetsValue.js')
 	    - 删除pandaOwner数据表 dropPandaOwnerTable()
 	    - 插入测试数据 insertDataToPandaOwner()
 	    - 判断pandaowner数据表是否存在  checkPandaownerTableExist
+    - backpandaassets
+      - 新建backpandaassets数据表 createBackPandaAssetsTable()
+      - 删除BackPandaAssets数据表 dropBackPandaAssetsTable()
+      - 判断BackPandaAssets数据表是否存在 checkBackPandaAssetsExist()
 
 */
 
@@ -136,7 +142,7 @@ class TestModel {
   }
 
   async insertDataToLandProduct () {
-    let sql = 'INSERT INTO pandaOwner VALUES '
+    let sql = 'INSERT INTO landProduct VALUES '
     for (let i = 0; i < landProductTestData.length; i++) {
       if (i !== landProductTestData.length - 1) {
         sql += landProductTestData[i] + ','
@@ -275,6 +281,33 @@ class TestModel {
         sql += pandaOwnerTestData[i]
       }
     }
+    return db.query(sql)
+  }
+
+  async createBackPandaAssetsTable () {
+    let sql = 'CREATE TABLE backpandaassets('
+    for(let index in BackPandaAssetsServerModel) {
+       if (BackPandaAssetsServerModel.hasOwnProperty(index)) {
+          let obj = BackPandaAssetsServerModel[index]
+          if (obj) {
+            if (obj.label === 'other') {
+              sql += obj.type
+            } else {
+              sql = sql + obj.label + ' ' + obj.type + ','
+            }
+          }
+       }
+    }
+    return db.query(sql)
+  }
+
+  async dropBackPandaAssetsTable () {
+    let sql = 'DROP TABLE backpandaassets'
+    return db.query(sql)
+  }
+
+  async checkBackPandaAssetsExist () {
+    let sql = 'show tables like "%backpandaassets%"'
     return db.query(sql)
   }
 }

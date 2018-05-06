@@ -53,7 +53,9 @@ class TestController {
 					if (!productDrop) return productDrop
 				}
 				const productCreate = await testModel.createLandProductTable()
-				return productCreate
+				if (!productCreate) return productCreate
+				const inserProduct = await testModel.insertDataToLandProduct()
+				return inserProduct
 			},
 			// @MYSQL UserLandProduct
 			async function (res) {
@@ -90,6 +92,18 @@ class TestController {
 				}
 				const productCreate = await testModel.createAssetsValueTable()
 				return productCreate
+			},
+			// @MYSQL backpandaassets
+			async function (res) {
+				if (!_.isError(res)) return res
+				const backpandaassetsExist = await testModel.checkBackPandaAssetsExist()
+				if (!backpandaassetsExist) return backpandaassetsExist
+				if (backpandaassetsExist.length > 0) {
+					const backpandaassetsDrop = await testModel.dropBackPandaAssetsTable()
+					if (!backpandaassetsDrop) return backpandaassetsDrop
+				}
+				const backpandaassetsCreate = await testModel.createBackPandaAssetsTable()
+				return backpandaassetsCreate
 			},
 			function (res, callback) {
 				if (_.isError(res)) {

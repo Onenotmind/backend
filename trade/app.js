@@ -120,6 +120,8 @@ app.use(cors({
     - testTrans 测试user事务
   @个人资产管理
     - 获取用户详细信息和资产 getUserInfoAndAssetsByAddr
+  @确认订单
+    - 确认订单 exchangeProduct
   @通用函数
     - 产生验证码 geneEmailCode
     - 加密算法 encrypt
@@ -198,6 +200,15 @@ koaRouter.get('/queryUserEmail', async (ctx) => {
   } else {
     ctx.body = errorRes(LoginCodes.User_Not_Bind_Email)
   }
+})
+
+koaRouter.get('/exchangeProduct', async (ctx) => {
+  const res = await landProductController.exchangeProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LandProductCodes.Exchange_Product_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  } 
 })
 
 /**
@@ -449,6 +460,7 @@ koaRouter.post('/deleteRollOutOrder', async (ctx) => {
     - 随机产生一只g10熊猫 genePandaRandom
     - 查询熊猫外出回归带的物品 getPandaBackAssets
     - 出售熊猫 sellPanda
+    - 取消出售熊猫 unSoldPanda
     - 丢弃熊猫 delPandaByGen
     - 孵化熊猫 sirePanda
 */
@@ -465,6 +477,15 @@ koaRouter.get('/sellPanda', async (ctx) => {
   const res = await pandaOwnerController.sellPanda(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Sell_Panda_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/unSoldPanda', async (ctx) => {
+  const res = await pandaOwnerController.unSoldPanda(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Unsell_Panda_Succ, res)
   } else {
     ctx.body = errorRes(res.message)
   }
@@ -547,17 +568,13 @@ koaRouter.get('/queryAllPandaSold', async (ctx) => {
   }
 })
 
-koaRouter.post('/buyPanda', async (ctx) => {
-  let requestData = ctx.request.body
-  let res = null
-  await pandaOwnerController.buyPanda(requestData['addr'], requestData['pandaGen'], requestData['price'])
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+koaRouter.get('/buyPanda', async (ctx) => {
+  const res = await pandaOwnerController.buyPanda(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(PandaLandCodes.Buy_Panda_Succ, res)
+  } else {
+    ctx.body = errorRes(PandaLandCodes.Buy_Panda_Fail)
+  }
 })
 
 

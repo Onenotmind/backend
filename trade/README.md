@@ -24,6 +24,10 @@
 			- userLandProduct 用户商品资产
 			- userProductManager 用户商品资产提现
 
+### 当前问题
+	- sql优化
+	- controller 与 model 层优化
+
 
 
 

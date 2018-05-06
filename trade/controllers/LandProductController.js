@@ -4,7 +4,7 @@ const async = require('async')
 const landProductModel = new LandProductModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
-const { checkToken, checkUserToken } = require('../libs/CommonFun.js')
+const { checkToken, checkUserToken, decrypt } = require('../libs/CommonFun.js')
 const { LandProductClientModel } = require('../sqlModel/landProduct.js')
 const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
@@ -158,16 +158,34 @@ class LandProductController {
     */
   async exchangeProduct (ctx) {
     if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const code = ctx.query['code']
+    const pwd = ctx.query['pwd']
     const userAddr = ctx.query['addr']
     const productId = ctx.query['productId']
     const userRealAddr = ctx.query['userRealAddr']
     const userPhone = ctx.query['userPhone']
+    const userName = ctx.query['userName']
     const userAddrVali = await joiParamVali.valiAddr(userAddr)
     const productIdVali = await joiParamVali.valiProductId(productId)
+    const pwdVali = await joiParamVali.valiPass(pwd)
     const userPhoneVali = await joiParamVali.valiPhone(userPhone)
-    if (!userPhoneVali || !productIdVali || !userPhoneVali || !userRealAddr) {
+    if (!userPhoneVali || !productIdVali || !userPhoneVali || !userRealAddr || !pwdVali) {
       return new Error(CommonCodes.Params_Check_Fail)
     }
+    // 交易密码 与验证码验证
+    const realPwd = await landProductModel.queryUserTradePwd(userAddr)
+    if (!realPwd) return realPwd
+    if (realPwd[0].utradePwd !== pwd) return new Error(LoginCodes.Trade_Pwd_Wrong)
+    const email = await landProductModel.queryUserEmail(userAddr)
+    if(!email) return email
+    let tmpCode = null
+    if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
+      tmpCode = ctx.cookies.get('tmpUserId')
+    }
+     let decryptRes = parseInt(decrypt(tmpCode, email[0].uemail))
+     if (decryptRes - 1 !== parseInt(code)) {
+       return errorRes(LoginCodes.Code_Error)  
+     }
     const specifiedPro = await landProductModel.querySpecifiedProByAddr(userAddr, productId)
     if (!specifiedPro || specifiedPro.length === 0 || parseInt(specifiedPro[0].value) < 1) {
       return new Error(LandProductCodes.User_No_Such_Product)

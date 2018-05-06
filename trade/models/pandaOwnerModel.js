@@ -17,6 +17,7 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 查询某只熊猫的详细信息 queryPandaInfo()
     - 改变熊猫的oweraddr transferPandaOwner()
     - 出售熊猫 sellPanda
+    - 取消出售熊猫 unSoldPanda
     - 判断用户的交易密码是否正确 checkOwnerTradePwd
     - 将外出熊猫回归的状态更改为在家 pandaBackHome
     - 批量插入landassets表 updateAssetsByAddr
@@ -75,10 +76,10 @@ class PandaOwnerModel {
     return db.query(sql, val)
   }
 
-  async transferPandaOwner (addr, pandaGen) {
-    let val = ['pandaowner', value, pandaGen]
-    let sql = 'UPDATE ?? SET ownerAddr = ? WHERE pandaGen = ?'
-    return db.query(sql, val)
+  async transferPandaOwner (trans, addr, pandaGen) {
+    let val = ['pandaowner', addr, 'home', pandaGen]
+    let sql = 'UPDATE ?? SET ownerAddr = ?, state = ?? WHERE pandaGen = ?'
+    return db.transQuery(trans, sql, val)
   }
 
   async genePanda (gen, addr, type, speed, hungry, gold, water, wood, fire, earth, special, integral, state, price) {
@@ -109,8 +110,8 @@ class PandaOwnerModel {
   }
 
   async queryAllPandaByAddr (addr) {
-    let val = ['pandaowner', addr, 'home']
-    let sql = 'SELECT * FROM ?? WHERE ownerAddr = ? AND state = ?'
+    let val = ['pandaowner', addr, 'sold']
+    let sql = 'SELECT * FROM ?? WHERE ownerAddr = ? AND state != ?'
     return db.query(sql, val)
   }
 
@@ -145,17 +146,22 @@ class PandaOwnerModel {
     return db.query(sql, val)
   }
 
+  async unSoldPanda (gen) {
+    let val = ['pandaowner', 'home', gen]
+    let sql = 'UPDATE ?? SET state = ? WHERE pandaGen = ?'
+    return db.query(sql, val)
+  }
+
   async pandaBackHome (gen) {
     let val = ['pandaowner', 'home', gen]
     let sql = 'UPDATE ?? SET state = ? WHERE pandaGen = ?'
     return db.query(sql, val)
   }
 
-  async updateAssetsByAddr (addr, buybamboo, ownerAddr, ownerbamboo) {
-    let val = [addr, buybamboo, ownerAddr, ownerbamboo]
-    let sql = 'update landassets set bamboo = case uaddr' +
-      ' when ? then ? when ? then ? end'
-    return db.query(sql, val)
+  async updateAssetsByAddr (trans, addr, buybamboo) {
+    let val = [buybamboo, addr]
+    let sql = 'update landassets set bamboo = ? where uaddr = ?'
+    return db.transQuery(trans, sql, val)
   }
 
   async getInfoForProduct (trans, pandaGen) {
@@ -289,20 +295,20 @@ class PandaOwnerModel {
     return db.query(sql, val)
   }
 
-  async insertLandProductToUser (trans, userAddr, productId) {
+  async insertLandProductToUser (userAddr, productId) {
     let insertData = {
       userAddr: userAddr,
       productId: productId,
       value: 1
     }
     let sql = 'INSERT INTO userLandProduct SET ?'
-    return db.transQuery(trans, sql, insertData)
+    return db.query(sql, insertData)
   }
 
-  async updateUserLandPro (trans, userAddr, productId) {
+  async updateUserLandPro (userAddr, productId) {
     let val = ['userlandproduct', userAddr, productId]
     let sql = 'UPDATE ?? SET value = value + 1 WHERE userAddr = ? AND productId = ?'
-    return db.transQuery(trans, sql, val)
+    return db.query(sql, val)
   }
 
   async querySpecifiedProByAddr (addr, productId) {
@@ -312,8 +318,8 @@ class PandaOwnerModel {
   }
 
   async findAllproduct () {
-    let val = ['landproduct']
-    let sql = 'SELECT * FROM ?? '
+    let val = ['landproduct', 'sold']
+    let sql = 'SELECT * FROM ?? where state = ??'
     return db.query(sql, val)
   }
 

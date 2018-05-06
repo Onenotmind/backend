@@ -15,6 +15,10 @@ let UserProductManagerServerModel = {
 		label: 'userRealAddr',
 		type: 'VARCHAR(20),'
 	},
+	userName: {
+		label: 'userName',
+		type: 'VARCHAR(20),'
+	},
 	userPhone: {
 		label: 'userPhone',
 		type: 'VARCHAR(20),'

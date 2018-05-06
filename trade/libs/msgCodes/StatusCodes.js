@@ -28,7 +28,8 @@ let LoginCodes = {
   'Change_Login_Pwd_Fail': '更改登陆密码失败，请稍后再试！',
   'Change_Trade_Pwd_Fail': '更改交易密码失败，请稍后再试！',
   'Assets_Data_Normal': '资产数据返回正常！',
-  'Assets_Data_Null': '资产数据返回错误！'
+  'Assets_Data_Null': '资产数据返回错误！',
+  'Trade_Pwd_Wrong': '交易密码不正确！'
 }
 
 let AssetsCodes = {
@@ -64,7 +65,8 @@ let LandProductCodes = {
 	'Vote_Product_Fail': '商品投票失败！',
 	'Get_Current_Product_Succ': '获取当前商品成功！',
 	'Get_Current_Product_Fail':'获取当前商品失败！',
-	'Update_User_Bamboo_Succ': '更新用户的竹子数量成功！'
+	'Update_User_Bamboo_Succ': '更新用户的竹子数量成功！',
+	'Exchange_Product_Succ': '商品兑换成功！'
 }
 
 let PandaLandCodes = {
@@ -78,7 +80,10 @@ let PandaLandCodes = {
 	'Panda_Out_Succ': '熊猫外出搜索成功！',
 	'Panda_Not_Sold': '熊猫并非出售',
 	'Sell_Panda_Succ': '出售熊猫成功！',
+	'Unsell_Panda_Succ': '取消出售熊猫成功！',
+	'Only_One_Unsold_Panda': '只有一只没出售的熊猫',
 	'Buy_Panda_Fail': '购买熊猫失败',
+	'Buy_Panda_Succ': '购买熊猫成功',
 	'Back_Assets_Carry_Succ': '熊猫带回商品成功!',
 	'Drop_Panda_Fail': '熊猫丢弃失败!',
 	'Panda_Sire_Succ': '熊猫孵化成功'

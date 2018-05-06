@@ -31,6 +31,9 @@ const { landProductTestData } = require('../mysqlData/landProduct/sqlData.js')
   @MYSQL landassets
     - 业务接口
       - 更新用户的竹子数量 updateUserBamboo
+  @MYSQL user
+    - 查询用户的邮箱 queryUserEmail
+    - 查询用户的交易密码 queryUserTradePwd
 */
 class LandProductModel {
 
@@ -171,8 +174,8 @@ class LandProductModel {
   }
 
   async deleteLandProductFrag (trans, userAddr, productId) {
-    let val = [userAddr, productId, 'send']
-    let sql = 'UPDATE userLandProduct SET value = value - 1 WHERE productId = ? AND userAddr = ?'
+    let val = [productId, userAddr]
+    let sql = 'UPDATE userLandProduct SET value = value - 3 WHERE productId = ? AND userAddr = ?'
     return db.transQuery(trans, sql, val)
   }
 
@@ -185,6 +188,18 @@ class LandProductModel {
   async updateUserBamboo (addr) {
     let val = ['landassets', count, addr]
     let sql = 'UPDATE ?? SET bamboo = bamboo + 1 WHERE uaddr = ?'
+    return db.query(sql, val)
+  }
+
+  async queryUserEmail (addr){
+    let val = ['uemail', 'user', addr]
+    let sql = 'select ?? from ?? where uaddr = ?'
+    return db.query(sql, val)
+  }
+
+  async queryUserTradePwd (addr) {
+    let val = ['utradePwd', 'user', addr]
+    let sql = 'select ?? from ?? where uaddr = ?'
     return db.query(sql, val)
   }
 }

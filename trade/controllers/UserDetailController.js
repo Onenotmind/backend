@@ -3,7 +3,7 @@ const UserDetailModel = require('../models/UserDetailModel.js')
 const userDetailModel = new UserDetailModel()
 const { LoginCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const JoiParamVali = require('../libs/JoiParamVali.js')
-const { getParamsCheck, checkUserToken, postParamsCheck, decrypt, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
+const { getParamsCheck, checkUserToken, checkGetParams, postParamsCheck, decrypt, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
 const { sendCodeFromMail } = require('../libs/mailer.js')
 const joiParamVali = new JoiParamVali()
 
@@ -177,7 +177,7 @@ class UserDetailController {
 		const code = params.code
 		const addrVali = await joiParamVali.valiAddr(addr)
 		const newPwdVali = await joiParamVali.valiPass(newPwd)
-		if (!addrVali || !pwdVali || !newPwd) {
+		if (!addrVali || !newPwdVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
 		}
 		const email = await userDetailModel.queryUserEmail(addr)
@@ -186,10 +186,10 @@ class UserDetailController {
 		if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
       tmpCode = ctx.cookies.get('tmpUserId')
     }
-    let decryptRes = parseInt(decrypt(tmpCode, email))
-    if (decryptRes - 1 !== parseInt(code)) {
-      return errorRes(LoginCodes.Code_Error)  
-    }
+   let decryptRes = parseInt(decrypt(tmpCode, email[0].uemail))
+   if (decryptRes - 1 !== parseInt(code)) {
+     return errorRes(LoginCodes.Code_Error)  
+   }
 		const newPwdChange = await userDetailModel.changeTradePwd(addr, newPwd)
 		if (newPwdChange) {
 			return newPwdChange
