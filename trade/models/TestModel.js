@@ -1,22 +1,24 @@
 const Db = require('./Db.js')
 const db = new Db()
+const moment = require('moment')
 
-const { UserServerModel } = require('../sqlModel/user.js')
-const { LandAssetsServerModel } = require('../sqlModel/landAssets.js')
+const { UserServerModel, UserModelName } = require('../sqlModel/user.js')
+const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
 
-const { PandaOwnerServerModel } = require('../sqlModel/pandaOwner.js')
+const { PandaOwnerServerModel, PandaOwnerName } = require('../sqlModel/pandaOwner.js')
 const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
 
-const { LandProductServerModel } = require('../sqlModel/landProduct.js')
+const { LandProductServerModel, LandProductName, LandProductInserData } = require('../sqlModel/landProduct.js')
 const { landProductTestData } = require('../mysqlData/landProduct/sqlData.js')
 
-const { UserLandProductServerModel } = require('../sqlModel/userLandProduct.js')
+const { UserLandProductServerModel, UserLandProductName } = require('../sqlModel/userLandProduct.js')
 
-const { UserProductManagerServerModel } = require('../sqlModel/userProductManager.js')
+const { UserProductManagerServerModel, UserProductManagerName } = require('../sqlModel/userProductManager.js')
 
-const { AssetsValueServerModel } = require('../sqlModel/assetsValue.js')
+const { AssetsValueServerModel, AssetsValueName } = require('../sqlModel/assetsValue.js')
 
 const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
+
 
 /**
 	@TestModel 测试数据专用
@@ -54,6 +56,9 @@ const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
       - 新建backpandaassets数据表 createBackPandaAssetsTable()
       - 删除BackPandaAssets数据表 dropBackPandaAssetsTable()
       - 判断BackPandaAssets数据表是否存在 checkBackPandaAssetsExist()
+  - 辅助函数
+    - 检测字段是否是索引 checkColumnsIsIndex
+    - 根据 model 层返回创建数据表的sql语句 getTableCreateSql
 
 */
 
@@ -65,12 +70,12 @@ class TestModel {
 
 	/* user && landassets  */
 	async checkUserTableExist () {
-    let sql = 'show tables like "%user%"'
+    let sql = 'show tables like "user"'
     return db.query(sql)
   }
 
   async checkLandassetsTableExist () {
-    let sql = 'show tables like "%landassets%"'
+    let sql = 'show tables like "landassets"'
     return db.query(sql)
   }
 
@@ -85,54 +90,18 @@ class TestModel {
   }
 
   async createTableUser () {
-    let sql = 'CREATE TABLE user('
-    for(let index in UserServerModel) {
-       if (UserServerModel.hasOwnProperty(index)) {
-          let obj = UserServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type + ','
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(UserModelName, UserServerModel)
     return db.query(sql)
   }
 
   async createTableLandassets () {
-    let sql = 'CREATE TABLE landassets('
-    for(let index in LandAssetsServerModel) {
-       if (LandAssetsServerModel.hasOwnProperty(index)) {
-          let obj = LandAssetsServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type + ','
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(LandAssetsName, LandAssetsServerModel)
     return db.query(sql)
   }
 
   /* landproduct  */
   async createLandProductTable () {
-    let sql = 'CREATE TABLE landProduct('
-    for(let index in LandProductServerModel) {
-       if (LandProductServerModel.hasOwnProperty(index)) {
-          let obj = LandProductServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type + ','
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(LandProductName, LandProductServerModel)
     return db.query(sql)
   }
 
@@ -142,43 +111,55 @@ class TestModel {
   }
 
   async insertDataToLandProduct () {
-    let sql = 'INSERT INTO landProduct VALUES '
-    for (let i = 0; i < landProductTestData.length; i++) {
-      if (i !== landProductTestData.length - 1) {
-        sql += landProductTestData[i] + ','
-      } else {
-        sql += landProductTestData[i]
+    let insertCb = async (productId, imgSrc, name) => {
+      let curTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+      let timer = new Date().getTime()
+      let insertData = {
+        [LandProductServerModel.productId.label]: productId,
+        [LandProductServerModel.type.label]: 'fire',
+        [LandProductServerModel.state.label]: 'sold',
+        [LandProductServerModel.time.label]: timer,
+        [LandProductServerModel.imgSrc.label]: imgSrc,
+        [LandProductServerModel.name.label]: name,
+        [LandProductServerModel.value.label]: 100,
+        [LandProductServerModel.recommender.label]: 'ETHLAND',
+        [LandProductServerModel.gmt_create.label]: curTime,
+        [LandProductServerModel.gmt_modified.label]:curTime
       }
+      let val = [LandProductName, insertData]
+      let sql = 'INSERT INTO ?? SET ?'
+      await db.query(sql, val)
     }
-    return db.query(sql)
+
+    for (let pro of LandProductInserData) {
+      await insertCb(pro.productId, pro.imgSrc, pro.name)
+    }
+    // let sql = 'INSERT INTO landProduct VALUES '
+    // for (let i = 0; i < landProductTestData.length; i++) {
+    //   if (i !== landProductTestData.length - 1) {
+    //     sql += landProductTestData[i] + ','
+    //   } else {
+    //     sql += landProductTestData[i]
+    //   }
+    // }
+    // return db.query(sql)
+    // return true
   }
 
   async checkLandProductTableExist () {
-    let sql = 'show tables like "%landproduct%"'
+    let sql = 'show tables like "landproduct"'
     return db.query(sql)
   }
 
   /* userLandProduct */
 
   async checkUserLandProductExist () {
-    let sql = 'show tables like "%userLandproduct%"'
+    let sql = 'show tables like "userLandproduct"'
     return db.query(sql)
   }
 
   async createUserLandProductTable () {
-    let sql = 'CREATE TABLE userLandProduct('
-    for(let index in UserLandProductServerModel) {
-       if (UserLandProductServerModel.hasOwnProperty(index)) {
-          let obj = UserLandProductServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(UserLandProductName, UserLandProductServerModel)
     return db.query(sql)
   }
 
@@ -190,19 +171,7 @@ class TestModel {
   /* userproductmanager */
 
   async createUserProductManagerTable () {
-    let sql = 'CREATE TABLE userProductManager('
-    for(let index in UserProductManagerServerModel) {
-       if (UserProductManagerServerModel.hasOwnProperty(index)) {
-          let obj = UserProductManagerServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(UserProductManagerName, UserProductManagerServerModel)
     return db.query(sql)
   }
 
@@ -212,25 +181,13 @@ class TestModel {
   }
 
   async checkUserProductManager () {
-    let sql = 'show tables like "%userProductManager%"'
+    let sql = 'show tables like "userProductManager"'
     return db.query(sql)
   }
 
   /* assetsvalue */
   async createAssetsValueTable () {
-    let sql = 'CREATE TABLE assetsvalue('
-    for(let index in AssetsValueServerModel) {
-       if (AssetsValueServerModel.hasOwnProperty(index)) {
-          let obj = AssetsValueServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(AssetsValueName, AssetsValueServerModel)
     return db.query(sql)
   }
 
@@ -240,7 +197,7 @@ class TestModel {
   }
 
   async checkAssetsValue () {
-    let sql = 'show tables like "%assetsvalue%"'
+    let sql = 'show tables like "assetsvalue"'
     return db.query(sql)
   }
 
@@ -251,37 +208,26 @@ class TestModel {
   }
 
   async checkPandaownerTableExist () {
-    let sql = 'show tables like "%pandaOwner%"'
+    let sql = 'show tables like "pandaOwner"'
     return db.query(sql)
   }
 
   async createPandaOwnerTable () {
-    let sql = 'CREATE TABLE pandaOwner('
-    for(let index in PandaOwnerServerModel) {
-       if (PandaOwnerServerModel.hasOwnProperty(index)) {
-          let obj = PandaOwnerServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type + ','
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(PandaOwnerName, PandaOwnerServerModel)
     return db.query(sql)
   }
 
   async insertDataToPandaOwner () {
-    let sql = 'INSERT INTO pandaOwner VALUES '
-    for (let i = 0; i < pandaOwnerTestData.length; i++) {
-      if (i !== pandaOwnerTestData.length - 1) {
-        sql += pandaOwnerTestData[i] + ','
-      } else {
-        sql += pandaOwnerTestData[i]
-      }
-    }
-    return db.query(sql)
+    // let sql = 'INSERT INTO pandaOwner VALUES '
+    // for (let i = 0; i < pandaOwnerTestData.length; i++) {
+    //   if (i !== pandaOwnerTestData.length - 1) {
+    //     sql += pandaOwnerTestData[i] + ','
+    //   } else {
+    //     sql += pandaOwnerTestData[i]
+    //   }
+    // }
+    // return db.query(sql)
+    return true
   }
 
   async createBackPandaAssetsTable () {
@@ -307,8 +253,43 @@ class TestModel {
   }
 
   async checkBackPandaAssetsExist () {
-    let sql = 'show tables like "%backpandaassets%"'
+    let sql = 'show tables like "backpandaassets"'
     return db.query(sql)
+  }
+
+  /**
+    * 检测字段是否是索引 checkColumnsIsIndex
+    * @params { string } col 字段名
+    */
+  checkColumnsIsIndex (col) {
+    if (col.indexOf('pk_') < 0 && col.indexOf('uk_') < 0 && col.indexOf('idx_') < 0 && col.indexOf('other')) {
+      return false
+    } else {
+      return true
+    }
+  }
+
+  /**
+    * 根据 model 层返回创建数据表的sql语句 getTableCreateSql
+    * @params { string } name 数据表名
+    * @params { object } serverModel 数据表字段结构
+    */
+  getTableCreateSql (name, serverModel) {
+    let sql = 'create table '+ name + '('
+    for(let index in serverModel) {
+       if (serverModel.hasOwnProperty(index)) {
+          let obj = serverModel[index]
+          if (obj) {
+            // 判断是否是索引或者是其他
+            if (this.checkColumnsIsIndex(index)) {
+              sql += obj.label
+            } else {
+              sql = sql + obj.label + ' ' + obj.type + ','
+            }
+          }
+       }
+    }
+    return sql
   }
 }
 

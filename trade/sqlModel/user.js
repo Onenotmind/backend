@@ -8,45 +8,77 @@ let UserClientModel = {
   longitude: 'longitude',
   latitude: 'latitude'
 }
+/**
+  * MYSQL user 用户表
+  */
 let UserServerModel = {
   id: {
-    label: 'uid',
-    type: 'INT AUTO_INCREMENT'
+    label: 'pk_id',
+    type: 'bigint(20) unsigned not null auto_increment'
   },
   addr: {
-    label: 'uaddr',
-    type: 'VARCHAR(20)'
+    label: 'uk_addr',
+    type: 'char(42)'
   },
   email: {
-    label: 'uemail',
-    type: 'VARCHAR(20)'
+    label: 'uk_email',
+    type: 'varchar(30)'
+  },
+  phone: {
+    label: 'uk_phone',
+    type: 'varchar(15)'
   },
   pwd: {
     label: 'upwd',
-    type: 'VARCHAR(20)'
+    type: 'varchar(20)'
   },
   tradePwd: {
     label: 'utradePwd',
-    type: 'VARCHAR(20)'
+    type: 'varchar(20)'
   },
   state: {
-    label: 'ustate',
-    type: 'VARCHAR(10)'
+    label: 'state',
+    type: 'char(3)' // reg 注册 
   },
   longitude: {
     label: 'longitude',
-    type: 'FLOAT'
+    type: 'decimal'
   },
   latitude: {
     label: 'latitude',
-    type: 'FLOAT'
+    type: 'decimal'
   },
+  gmt_create: {
+    label: 'gmt_create',
+    type: 'datetime'
+  },
+  gmt_modified: {
+    label: 'gmt_modified',
+    type: 'datetime'
+  },
+  // 索引
+  pk_id: {
+    label: 'primary key(pk_id),'
+  },
+  uk_addr: {
+    label: 'unique key(uk_addr),'
+  },
+  uk_email: {
+    label: 'unique key(uk_email),'
+  },
+  uk_phone: {
+    label: 'unique key(uk_phone)'
+  },
+  // 默认sql引擎设置
   other: {
-    label: 'other',
-    type: 'PRIMARY KEY (uid))ENGINE=InnoDB DEFAULT CHARSET=utf8'
+    label: ' )ENGINE=InnoDB DEFAULT CHARSET=utf8'
   }
 }
+
+const UserModelName = 'user'
+
 module.exports = {
   UserClientModel: UserClientModel,
-  UserServerModel: UserServerModel
+  UserServerModel: UserServerModel,
+  UserModelName: UserModelName
 }

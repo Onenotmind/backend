@@ -5,7 +5,7 @@ const landProductModel = new LandProductModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
 const { checkToken, checkUserToken, decrypt } = require('../libs/CommonFun.js')
-const { LandProductClientModel } = require('../sqlModel/landProduct.js')
+const { LandProductClientModel, LandProductServerModel } = require('../sqlModel/landProduct.js')
 const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 /**
@@ -101,11 +101,11 @@ class LandProductController {
     if (!prepareProductArr) return new Error(LandProductCodes.Get_Prepare_Product_Fail)
     const cutLen = prepareProductArr.length > productSoldNum ? productSoldNum: prepareProductArr.length
     prepareProductArr.sort((a, b) => {
-      return parseInt(b.time) - parseInt(a.time)
+      return parseInt(b[LandProductServerModel.time.label]) - parseInt(a[LandProductServerModel.time.label])
     }).slice(0, cutLen)
     for (let pro of prepareProductArr) {
       const curTime = new Date().getTime() + 3 * 60 * 24 * 60
-      const sellPro = await landProductModel.sellProduct(pro.productId, curTime)
+      const sellPro = await landProductModel.sellProduct(pro[LandProductServerModel.productId.label], curTime)
       if (!sellPro) return new Error(LandProductCodes.Sell_Product_Fail)
     }
     const endVote = await landProductModel.endProductVote()
@@ -130,8 +130,8 @@ class LandProductController {
     if (!curProduct || curProduct.length === 0) return
     let curTime = new Date().getTime()
     for (let pro of curProduct) {
-      if (curTime > pro.time) {
-        const dropPro = await landProductModel.productDropOff(pro.productId)
+      if (curTime > pro[LandProductServerModel.time.label]) {
+        const dropPro = await landProductModel.productDropOff(pro[LandProductServerModel.productId.label])
         if (!dropPro) return new Error(LandProductCodes.Drop_Product_Fail)
       }
     }
@@ -146,8 +146,8 @@ class LandProductController {
     if (!expiredProduct || expiredProduct.length === 0) return
     let delTime = new Date().getTime() - expiredTime
     for (let pro of expiredProduct) {
-      if (delTime > pro.time) {
-        const dropPro = await landProductModel.deleteProduct(pro.productId)
+      if (delTime > pro[LandProductServerModel.time.label]) {
+        const dropPro = await landProductModel.deleteProduct(pro[LandProductServerModel.productId.label])
         if (!dropPro) return new Error(LandProductCodes.Del_Product_Fail)
       }
     }
@@ -187,7 +187,7 @@ class LandProductController {
        return errorRes(LoginCodes.Code_Error)  
      }
     const specifiedPro = await landProductModel.querySpecifiedProByAddr(userAddr, productId)
-    if (!specifiedPro || specifiedPro.length === 0 || parseInt(specifiedPro[0].value) < 1) {
+    if (!specifiedPro || specifiedPro.length === 0 || parseInt(specifiedPro[0][LandProductServerModel.value.label]) < 1) {
       return new Error(LandProductCodes.User_No_Such_Product)
     }
     const trans = await landProductModel.startTransaction()

@@ -1,35 +1,58 @@
+/**
+	*	MYSQL landassets 用户虚拟资产表
+	*/
+const LandAssetsName = 'landassets'
+
 let LandAssetsServerModel = {
+	id: {
+    label: 'pk_id',
+    type: 'bigint(20) unsigned not null auto_increment'
+  },
 	addr: {
-		label: 'uaddr',
-		type: 'VARCHAR(100)'
-	},
+    label: 'uk_addr',
+    type: 'char(42)'
+  },
 	bamboo: {
 		label: 'bamboo',
-		type: 'FLOAT'
+		type: 'int unsigned'
 	},
 	bamboolock: {
 		label: 'bamboolock',
-		type: 'FLOAT'
+		type: 'int unsigned'
 	},
 	eth: {
 		label: 'eth',
-		type: 'FLOAT'
+		type: 'decimal(6, 3)'
 	},
 	ethLock: {
 		label: 'ethLock',
-		type: 'FLOAT'
+		type: 'decimal(6, 3)'
 	},
 	eos: {
 		label: 'eos',
-		type: 'FLOAT'
+		type: 'decimal(7, 2)'
 	},
 	eosLock: {
 		label: 'eosLock',
-		type: 'FLOAT'
+		type: 'decimal(7, 2)'
 	},
+	gmt_create: {
+    label: 'gmt_create',
+    type: 'datetime'
+  },
+  gmt_modified: {
+    label: 'gmt_modified',
+    type: 'datetime'
+  },
+	// 索引
+  pk_id: {
+    label: 'primary key(pk_id),'
+  },
+  uk_addr: {
+    label: 'unique key(uk_addr)'
+  },
 	other: {
-		label: 'other',
-		type: 'PRIMARY KEY (uaddr))'
+		label: ' )ENGINE=InnoDB DEFAULT CHARSET=utf8'
 	}
 }
 let LandAssetsClientModel = {
@@ -38,7 +61,9 @@ let LandAssetsClientModel = {
 	bamboo: 'bamboo',
 	water: 'water'
 }
+
 module.exports = {
 	LandAssetsClientModel: LandAssetsClientModel,
-	LandAssetsServerModel: LandAssetsServerModel
+	LandAssetsServerModel: LandAssetsServerModel,
+	LandAssetsName: LandAssetsName
 }

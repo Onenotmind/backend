@@ -478,6 +478,7 @@ koaRouter.get('/sellPanda', async (ctx) => {
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Sell_Panda_Succ, res)
   } else {
+    console.log(errorRes(res.message))
     ctx.body = errorRes(res.message)
   }
 })

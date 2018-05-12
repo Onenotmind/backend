@@ -25,8 +25,20 @@
 			- userProductManager 用户商品资产提现
 
 ### 当前问题
-	- sql优化
-	- controller 与 model 层优化
+
+> 优化
+
+	- client层异常处理
+
+	- post get 接口分离
+
+	- ctx 获取参数方法
+
+	- 更简洁的参数校验
+
+> 功能
+
+
 
 
 

@@ -5,6 +5,7 @@ const Joi = require('joi')
 		@基因校验 valiPandaGeni
     @地址校验 valiAddr
     @属性值校验 valiAttr
+    @价钱校验 valiPrice
     @邮箱校验 valiEmail
     @密码校验 valiPass
     @状态值校验 valiState
@@ -30,6 +31,11 @@ class JoiParamVali {
   async valiAttr(attr) {
     const schema = Joi.number().min(0).max(100).precision(4).required().optional()
     return this.joiDataCheck(attr, schema)
+  }
+
+  async valiPrice (price) {
+    const schema = Joi.number().min(0).max(20000).required().optional()
+    return this.joiDataCheck(price, schema)
   }
 
   async valiBamboo(bamboo) {

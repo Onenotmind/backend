@@ -10,6 +10,7 @@ class TestController {
 		if (!trans) return new Error(CommonCodes.Service_Wrong)
 		let tasks = [
 			async function () {
+				console.log('begin')
 				const userExist = await testModel.checkUserTableExist()
 				if (!userExist) return userExist
 				if (userExist.length > 0) {

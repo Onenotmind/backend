@@ -1,43 +1,52 @@
+/**
+	*	MYSQL pandaowner 熊猫信息表
+	*/
+const PandaOwnerName = 'pandaowner'
+
 let PandaOwnerServerModel = {
-	pandaGeni: {
-		label: 'pandaGen',
-		type: 'VARCHAR(100)'
+	id: {
+    label: 'pk_id',
+    type: 'bigint(20) unsigned not null auto_increment'
+  },
+	gen: {
+		label: 'uk_gen',
+		type: 'char(30)'
 	},
-	ownerAddr: {
-		label: 'ownerAddr',
-		type: 'VARCHAR(40)'
+	addr: {
+		label: 'idx_addr',
+		type: 'char(42)'
 	},
 	type: {
 		label: 'type',
-		type: 'VARCHAR(20)'
+		type: 'varchar(5)'
 	},
 	speed: {
 		label: 'speed',
-		type: 'FLOAT'
+		type: 'decimal'
 	},
 	hungry: {
 		label: 'hungry',
-		type: 'FLOAT'
+		type: 'decimal'
 	},
 	goldCatch: {
 		label: 'goldCatch',
-		type: 'FLOAT'
+		type: 'decimal'
 	},
 	waterCatch: {
 		label: 'waterCatch',
-		type: 'FLOAT'
+		type: 'decimal'
 	},
 	fireCatch: {
 		label: 'fireCatch',
-		type: 'FLOAT'
+		type: 'decimal'
 	},
 	earthCatch: {
 		label: 'earthCatch',
-		type: 'FLOAT'
+		type: 'decimal'
 	},
 	woodCatch: {
 		label: 'woodCatch',
-		type: 'FLOAT'
+		type: 'decimal'
 	},
 	special: {
 		label: 'special',
@@ -45,19 +54,39 @@ let PandaOwnerServerModel = {
 	},
 	integral: {
 		label: 'integral',
-		type: 'INT'
+		type: 'smallint unsigned'
 	},
 	state: {
-		label: 'state',
-		type: 'VARCHAR(10)'
+		label: 'idx_state',
+		type: 'VARCHAR(4)'
 	},
 	price: {
 		label: 'price',
-		type: 'FLOAT'
+		type: 'smallint unsigned'
 	},
+	gmt_create: {
+    label: 'gmt_create',
+    type: 'datetime'
+  },
+  gmt_modified: {
+    label: 'gmt_modified',
+    type: 'datetime'
+  },
+	// 索引
+	pk_id: {
+    label: 'primary key(pk_id),'
+  },
+  idx_addr: {
+    label: 'index (idx_addr),'
+  },
+  uk_gen: {
+  	label: 'unique key(uk_gen),'
+  },
+  idx_state: {
+  	label: 'unique key(idx_state)'
+  },
 	other: {
-		label: 'other',
-		type: 'PRIMARY KEY (pandaGen))'
+		label: ')ENGINE=InnoDB DEFAULT CHARSET=utf8'
 	}
 }
 
@@ -128,5 +157,6 @@ let AttrList = ['goldCatch', 'waterCatch', 'fireCatch', 'earthCatch', 'woodCatch
 module.exports = {
 	PandaOwnerServerModel: PandaOwnerServerModel,
 	PandaOwnerClientModel: PandaOwnerClientModel,
-	AttrList: AttrList
+	AttrList: AttrList,
+	PandaOwnerName: PandaOwnerName
 }

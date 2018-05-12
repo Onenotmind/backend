@@ -6,8 +6,14 @@ const pandaOwnerModel = new PandaOwnerModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
 const { getParamsCheck, postParamsCheck, decrypt, cacl, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
-const { PandaOwnerClientModel, AttrList } = require('../sqlModel/pandaOwner.js')
-const { PandaOwnerCodes, AssetsCodes, errorRes, CommonCodes, PandaLandCodes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+const { PandaOwnerClientModel, PandaOwnerServerModel, AttrList } = require('../sqlModel/pandaOwner.js')
+const { UserServerModel } = require('../sqlModel/user.js')
+const { LandAssetsServerModel } = require('../sqlModel/landAssets.js')
+const { LandProductServerModel } = require('../sqlModel/landProduct.js')
+const { UserLandProductServerModel } = require('../sqlModel/userLandProduct.js')
+const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
+const { AssetsValueServerModel } = require('../sqlModel/assetsValue.js')
+const { PandaOwnerCodes, AssetsCodes, errorRes, LandProductCodes, CommonCodes, PandaLandCodes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 /*
   PandaOwnerController:
@@ -100,14 +106,14 @@ class PandaOwnerController {
 		let backPandas = [] // 返回的panda基因
 		const curDate =  Date.parse(new Date()) / 1000 // 当前时间
 		for (let panda of allOutPanda) {
-			if (curDate > panda.price) {
-				const backPanda = await pandaOwnerModel.pandaBackHome(panda.pandaGen)
+			if (curDate > panda[PandaOwnerServerModel.price.label]) {
+				const backPanda = await pandaOwnerModel.pandaBackHome(panda[PandaOwnerServerModel.gen.label])
 				if (!backPanda) return backPanda
-				const backAssets = await pandaOwnerModel.getPandaBackAssets(panda.pandaGen)
+				const backAssets = await pandaOwnerModel.getPandaBackAssets(panda[PandaOwnerServerModel.gen.label])
 				if (!backAssets) return backAssets
-				backPandas.push(panda.pandaGen)
-				if (backAssets[0].backAssets) {
-					const backAssetsArr = backAssets[0].backAssets.split('|')
+				backPandas.push(panda[PandaOwnerServerModel.gen.label])
+				if (backAssets[0][BackPandaAssetsServerModel.backAssets.label]) {
+					const backAssetsArr = backAssets[0][BackPandaAssetsServerModel.backAssets.label].split('|')
 					if (backAssetsArr.length > 0) {
 						backProducts = backProducts.concat(backAssetsArr)
 						for (let landPro of backAssetsArr) {
@@ -126,8 +132,8 @@ class PandaOwnerController {
 		        }
 					}
 				}
-				if (backAssets[0].dropAssets) {
-					const dropAssetsArr = backAssets[0].dropAssets.split('|')
+				if (backAssets[0][BackPandaAssetsServerModel.dropAssets.label]) {
+					const dropAssetsArr = backAssets[0][BackPandaAssetsServerModel.dropAssets.label].split('|')
 					if (dropAssetsArr.length > 0) {
 						dropProducts = dropProducts.concat(dropAssetsArr)
 					}
@@ -136,7 +142,7 @@ class PandaOwnerController {
 		}
 		// 带回去的商品
 		if (backProducts.length > 0) {
-			backProducts.forEach(function(x) { 
+			backProducts.forEach(function(x) {
 				backTypeTmpObj[x] = (backTypeTmpObj[x] || 0) + 1
 			})
 			const typeArr = Object.keys(backTypeTmpObj)
@@ -145,7 +151,7 @@ class PandaOwnerController {
 				if (!imgInfo) return imgInfo
 				const item = {
 					productId: type,
-					imgSrc: imgInfo[0].imgSrc,
+					imgSrc: imgInfo[0][LandProductServerModel.imgSrc.label],
 					value: backTypeTmpObj[type]
 				}
 				resProducts.push(item)
@@ -162,7 +168,7 @@ class PandaOwnerController {
 				if (!imgInfo) return imgInfo
 				const item = {
 					productId: type,
-					imgSrc: imgInfo[0].imgSrc,
+					imgSrc: imgInfo[0][LandProductServerModel.imgSrc.label],
 					value: dropTypeTmpObj[type]
 				}
 				dropResProducts.push(item)
@@ -214,7 +220,7 @@ class PandaOwnerController {
 		// 判断这只熊猫是否在addr下
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
 		if (!pandaInfo || pandaInfo.length === 0) return new Error(PandaLandCodes.No_Such_Panda)
-		if (pandaInfo[0].ownerAddr !== checkAddr) return new Error(PandaLandCodes.No_Such_Panda)
+		if (pandaInfo[0][PandaOwnerServerModel.addr.label] !== checkAddr) return new Error(PandaLandCodes.No_Such_Panda)
 		// 取消出售熊猫
 		const cancelSoldPanda = await pandaOwnerModel.unSoldPanda(pandaGen)
 		return cancelSoldPanda
@@ -367,7 +373,7 @@ class PandaOwnerController {
 		const price = ctx.query['price']
 		// const tradePwd = ctx.query['tradePwd']
 		const genVali = await joiParamVali.valiPandaGeni(gen)
-		const priceVali = await joiParamVali.valiAttr(price)
+		const priceVali = await joiParamVali.valiPrice(price)
 		// const pwdVali = await joiParamVali.valiPass(tradePwd)
 		if (!genVali || !priceVali) {
 			return new Error(CommonCodes.Params_Check_Fail)
@@ -441,14 +447,14 @@ class PandaOwnerController {
 		const tokenCheck = await checkToken(token, checkAddr)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
-		if (!pandaInfo || pandaInfo[0].state !== 'sold') return new Error(PandaLandCodes.Panda_Not_Sold)
-		const ownerAddr = pandaInfo[0].ownerAddr
+		if (!pandaInfo || pandaInfo[0][PandaOwnerServerModel.state.label] !== 'sold') return new Error(PandaLandCodes.Panda_Not_Sold)
+		const ownerAddr = pandaInfo[0][PandaOwnerServerModel.addr.label]
 		const ownerAssets = await pandaOwnerModel.queryAssetsByAddr(ownerAddr)
 		if (!ownerAssets) return ownerAssets
-		const bamboo = ownerAssets[0].bamboo
+		const bamboo = ownerAssets[0][LandAssetsServerModel.bamboo.label]
 		const assets = await pandaOwnerModel.queryAssetsByAddr(addr)
-		if (!assets || assets[0].bamboo < price) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
-		const buyBamboo = assets[0].bamboo
+		if (!assets || assets[0][LandAssetsServerModel.bamboo.label] < price) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
+		const buyBamboo = assets[0][LandAssetsServerModel.bamboo.label]
 		let buyleft = parseFloat(buyBamboo) - parseFloat(price) > 0 ? parseFloat(buyBamboo) - parseFloat(price): 0
 		let ownerleft = parseFloat(bamboo) + parseFloat(price)
 		const trans = await pandaOwnerModel.startTransaction()
@@ -460,8 +466,6 @@ class PandaOwnerController {
 			},
 			async function (res) {
 				if (_.isError(res)) return res
-				console.log(ownerAddr)
-			console.log(ownerleft)
 				const updateOwnerAssets = await pandaOwnerModel.updateAssetsByAddr(trans, ownerAddr, ownerleft)
 				return updateOwnerAssets
 			},
@@ -537,8 +541,8 @@ class PandaOwnerController {
 			async function () {
 				const pandaInfo = await pandaOwnerModel.getInfoForProduct(trans, geni)
 				if (!pandaInfo || pandaInfo.length === 0) return new Error(PandaLandCodes.No_Such_Panda)
-				if (parseInt(pandaInfo[0].bamboo) < bamboo) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
-				let leftBamboo = parseInt(pandaInfo[0].bamboo) - bamboo
+				if (parseInt(pandaInfo[0][LandAssetsServerModel.bamboo.label]) < bamboo) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
+				let leftBamboo = parseInt(pandaInfo[0][LandAssetsServerModel.bamboo.label]) - bamboo
 				const updateLandAssets = await pandaOwnerModel.updateLandAssetsByAddrTrans(trans, pandaInfo[0].ownerAddr, 'bamboo', leftBamboo)
 				if (!updateLandAssets) return new Error(CommonCodes.Service_Wrong)
 				// console.log('pandaInfo', pandaInfo[0])
@@ -547,19 +551,19 @@ class PandaOwnerController {
 			async function (pandaInfo) {
 				if (_.isError(pandaInfo)) return pandaInfo
 				let baseRate = parseFloat(bamboo / bambooTitudeRate)
-				let addr = pandaInfo.ownerAddr
-				let geoParams = cacl(pandaInfo.longitude, pandaInfo.latitude, baseRate, direction, pandaInfo.hungry, pandaInfo.speed)
+				let addr = pandaInfo[PandaOwnerServerModel.addr.label]
+				let geoParams = cacl(pandaInfo[UserServerModel.longitude.label], pandaInfo[UserServerModel.latitude.label], baseRate, direction, pandaInfo[PandaOwnerServerModel.hungry.label], pandaInfo[PandaOwnerServerModel.speed.label])
 				// const product = await pandaOwnerModel.findProductByGeo(trans, geoParams.longitude, geoParams.latitude, geoParams.width, geoParams.height)
 				const product = await pandaOwnerModel.findAllproduct()
 				if (!product || product.length === 0) return new Error(PandaLandCodes.No_Product_In_Land)
 				let attrArr = {
-          'speed': parseFloat(pandaInfo.speed),
-          'hungry': parseFloat(pandaInfo.hungry),
-          'gold': pandaInfo.goldCatch,
-          'wood': pandaInfo.woodCatch,
-          'water': pandaInfo.waterCatch,
-          'fire': pandaInfo.fireCatch,
-          'earth': pandaInfo.earthCatch
+          'speed': parseFloat(pandaInfo[PandaOwnerServerModel.speed.label]),
+          'hungry': parseFloat(pandaInfo[PandaOwnerServerModel.hungry.label]),
+          'gold': pandaInfo[PandaOwnerServerModel.goldCatch.label],
+          'wood': pandaInfo[PandaOwnerServerModel.woodCatch.label],
+          'water': pandaInfo[PandaOwnerServerModel.waterCatch.label],
+          'fire': pandaInfo[PandaOwnerServerModel.fireCatch.label],
+          'earth': pandaInfo[PandaOwnerServerModel.earthCatch.label]
         }
         // console.log({attrArr: attrArr,addr: addr,product: product,geoParams: geoParams})
         return {
@@ -577,8 +581,8 @@ class PandaOwnerController {
 				const geoParams = res.geoParams
 				let getDiffValue = (type) => {
            for (let pro of assetsValArr) {
-           	if (type === pro.productId) {
-           		return pro.value
+           	if (type === pro[LandProductServerModel.productId.label]) {
+           		return pro[LandProductServerModel.value.label]
            	}
            }
         }
@@ -598,19 +602,19 @@ class PandaOwnerController {
             // let aVal = getDiffValue(a.value.split('/')[1]) * parseInt(a.value.split('/')[0])
             // let bVal = getDiffValue(b.value.split('/')[1]) * parseInt(b.value.split('/')[0])
             // return bVal - aVal
-            return parseInt(b.value) - parseInt(a.value)
+            return parseInt(b[LandProductServerModel.value.label]) - parseInt(a[LandProductServerModel.value.label])
           }).slice(0,3)
         }
         for (let item of mostValRes) {
           // mostVal += getDiffValue(item.value.split('/')[1]) * parseInt(item.value.split('/')[0])
-        	mostVal += parseInt(item.value / 3)
+        	mostVal += parseInt(item[LandProductServerModel.value.label] / 3)
         }
         let itemLen = mostValRes.length === 3 ? 2 : mostValRes.length -1
         if (itemLen < 0) return
-        baseVal = parseInt(mostValRes[itemLen].value / 3)
+        baseVal = parseInt(mostValRes[itemLen][LandProductServerModel.value.label] / 3)
         // baseVal = getDiffValue(mostValRes[itemLen].value.split('/')[1]) * parseInt(mostValRes[itemLen].value.split('/')[0])
 				proArr.forEach(data => {
-          let dataTypeArr = data.type.split('|')
+          let dataTypeArr = data[LandProductServerModel.type.label].split('|')
           for (let index in dataTypeArr) {
             // if (true) {
             let starCenter = self.getDiffStarCenter(starArr, dataTypeArr[index])
@@ -625,20 +629,20 @@ class PandaOwnerController {
             // console.log('catchRate', catchRate)
             if (Math.random() < 0.5) {
               itemRes.push(data)
-              let curAssetsType = data.type
+              let curAssetsType = data[LandProductServerModel.type.label]
               if (curAssetsType === 'ETH' || curAssetsType === 'EOS') {
-              	saveRes.push(data.value)
+              	saveRes.push(data[LandProductServerModel.value.label])
               } else {
-              	saveProRes.push(data.productId)
+              	saveProRes.push(data[LandProductServerModel.productId.label])
               }
-              itemsVal += parseInt(data.value / 3)
+              itemsVal += parseInt(data[LandProductServerModel.value.label] / 3)
               // itemsVal += getDiffValue(data.value.split('/')[1]) * parseInt(data.value.split('/')[0])
               let finalAttrVal = attrArr[dataTypeArr[index]] + 0.1* Math.random().toFixed(4)
               // TODO updatePandaAttr是否用await
               pandaOwnerModel.updatePandaAttrTrans(trans, dataTypeArr[index] + 'Catch', finalAttrVal, geni)	
 							// if (!updateAttr) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)            
             } else {
-            	dropRes.push(data.productId)
+            	dropRes.push(data[LandProductServerModel.productId.label])
             }
           }
         })
