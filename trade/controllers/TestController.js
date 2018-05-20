@@ -98,6 +98,18 @@ class TestController {
 				const productCreate = await testModel.createAssetsValueTable()
 				return productCreate
 			},
+			// @MYSQL ethaddrmanager
+			async function (res) {
+				if (_.isError(res)) return res
+				const ethaddrmanagerExist = await testModel.checkEthAddrManagerExist()
+				if (!ethaddrmanagerExist) return ethaddrmanagerExist
+				if (ethaddrmanagerExist.length > 0) {
+					const ethaddrmanagerDrop = await testModel.dropEthAddrManagerTable()
+					if (!ethaddrmanagerDrop) return ethaddrmanagerDrop
+				}
+				const ethaddrmanagerCreate = await testModel.createEthAddrManagerTable()
+				return ethaddrmanagerCreate
+			},
 			// @MYSQL backpandaassets
 			async function (res) {
 				if (!_.isError(res)) return res

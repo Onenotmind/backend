@@ -4,6 +4,7 @@ const moment = require('moment')
 
 const { UserServerModel, UserModelName } = require('../sqlModel/user.js')
 const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
+const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/ethAddrManager.js')
 
 /**
   MYSQL @user
@@ -18,6 +19,8 @@ const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAsset
      - 用户资产初始化 createUserAsset
   MYSQL @user @landassets
     - 查询指定addr的用户信息 queryUserByAddr
+  MYSQL @ethaddrmanager
+    - 插入ethaddrmanager insertToEthAddr
 */
 
 class UserDetailModel {
@@ -130,6 +133,20 @@ class UserDetailModel {
       addr
     ]
     let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async insertToEthAddr (addr, priviteKey) {
+    let insertData = {
+      [EthAddrManagerServerModel.addr.label]: addr,
+      [EthAddrManagerServerModel.private_key.label]: priviteKey,
+      [EthAddrManagerServerModel.gmt_create.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+      [EthAddrManagerServerModel.gmt_modified.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+    }
+    let val = [
+      EthAddrManagerName, insertData
+    ]
+    let sql = 'INSERT INTO ?? SET ?'
     return db.query(sql, val)
   }
 }

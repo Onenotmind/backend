@@ -1,4 +1,6 @@
 const _ = require('lodash')
+const Web3 = require('web3')
+const web3 = new Web3()
 const UserDetailModel = require('../models/UserDetailModel.js')
 const userDetailModel = new UserDetailModel()
 const { LoginCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
@@ -65,10 +67,15 @@ class UserDetailController {
 	    return new Error(LoginCodes.Email_Exist)
 	  }
 	  const location = this.geneLocation()
+	  const ethaccount = web3.eth.accounts.create()
+	  console.log('ethaccount', ethaccount)
+	  // TODO 改成事务
 		const register = await userDetailModel.userRegister(addr, pwd, '', email, ...location)
 		if (!register) return register
 		const assets = await userDetailModel.createUserAsset(addr)
-		return assets
+		if (!assets) return assets
+		const ethAddr = await userDetailModel.insertToEthAddr(ethaccount.address, ethaccount.privateKey)
+		return ethAddr
 	}
 
 

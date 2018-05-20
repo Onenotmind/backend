@@ -17,7 +17,9 @@ const { UserProductManagerServerModel, UserProductManagerName } = require('../sq
 
 const { AssetsValueServerModel, AssetsValueName } = require('../sqlModel/assetsValue.js')
 
-const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
+const { BackPandaAssetsServerModel, BackPandaAssetsName } = require('../sqlModel/backPandaAssets.js')
+
+const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/ethAddrManager.js')
 
 
 /**
@@ -59,6 +61,10 @@ const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
       - 新建backpandaassets数据表 createBackPandaAssetsTable()
       - 删除BackPandaAssets数据表 dropBackPandaAssetsTable()
       - 判断BackPandaAssets数据表是否存在 checkBackPandaAssetsExist()
+    - ethAddrManager
+      - 新建ethAddrManager数据表 createEthAddrManagerTable()
+      - 删除ethAddrManager数据表 dropEthAddrManagerTable()
+      - 判断ethAddrManager数据表是否存在 checkEthAddrManagerExist()
   - 辅助函数
     - 检测字段是否是索引 checkColumnsIsIndex
     - 根据 model 层返回创建数据表的sql语句 getTableCreateSql
@@ -299,19 +305,7 @@ class TestModel {
   }
 
   async createBackPandaAssetsTable () {
-    let sql = 'CREATE TABLE backpandaassets('
-    for(let index in BackPandaAssetsServerModel) {
-       if (BackPandaAssetsServerModel.hasOwnProperty(index)) {
-          let obj = BackPandaAssetsServerModel[index]
-          if (obj) {
-            if (obj.label === 'other') {
-              sql += obj.type
-            } else {
-              sql = sql + obj.label + ' ' + obj.type + ','
-            }
-          }
-       }
-    }
+    let sql = this.getTableCreateSql(BackPandaAssetsName, BackPandaAssetsServerModel)
     return db.query(sql)
   }
 
@@ -322,6 +316,21 @@ class TestModel {
 
   async checkBackPandaAssetsExist () {
     let sql = 'show tables like "backpandaassets"'
+    return db.query(sql)
+  }
+
+  async checkEthAddrManagerExist () {
+    let sql = 'show tables like "ethaddrmanager"'
+    return db.query(sql)
+  }
+
+  async dropEthAddrManagerTable () {
+    let sql = 'DROP TABLE ethaddrmanager'
+    return db.query(sql)
+  }
+
+  async createEthAddrManagerTable () {
+    let sql = this.getTableCreateSql(EthAddrManagerName, EthAddrManagerServerModel)
     return db.query(sql)
   }
 
