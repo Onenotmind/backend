@@ -26,10 +26,12 @@ const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
 	    - 判断user表是否存在 checkUserTableExist
 	    - 新建user表 createTableUser
 	    - 删除user表 dropTableUser
+      - 插入测试数据 insertTestUserData
 		- landassets
 	    - 判断landassets表是否存在 checkLandassetsTableExist
 	    - 新建landassets表 createTableLandassets
 	    - 删除landassets表 dropTableLandassets
+      - 插入测试数据 insertTestLandAssetsData
 		- landproduct
 	    - 新建LandProduct数据表 createLandProductTable()
 	    - 删除LandProduct数据表 dropLandProductTable()
@@ -51,6 +53,7 @@ const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
 	  	- 新建pandaOwner数据表 createPandaOwnerTable()
 	    - 删除pandaOwner数据表 dropPandaOwnerTable()
 	    - 插入测试数据 insertDataToPandaOwner()
+      - 插入panda owner数据表 genePanda()
 	    - 判断pandaowner数据表是否存在  checkPandaownerTableExist
     - backpandaassets
       - 新建backpandaassets数据表 createBackPandaAssetsTable()
@@ -89,9 +92,46 @@ class TestModel {
     return db.query(sql)
   }
 
+  async insertTestUserData () {
+    let insertData = {
+      [UserServerModel.addr.label]: 'ethland',
+      [UserServerModel.email.label]: '',
+      [UserServerModel.pwd.label]: 'ethland',
+      [UserServerModel.phone.label]: null,
+      [UserServerModel.tradePwd.label]: '',
+      [UserServerModel.state.label]: 'reg',
+      [UserServerModel.longitude.label]: 0,
+      [UserServerModel.latitude.label]: 0,
+      [UserServerModel.gmt_create.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+      [UserServerModel.gmt_modified.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+    }
+    let val = [
+      UserModelName, insertData
+    ]
+    let sql = 'INSERT INTO ?? SET ?'
+    return db.query(sql, val)
+  }
+
   async createTableUser () {
     let sql = this.getTableCreateSql(UserModelName, UserServerModel)
     return db.query(sql)
+  }
+
+  async insertTestLandAssetsData () {
+    let insertData = {
+      [LandAssetsServerModel.addr.label]: 'ethland',
+      [LandAssetsServerModel.bamboo.label]: 2000,
+      [LandAssetsServerModel.bamboolock.label]: 0,
+      [LandAssetsServerModel.eth.label]: 0,
+      [LandAssetsServerModel.ethLock.label]: 0,
+      [LandAssetsServerModel.eos.label]: 0,
+      [LandAssetsServerModel.eosLock.label]: 0
+    }
+    let val = [
+      LandAssetsName, insertData
+    ]
+    let sql = 'INSERT INTO ?? SET ?'
+    return db.query(sql, val) 
   }
 
   async createTableLandassets () {
@@ -227,7 +267,35 @@ class TestModel {
     //   }
     // }
     // return db.query(sql)
+    for (let panda of pandaOwnerTestData) {
+      await this.genePanda(...panda)
+    }
     return true
+  }
+
+  async genePanda (gen, addr, type, speed, hungry, gold, water, wood, fire, earth, special, integral, state, price) {
+    let curTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+    let insertData = {
+      [PandaOwnerServerModel.gen.label]: gen,
+      [PandaOwnerServerModel.addr.label]: addr,
+      [PandaOwnerServerModel.type.label]: type,
+      [PandaOwnerServerModel.speed.label]: speed,
+      [PandaOwnerServerModel.hungry.label]: hungry,
+      [PandaOwnerServerModel.goldCatch.label]: gold,
+      [PandaOwnerServerModel.woodCatch.label]: wood,
+      [PandaOwnerServerModel.waterCatch.label]:water,
+      [PandaOwnerServerModel.fireCatch.label]:fire,
+      [PandaOwnerServerModel.earthCatch.label]:earth,
+      [PandaOwnerServerModel.special.label]:special,
+      [PandaOwnerServerModel.integral.label]:integral,
+      [PandaOwnerServerModel.state.label]: state,
+      [PandaOwnerServerModel.price.label]: price,
+      [PandaOwnerServerModel.gmt_create.label]: curTime,
+      [PandaOwnerServerModel.gmt_modified.label]:curTime
+    }
+    let val = [PandaOwnerName, insertData]
+    let sql = 'INSERT INTO ?? SET ?'
+    return db.query(sql, val)
   }
 
   async createBackPandaAssetsTable () {

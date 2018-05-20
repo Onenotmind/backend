@@ -266,7 +266,7 @@ class PandaOwnerController {
 		let pandaAttr = null
 		let spAttr = []
 		pandaAttr = this.geneAttr()
-		let genTypeNum = 5
+		let genTypeNum = 10
 		let integral = this.geneAttrVal(30)
 		for (let i = 0; i < genTypeNum; i++) {
 			geni += this.geneNumRandom()
@@ -325,12 +325,8 @@ class PandaOwnerController {
 
 	// 0~10随机数产生
 	geneNumRandom () {
-		let num = parseInt(Math.random() * 10)
-		if (num < 10) {
-			return '00' + num
-		} else {
-			return '010'
-		}
+		let num = parseInt(Math.random() * 5) + 1
+		return '00' + num
 	}
 
 	// 属性值随机数产生

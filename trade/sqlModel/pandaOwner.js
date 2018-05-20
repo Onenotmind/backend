@@ -22,31 +22,31 @@ let PandaOwnerServerModel = {
 	},
 	speed: {
 		label: 'speed',
-		type: 'decimal'
+		type: 'decimal(4,2)'
 	},
 	hungry: {
 		label: 'hungry',
-		type: 'decimal'
+		type: 'decimal(4,2)'
 	},
 	goldCatch: {
 		label: 'goldCatch',
-		type: 'decimal'
+		type: 'decimal(4,2)'
 	},
 	waterCatch: {
 		label: 'waterCatch',
-		type: 'decimal'
+		type: 'decimal(4,2)'
 	},
 	fireCatch: {
 		label: 'fireCatch',
-		type: 'decimal'
+		type: 'decimal(4,2)'
 	},
 	earthCatch: {
 		label: 'earthCatch',
-		type: 'decimal'
+		type: 'decimal(4,2)'
 	},
 	woodCatch: {
 		label: 'woodCatch',
-		type: 'decimal'
+		type: 'decimal(4,2)'
 	},
 	special: {
 		label: 'special',
@@ -83,7 +83,7 @@ let PandaOwnerServerModel = {
   	label: 'unique key(uk_gen),'
   },
   idx_state: {
-  	label: 'unique key(idx_state)'
+  	label: 'index (idx_state)'
   },
 	other: {
 		label: ')ENGINE=InnoDB DEFAULT CHARSET=utf8'

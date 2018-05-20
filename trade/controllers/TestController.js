@@ -19,6 +19,8 @@ class TestController {
 				}
 				const userCreate = await testModel.createTableUser()
 				if (!userCreate) return userCreate
+				const insertUser = await testModel.insertTestUserData()
+				return insertUser
 			},
 			async function (res) {
 				if (_.isError(res)) return res
@@ -30,6 +32,8 @@ class TestController {
 				}
 				const assetsCreate = await testModel.createTableLandassets()
 				if (!assetsCreate) return assetsCreate
+				const inserAssets = await testModel.insertTestLandAssetsData()
+				return inserAssets
 			},
 			async function (res) {
 				if (_.isError(res)) return res
