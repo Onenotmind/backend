@@ -112,7 +112,7 @@ class TestController {
 			},
 			// @MYSQL backpandaassets
 			async function (res) {
-				if (!_.isError(res)) return res
+				if (_.isError(res)) return res
 				const backpandaassetsExist = await testModel.checkBackPandaAssetsExist()
 				if (!backpandaassetsExist) return backpandaassetsExist
 				if (backpandaassetsExist.length > 0) {

@@ -21,9 +21,16 @@ const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/e
     - 查询指定addr的用户信息 queryUserByAddr
   MYSQL @ethaddrmanager
     - 插入ethaddrmanager insertToEthAddr
+  MYSQL @事务
+    - 开启事务 startTransaction
 */
 
 class UserDetailModel {
+
+  async startTransaction () {
+    return db.startTransaction()
+  }
+  
 	async userRegister (addr, pwd, tradePwd, email, longitude, latitude) {
 		let insertData = {
       [UserServerModel.addr.label]: addr,
@@ -75,7 +82,9 @@ class UserDetailModel {
 
   async queryUserByAddr (addr) {
   	let val = ['user', addr]
-  	let sql = 'select * from ?? inner join landassets l on user.uk_addr=l.uk_addr where user.uk_addr = ?'
+  	let sql = 'select * from ?? ' + 
+      'inner join landassets l on user.uk_addr=l.uk_addr ' +
+      'inner join ethaddrmanager m on m.uk_addr=l.uk_addr where user.uk_addr = ?'
   	return db.query(sql, val)
   }
 
@@ -136,9 +145,10 @@ class UserDetailModel {
     return db.query(sql, val)
   }
 
-  async insertToEthAddr (addr, priviteKey) {
+  async insertToEthAddr (addr, account, priviteKey) {
     let insertData = {
       [EthAddrManagerServerModel.addr.label]: addr,
+      [EthAddrManagerServerModel.account.label]: account,
       [EthAddrManagerServerModel.private_key.label]: priviteKey,
       [EthAddrManagerServerModel.gmt_create.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       [EthAddrManagerServerModel.gmt_modified.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss')

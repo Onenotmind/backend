@@ -62,7 +62,7 @@ let PandaOwnerServerModel = {
 	},
 	price: {
 		label: 'price',
-		type: 'smallint unsigned'
+		type: 'int unsigned'
 	},
 	gmt_create: {
     label: 'gmt_create',

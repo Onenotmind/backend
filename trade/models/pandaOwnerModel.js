@@ -288,6 +288,8 @@ class PandaOwnerModel {
   }
 
   async updatePandaLocationStateTrans (trans, state, price, pandaGen) {
+    console.log(price)
+    console.log(pandaGen)
     let val = [
       PandaOwnerName,
       PandaOwnerServerModel.state.label,

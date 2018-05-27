@@ -1,7 +1,7 @@
 const crypto = require('crypto')
 const _ = require('lodash')
 const async = require('async')
-const PandaOwnerModel = require('../models/PandaOwnerModel.js')
+const PandaOwnerModel = require('../models/pandaOwnerModel.js')
 const pandaOwnerModel = new PandaOwnerModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
@@ -326,6 +326,7 @@ class PandaOwnerController {
 	// 0~10随机数产生
 	geneNumRandom () {
 		let num = parseInt(Math.random() * 5) + 1
+		// num = parseInt(num / 2) > 0 ? parseInt(num / 2) : 1
 		return '00' + num
 	}
 
@@ -530,7 +531,7 @@ class PandaOwnerController {
 		}
 		const trans = await pandaOwnerModel.startTransaction()
 		if (!trans) return new Error(CommonCodes.Service_Wrong)
-		// console.log('trans begin!')
+		console.log('trans begin!')
 		// const assetsValArr = await pandaOwnerModel.queryCurrentAssetsVal()
 		// if (!assetsValArr || assetsValArr.length === 0) return new Error(AssetsCodes.Assets_Null)
 		let tasks = [
@@ -541,7 +542,7 @@ class PandaOwnerController {
 				let leftBamboo = parseInt(pandaInfo[0][LandAssetsServerModel.bamboo.label]) - bamboo
 				const updateLandAssets = await pandaOwnerModel.updateLandAssetsByAddrTrans(trans, pandaInfo[0].ownerAddr, 'bamboo', leftBamboo)
 				if (!updateLandAssets) return new Error(CommonCodes.Service_Wrong)
-				// console.log('pandaInfo', pandaInfo[0])
+				console.log('pandaInfo', pandaInfo[0])
 				return pandaInfo[0]
 			},
 			async function (pandaInfo) {
@@ -561,7 +562,7 @@ class PandaOwnerController {
           'fire': pandaInfo[PandaOwnerServerModel.fireCatch.label],
           'earth': pandaInfo[PandaOwnerServerModel.earthCatch.label]
         }
-        // console.log({attrArr: attrArr,addr: addr,product: product,geoParams: geoParams})
+        console.log({attrArr: attrArr,addr: addr,product: product,geoParams: geoParams})
         return {
         	attrArr: attrArr,
         	addr: addr,
@@ -614,7 +615,7 @@ class PandaOwnerController {
           for (let index in dataTypeArr) {
             // if (true) {
             let starCenter = self.getDiffStarCenter(starArr, dataTypeArr[index])
-            // console.log(starCenter)
+            console.log(starCenter)
             let centerPos = {
             	longitude: starCenter[0],
             	latitude: starCenter[1]
@@ -622,7 +623,7 @@ class PandaOwnerController {
             let caclPosRate = self.recognize(centerPos, geoParams)
             const valRate = parseFloat(15 / data.value) // 商品的价值系数
             const catchRate = attrArr[dataTypeArr[index]] * caclPosRate * valRate < 0 ? 0:attrArr[dataTypeArr[index]] * caclPosRate * valRate
-            // console.log('catchRate', catchRate)
+            console.log('catchRate', catchRate)
             if (Math.random() < 0.5) {
               itemRes.push(data)
               let curAssetsType = data[LandProductServerModel.type.label]

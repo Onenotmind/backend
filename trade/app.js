@@ -6,7 +6,7 @@ const AssetsController = require('./controllers/AssetsController.js')
 const AssetsRollInController = require('./controllers/AssetsRollInController.js')
 const AssetsRollOutController = require('./controllers/AssetsRollOutController.js')
 const LandProductController = require('./controllers/LandProductController.js')
-const PandaOwnerController = require('./controllers/PandaOwnerController.js')
+const PandaOwnerController = require('./controllers/pandaOwnerController.js')
 const LandAssetsController = require('./controllers/LandAssetsController.js')
 const UserDetailController = require('./controllers/UserDetailController.js')
 const TestController = require('./controllers/TestController.js')
@@ -22,7 +22,7 @@ const async = require('async')
 const winston = require('winston')
 
 const app = new Koa()
-const port = 7007
+const port = 3001
 const assetsController = new AssetsController()
 const assetsRollInController = new AssetsRollInController()
 const assetsRollOutController = new AssetsRollOutController()

@@ -9,6 +9,10 @@ const EthAddrManagerServerModel = {
     label: 'uk_addr',
     type: 'char(42)'
   },
+  account: {
+    label: 'uk_account',
+    type: 'char(42)'
+  },
   private_key: {
   	label: 'private_key',
     type: 'varchar(100)'
@@ -26,7 +30,10 @@ const EthAddrManagerServerModel = {
     label: 'primary key(pk_id),'
   },
   uk_addr: {
-    label: 'unique key(uk_addr)'
+    label: 'unique key(uk_addr),'
+  },
+  uk_account: {
+    label: 'unique key(uk_account)'
   },
   // 默认sql引擎设置
   other: {

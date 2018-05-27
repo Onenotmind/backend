@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const async = require('async')
 const Web3 = require('web3')
 const web3 = new Web3()
 const UserDetailModel = require('../models/UserDetailModel.js')
@@ -66,16 +67,66 @@ class UserDetailController {
 	  if (login && login.length > 0) {
 	    return new Error(LoginCodes.Email_Exist)
 	  }
-	  const location = this.geneLocation()
-	  const ethaccount = web3.eth.accounts.create()
-	  console.log('ethaccount', ethaccount)
-	  // TODO 改成事务
-		const register = await userDetailModel.userRegister(addr, pwd, '', email, ...location)
-		if (!register) return register
-		const assets = await userDetailModel.createUserAsset(addr)
-		if (!assets) return assets
-		const ethAddr = await userDetailModel.insertToEthAddr(ethaccount.address, ethaccount.privateKey)
-		return ethAddr
+	  const trans = await userDetailModel.startTransaction()
+		if (!trans) return new Error(CommonCodes.Service_Wrong)
+		console.log('begin user trans')
+		let self = this
+		let tasks = [
+			async function () {
+				const location = self.geneLocation()
+				const register = await userDetailModel.userRegister(addr, pwd, '', email, ...location)
+				return register
+			},
+			async function (res) {
+				console.log('res', res)
+				if (_.isError(res)) return res
+				const assets = await userDetailModel.createUserAsset(addr)
+				return assets
+			},
+			async function (res) {
+				console.log('res', res)
+				if (_.isError(res)) return res
+	  		const ethaccount = web3.eth.accounts.create()
+				const ethAddr = await userDetailModel.insertToEthAddr(addr, ethaccount.address, ethaccount.privateKey)
+				return ethAddr
+			},
+			function (res, callback) {
+				console.log('res', res)
+				if (_.isError(res)) {
+					callback(res)
+				} else {
+					callback(null, res)
+				}
+			}
+		]
+	  return new Promise((resolve, reject) => {
+			trans.beginTransaction(function (bErr) {
+				if (bErr) {
+					reject(bErr)
+					return
+				}
+				async.waterfall(tasks, function (tErr, res) {
+		      if (tErr) {
+		        trans.rollback(function () {
+		          trans.release()
+		          reject(tErr)
+		        })
+		      } else {
+		        trans.commit(function (err, info) {
+		          if (err) {
+		            trans.rollback(function (err) {
+		              trans.release()
+		              reject(err)
+		            })
+		          } else {
+		            trans.release()
+		            resolve(res)
+		          }
+		        })
+		      }
+		    })
+			})
+		})
 	}
 
 
