@@ -68,22 +68,47 @@ class PandaOwnerModel {
   }
 
   async queryPandasByState (state) {
+    let columns = [
+      PandaOwnerServerModel.gen.label,
+      PandaOwnerServerModel.type.label,
+      PandaOwnerServerModel.speed.label,
+      PandaOwnerServerModel.hungry.label,
+      PandaOwnerServerModel.goldCatch.label,
+      PandaOwnerServerModel.waterCatch.label,
+      PandaOwnerServerModel.fireCatch.label,
+      PandaOwnerServerModel.earthCatch.label,
+      PandaOwnerServerModel.woodCatch.label,
+      PandaOwnerServerModel.special.label,
+      PandaOwnerServerModel.integral.label,
+      PandaOwnerServerModel.price.label,
+      PandaOwnerServerModel.state.label
+    ]
     let val = [
+      columns,
       PandaOwnerName,
       PandaOwnerServerModel.state.label,
       state
     ]
-    let sql = 'SELECT * FROM ?? WHERE ?? = ?'
+    let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
     return db.query(sql, val)
   }
 
   async queryAssetsByAddr (addr) {
+    let columns = [
+      LandAssetsServerModel.bamboo.label,
+      LandAssetsServerModel.bambooLock.label,
+      LandAssetsServerModel.eth.label,
+      LandAssetsServerModel.ethLock.label,
+      LandAssetsServerModel.eos.label,
+      LandAssetsServerModel.eosLock.label,
+    ]
     let val = [
+      columns,
       LandAssetsName,
       LandAssetsServerModel.addr.label,
       addr
     ]
-    let sql = 'SELECT * FROM ?? WHERE ?? = ?'
+    let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
     return db.query(sql, val)
   }
 
@@ -139,36 +164,82 @@ class PandaOwnerModel {
   }
 
   async queryPandaInfo (gen) {
+    let columns = [
+      PandaOwnerServerModel.addr.label,
+      PandaOwnerServerModel.type.label,
+      PandaOwnerServerModel.speed.label,
+      PandaOwnerServerModel.hungry.label,
+      PandaOwnerServerModel.goldCatch.label,
+      PandaOwnerServerModel.waterCatch.label,
+      PandaOwnerServerModel.fireCatch.label,
+      PandaOwnerServerModel.earthCatch.label,
+      PandaOwnerServerModel.woodCatch.label,
+      PandaOwnerServerModel.special.label,
+      PandaOwnerServerModel.integral.label,
+      PandaOwnerServerModel.price.label,
+      PandaOwnerServerModel.state.label
+    ]
     let val = [
+      columns,
       PandaOwnerName,
       PandaOwnerServerModel.gen.label,
       gen
     ]
-  	let sql = 'SELECT * FROM ?? WHERE ?? = ?'
+  	let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
   	return db.query(sql, val)
   }
 
   async queryAllPandaByAddr (addr) {
+    let columns = [
+      PandaOwnerServerModel.gen.label,
+      PandaOwnerServerModel.type.label,
+      PandaOwnerServerModel.speed.label,
+      PandaOwnerServerModel.hungry.label,
+      PandaOwnerServerModel.goldCatch.label,
+      PandaOwnerServerModel.waterCatch.label,
+      PandaOwnerServerModel.fireCatch.label,
+      PandaOwnerServerModel.earthCatch.label,
+      PandaOwnerServerModel.woodCatch.label,
+      PandaOwnerServerModel.special.label,
+      PandaOwnerServerModel.integral.label,
+      PandaOwnerServerModel.state.label
+    ]
     let val = [
+      columns,
       PandaOwnerName,
       PandaOwnerServerModel.addr.label,
       addr,
       PandaOwnerServerModel.state.label,
       'sold'
     ]
-    let sql = 'SELECT * FROM ?? WHERE ?? = ? AND ?? != ?'
+    let sql = 'SELECT ?? FROM ?? WHERE ?? = ? AND ?? != ?'
     return db.query(sql, val)
   }
 
   async queryAllOutPandaByAddr (addr) {
+    let columns = [
+      PandaOwnerServerModel.gen.label,
+      PandaOwnerServerModel.type.label,
+      PandaOwnerServerModel.speed.label,
+      PandaOwnerServerModel.hungry.label,
+      PandaOwnerServerModel.goldCatch.label,
+      PandaOwnerServerModel.waterCatch.label,
+      PandaOwnerServerModel.fireCatch.label,
+      PandaOwnerServerModel.earthCatch.label,
+      PandaOwnerServerModel.woodCatch.label,
+      PandaOwnerServerModel.special.label,
+      PandaOwnerServerModel.integral.label,
+      PandaOwnerServerModel.price.label
+    ]
     let val = [
+      columns,
       PandaOwnerName,
       PandaOwnerServerModel.addr.label,
       addr,
       PandaOwnerServerModel.state.label,
       'out'
     ]
-    let sql = 'SELECT * FROM ?? WHERE ?? = ? AND ?? = ?'
+    let sql = 'SELECT ?? FROM ?? WHERE ?? = ? AND ?? = ?'
     return db.query(sql, val)
   } 
 
@@ -183,12 +254,17 @@ class PandaOwnerModel {
   }
 
   async getPandaBackAssets (gen) {
+    let columns = [
+      BackPandaAssetsServerModel.backAssets.label,
+      BackPandaAssetsServerModel.dropAssets.label
+    ]
     let val = [
+      columns,
       BackPandaAssetsName,
       BackPandaAssetsServerModel.gen.label,
       gen
     ]
-    let sql = 'SELECT * FROM ?? WHERE ?? = ?'
+    let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
     return db.query(sql, val)
   }
 
@@ -330,12 +406,17 @@ class PandaOwnerModel {
   }
 
   async queryBackPandaAssetsByGen (pandaGen) {
+    let columns = [
+      BackPandaAssetsServerModel.backAssets.label,
+      BackPandaAssetsServerModel.dropAssets.label
+    ]
     let val = [
+      columns,
       BackPandaAssetsName,
       BackPandaAssetsServerModel.gen.label,
       pandaGen
     ]
-    let sql = 'SELECT * FROM ?? WHERE ?? = ?'
+    let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
     return db.query(sql, val)
   }
 

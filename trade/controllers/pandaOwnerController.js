@@ -5,7 +5,7 @@ const PandaOwnerModel = require('../models/pandaOwnerModel.js')
 const pandaOwnerModel = new PandaOwnerModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
-const { getParamsCheck, postParamsCheck, decrypt, cacl, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
+const { getParamsCheck, postParamsCheck, checkUserToken, decrypt, cacl, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
 const { PandaOwnerClientModel, PandaOwnerServerModel, AttrList } = require('../sqlModel/pandaOwner.js')
 const { UserServerModel } = require('../sqlModel/user.js')
 const { LandAssetsServerModel } = require('../sqlModel/landAssets.js')
@@ -57,44 +57,28 @@ class PandaOwnerController {
 
 	// 根据熊猫基因查询熊猫
 	async queryPandaInfo (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const gen = ctx.query['gen']
 		const genVali = await joiParamVali.valiPandaGeni(gen)
-		if (!genVali) {
-			return new Error(CommonCodes.Params_Check_Fail)
-		}
+		if (_.isError(genVali)) return genVali
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(gen)
 		return pandaInfo
 	}
 
 	async queryAllPandaByAddr (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const addr = ctx.query['addr']
 		const addrVali = await joiParamVali.valiAddr(addr)
-		if (!addrVali) {
-			return new Error(CommonCodes.Params_Check_Fail)
-		}
+		if (_.isError(addrVali)) return addrVali
 		const allPanda = await pandaOwnerModel.queryAllPandaByAddr(addr)
-		if (!allPanda) return new Error(allPanda.message)
 		return allPanda
 	}
 
 	async getPandaBackAssets (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
-		// const gen = ctx.query['pandaGen']
-		// const genVali = await joiParamVali.valiPandaGeni(gen)
-		// if (!genVali) {
-		// 	return new Error(CommonCodes.Params_Check_Fail)
-		// }
 		const allOutPanda = await pandaOwnerModel.queryAllOutPandaByAddr(checkAddr)
 		if (!allOutPanda || allOutPanda.length === 0) return new Error(PandaOwnerCodes.Not_Out_Panda)
 		let backProducts = [] // 返回的所有商品
@@ -183,7 +167,7 @@ class PandaOwnerController {
 
 	// 增加熊猫对某种属性的探测属性
 	async updatePandaAttr (attr, value, pandaGen) {
-		const attrTypeVali = await joiParamVali.valiState(attr, AttrList)
+		const attrTypeVali = await joiParamVali.valiState(attr)
 		const valVali = [
 			{
 				val: pandaGen,
@@ -209,13 +193,11 @@ class PandaOwnerController {
 		*	取消出售熊猫 unSoldPanda
 		*/
 	async unSoldPanda (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const pandaGen = ctx.query['pandaGen']
 		const pandaGenVali = await joiParamVali.valiPandaGeni(pandaGen)
-		if (!pandaGenVali) return new Error(CommonCodes.Params_Check_Fail)
+		if (_.isError(pandaGenVali)) return pandaGenVali
 		// 逻辑部分
 		// 判断这只熊猫是否在addr下
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
@@ -248,15 +230,11 @@ class PandaOwnerController {
 
 	// 随机产生一只G10的熊猫
 	async genePandaRandom (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const addr = ctx.query['addr']
 		const addrVali = await joiParamVali.valiAddr(addr)
-		if (!addrVali) {
-			return new Error(CommonCodes.Params_Check_Fail)
-		}
+		if (_.isError(addrVali)) return addrVali
 		const pandaCount = await pandaOwnerModel.queryAllPandaByAddr(addr)
 		console.log('pandaCount', pandaCount)
 		if (pandaCount && pandaCount.length > 0) {
@@ -284,15 +262,11 @@ class PandaOwnerController {
 	}
 
 	async sirePanda (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const gen = ctx.query['pandaGen']
 		const genVali = await joiParamVali.valiPandaGeni(gen)
-		if (!genVali) {
-			return new Error(CommonCodes.Params_Check_Fail)
-		}
+		if (_.isError(genVali)) return genVali
 		const sirePanda = await pandaOwnerModel.pandaBackHome(gen)
 		return sirePanda
 	}
@@ -362,19 +336,22 @@ class PandaOwnerController {
 	}
 
 	async sellPanda (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const gen = ctx.query['pandaGen']
 		const price = ctx.query['price']
-		// const tradePwd = ctx.query['tradePwd']
-		const genVali = await joiParamVali.valiPandaGeni(gen)
-		const priceVali = await joiParamVali.valiPrice(price)
-		// const pwdVali = await joiParamVali.valiPass(tradePwd)
-		if (!genVali || !priceVali) {
-			return new Error(CommonCodes.Params_Check_Fail)
-		}
+		const paramsType = [
+			{
+				label: 'pandaGen',
+				vali: 'valiPandaGeni'
+			},
+			{
+				label: 'price',
+				vali: 'valiPrice'
+			}
+		]
+		const params= await getParamsCheck(ctx, paramsType)
+		if (_.isError(params)) return params
 		// 查询某个地址所有未出售的熊猫，若熊猫总数只有一个，则不能卖熊猫
 		const unsoldPandas = await pandaOwnerModel.queryAllPandaByAddr(checkAddr)
 		if (!unsoldPandas || unsoldPandas.length < 2) return new Error(LandProductCodes.Only_One_Unsold_Panda)
@@ -396,19 +373,11 @@ class PandaOwnerController {
   }
 
   async delPandaByGen (ctx) {
-  	const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+  	const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const gen = ctx.query['pandaGen']
-		// const tradePwd = ctx.query['tradePwd']
 		const genVali = await joiParamVali.valiPandaGeni(gen)
-		// const pwdVali = await joiParamVali.valiPass(tradePwd)
-		if (!genVali) {
-			return new Error(CommonCodes.Params_Check_Fail)
-		}
-		// const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
-		// if (!checkPwd) return checkPwd
+		if (_.isError(genVali)) return genVali
 		const dropPanda = await pandaOwnerModel.delPandaByGen(gen)
 		return dropPanda
   }
@@ -511,24 +480,28 @@ class PandaOwnerController {
 	}
 
 	async getEthlandProduct (ctx, starArr) {
-		// const token = ctx.request.headers['token']
-		// const checkAddr = ctx.cookies.get('userAddr')
-		// const tokenCheck = await checkToken(token, checkAddr)
-		// if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
-		const paramsType = ['pandaGen', 'bamboo', 'direction']
+		const tokenCheck = await checkUserToken(ctx)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const paramsType = [
+			{
+				label: 'pandaGen',
+				vali: 'valiPandaGeni'
+			},
+			{
+				label: 'bamboo',
+				vali: 'valiBamboo'
+			},
+			{
+				label: 'direction',
+				vali: 'valiDir'
+			}
+		]
 		const params= await getParamsCheck(ctx, paramsType)
-		if (!params) return new Error(CommonCodes.Params_Check_Fail)
-		// console.log('params', params)
+		if (!params) return params
 		const self = this
 		const geni = params.pandaGen
 		const bamboo = params.bamboo
 		const direction = params.direction
-		const geniVali = await joiParamVali.valiPandaGeni(geni)
-		const bambooVali = await joiParamVali.valiBamboo(bamboo)
-		const directionVali = await joiParamVali.valiDir(direction)
-		if (!geniVali || !bambooVali || !directionVali) {
-			return new Error(CommonCodes.Params_Check_Fail)
-		}
 		const trans = await pandaOwnerModel.startTransaction()
 		if (!trans) return new Error(CommonCodes.Service_Wrong)
 		console.log('trans begin!')

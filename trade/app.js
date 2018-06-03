@@ -100,7 +100,7 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  origin: 'http://localhost:9101',
+  origin: 'http://localhost:3002',
   credentials: true
 }))
 
@@ -130,7 +130,9 @@ app.use(cors({
 
 
 koaRouter.post('/userRegister', async (ctx) => {
+  console.log('userRegister')
   const res = await userDetailController.userRegister(ctx)
+  console.log('res', res)
   const token = geneToken(ctx.query['addr'])
   if (!_.isError(res)) {
     ctx.cookies.set(
@@ -142,6 +144,7 @@ koaRouter.post('/userRegister', async (ctx) => {
     })
     ctx.body = succRes(LoginCodes.Register_Succ, token)
   } else {
+    console.log('userRegister', res.message)
     ctx.body = errorRes(res.message)
   }
 })
@@ -167,7 +170,7 @@ koaRouter.get('/userLogin', async (ctx) => {
 
 koaRouter.post('/userChangeLoginPass', async (ctx) => {
   const res = await userDetailController.changeLoginPwd(ctx)
-  if (res) {
+  if (!_.isError(res)) {
     ctx.body = succRes(LoginCodes.Change_Login_Pwd_Succ, res)
   } else {
     ctx.body = errorRes(res.message)
@@ -639,6 +642,19 @@ koaRouter.get('/updateUserBamboo', async (ctx) =>{
   const res = await landProductController.updateUserBamboo(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(LandProductCodes.Update_User_Bamboo_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+/**
+  * combo页面
+  * 获取用户参与挖矿得到的bamboo数量 getUserBamboo TODO 暂时放在UserDetailController
+  */
+koaRouter.get('/getUserBamboo', async (ctx) => {
+  const res = await userDetailController.getUserBamboo(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LoginCodes.Get_User_Bamboo, res)
   } else {
     ctx.body = errorRes(res.message)
   }

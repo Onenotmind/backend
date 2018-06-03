@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
+const _ = require('lodash')
 const { CommonCodes } = require('./msgCodes/StatusCodes.js')
+const JoiParamVali = require('./JoiParamVali.js')
+const joiParamVali = new JoiParamVali()
 
 function cacl (long, lati, rate, direction, hungry, speed) {
   let tmpWidth = 0
@@ -62,21 +65,28 @@ function uuid (a) {
 }
 
 const cookieCryp = 'uuid'
-function getParamsCheck (ctx, paramsArray) {
-  return new Promise((resolve, reject) => {
-    if (ctx.request.method !== 'GET') {
-      reject(CommonCodes.Request_Method_Wrong)
-    }
-    let params = {}
-    paramsArray.forEach((element) => {
-      if (ctx.query[element] !== undefined) {
-        params[element] = ctx.query[element]
+
+async function getParamsCheck (ctx, paramsArray) {
+  if (ctx.request.method !== 'GET') {
+    return new Error(CommonCodes.Request_Method_Wrong)
+  }
+  let params = {}
+  for (const element of paramsArray) {
+    if (ctx.query[element.label] !== undefined) {
+      if (element.vali) {
+        const valiParam = await joiParamVali[element.vali](ctx.query[element.label])
+        if (_.isError(valiParam)) {
+          return valiParam
+        } else {
+          params[element.label] = ctx.query[element.label]
+        }
       } else {
-        reject(`参数${element}不存在！`)
+        params[element.label] = ctx.query[element.label]
       }
-    })
-    resolve(params)
-  })
+    } else {
+      return new Error(`参数${element.label}不存在！`)
+    }
+  }
 }
 
 function checkGetParams (ctx, paramsArray) {
@@ -97,23 +107,29 @@ function checkGetParams (ctx, paramsArray) {
 }
 
 
-function postParamsCheck (ctx, paramsArray) {
-  return new Promise((resolve, reject) => {
-    if (ctx.request.method !== 'POST') {
-      // ctx.body = '接口请求方式必须为POST'
-      reject(CommonCodes.Request_Method_Wrong)
-    }
-    let requestData = ctx.request.body
-    let params = {}
-    paramsArray.forEach((element) => {
-      if (requestData[element] !== undefined) {
-        params[element] = requestData[element]
+async function postParamsCheck (ctx, paramsArray) {
+  if (ctx.request.method !== 'POST') {
+    // ctx.body = '接口请求方式必须为POST'
+    return new Error(CommonCodes.Request_Method_Wrong)
+  }
+  let requestData = ctx.request.body
+  let params = {}
+  for (const element of paramsArray) {
+    if (requestData[element.label] !== undefined) {
+      if (element.vali) {
+        const valiParam = await joiParamVali[element.vali](requestData[element.label])
+        if (_.isError(valiParam)) {
+          return valiParam
+        } else {
+          params[element.label] = requestData[element.label]
+        }
       } else {
-        reject(`参数${element}不存在！`)
+        params[element.label] = requestData[element.label]
       }
-    })
-    resolve(params)
-  })
+    } else {
+      return new Error(`参数${element.label}不存在！`)
+    }
+  }
 }
 
 function checkToken (token, addr) {

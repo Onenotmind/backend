@@ -57,7 +57,8 @@ class LandProductController {
     * 查询某个地址下所有商品 queryLandProductByAddr
     */
   async queryLandProductByAddr (ctx) {
-    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const addr = ctx.query['addr']
     if (!addr) return new Error(CommonCodes.Params_Check_Fail)
     const products = await landProductModel.queryLandProductByAddr(addr)
@@ -68,7 +69,8 @@ class LandProductController {
     * 获取当前投票中的商品 getCurrentVotedProduct
     */
   async getCurrentVotedProduct (ctx) {
-    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const voteProduct = await landProductModel.getPrepareProduct()
     return voteProduct
   }
@@ -78,14 +80,22 @@ class LandProductController {
    */
 
   async voteProduct (ctx) {
-    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const voteNum = ctx.query['num']
     const productId = ctx.query['productId']
-    const voteNumVali = await joiParamVali.valiBamboo(voteNum)
-    const productIdVali = await joiParamVali.valiProductId(productId)
-    if (!productIdVali || !voteNumVali) {
-      return new Error(CommonCodes.Params_Check_Fail)
-    }
+    const paramsType = [
+      {
+        label: 'num',
+        vali: 'valiBamboo'
+      },
+      {
+        label: 'productId',
+        vali: 'valiProductId'
+      }
+    ]
+    const params= await getParamsCheck(ctx, paramsType)
+    if (_.isError(params)) return params
     const votePro = await landProductModel.voteProduct(productId, voteNum)
     return votePro
   }
@@ -117,7 +127,8 @@ class LandProductController {
    * 获得当前正在出售的商品 getCurrentProduct
    */
   async getCurrentProduct (ctx) {
-    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const curProduct = await landProductModel.getCurrentProduct()
     return curProduct
   }
@@ -157,7 +168,28 @@ class LandProductController {
     * 兑换商品 exchangeProduct
     */
   async exchangeProduct (ctx) {
-    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const paramsType = [
+      {
+        label: 'pwd',
+        vali: 'valiPass'
+      },
+      {
+        label: 'addr',
+        vali: 'valiAddr'
+      },
+      {
+        label: 'productId',
+        vali: 'valiProductId'
+      },
+      {
+        label: 'userPhone',
+        vali: 'valiPhone'
+      }
+    ]
+    const params= await getParamsCheck(ctx, paramsType)
+    if (_.isError(params)) return params
     const code = ctx.query['code']
     const pwd = ctx.query['pwd']
     const userAddr = ctx.query['addr']
@@ -165,13 +197,6 @@ class LandProductController {
     const userRealAddr = ctx.query['userRealAddr']
     const userPhone = ctx.query['userPhone']
     const userName = ctx.query['userName']
-    const userAddrVali = await joiParamVali.valiAddr(userAddr)
-    const productIdVali = await joiParamVali.valiProductId(productId)
-    const pwdVali = await joiParamVali.valiPass(pwd)
-    const userPhoneVali = await joiParamVali.valiPhone(userPhone)
-    if (!userPhoneVali || !productIdVali || !userPhoneVali || !userRealAddr || !pwdVali) {
-      return new Error(CommonCodes.Params_Check_Fail)
-    }
     // 交易密码 与验证码验证
     const realPwd = await landProductModel.queryUserTradePwd(userAddr)
     if (!realPwd) return realPwd
@@ -257,12 +282,11 @@ class LandProductController {
 	}
 
   async updateUserBamboo (ctx) {
-    if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const addr = ctx.query['addr']
     const addrVali = await joiParamVali.valiAddr(addr)
-    if (!addrVali) {
-      return new Error(CommonCodes.Params_Check_Fail)
-    }
+    if (_.isError(addrVali)) return addrVali
     const updateBamboo = await landProductModel.updateUserBamboo(addr)
     return updateBamboo
   }

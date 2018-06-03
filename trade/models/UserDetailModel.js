@@ -17,6 +17,7 @@ const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/e
     - 通过用户addr查询用户经纬度 getUserLocationByAddr
   MYSQL @landassets
      - 用户资产初始化 createUserAsset
+     - 增加用户的bamboo addUserBamboo
   MYSQL @user @landassets
     - 查询指定addr的用户信息 queryUserByAddr
   MYSQL @ethaddrmanager
@@ -68,6 +69,19 @@ class UserDetailModel {
     return db.query(sql, val) 
   }
 
+  async addUserBamboo (addr, count) {
+    let val = [
+      LandAssetsName,
+      LandAssetsServerModel.bamboo.label,
+      LandAssetsServerModel.bamboo.label,
+      count,
+      LandAssetsServerModel.addr.label,
+      addr
+    ]
+    let sql = 'update ?? set ?? = ?? + ? where ?? = ?'
+    return db.query(sql, val)  
+  }
+
 	async userLogin (addr, pwd) {
 		let val = [
       UserModelName,
@@ -81,8 +95,21 @@ class UserDetailModel {
   }
 
   async queryUserByAddr (addr) {
-  	let val = ['user', addr]
-  	let sql = 'select * from ?? ' + 
+    let columns = [
+      'user.uk_addr',
+      'user.uk_email',
+      'user.utradePwd',
+      'user.longitude',
+      'user.latitude',
+      'l.bamboo',
+      'l.bamboolock',
+      'l.eth',
+      'l.ethLock',
+      'l.eos',
+      'l.eosLock',
+      'm.uk_account']
+  	let val = [columns, 'user', addr]
+  	let sql = 'select ?? from ?? ' + 
       'inner join landassets l on user.uk_addr=l.uk_addr ' +
       'inner join ethaddrmanager m on m.uk_addr=l.uk_addr where user.uk_addr = ?'
   	return db.query(sql, val)
