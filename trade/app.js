@@ -198,7 +198,7 @@ koaRouter.post('/userChangeTradePass', async (ctx) => {
 
 koaRouter.get('/queryUserEmail', async (ctx) => {
   const res = await userDetailController.queryUserEmail(ctx)
-  if (res) {
+  if (!_.isError(res)) {
     ctx.body = succRes(LoginCodes.Query_Email_Succ, res)
   } else {
     ctx.body = errorRes(LoginCodes.User_Not_Bind_Email)
@@ -654,7 +654,13 @@ koaRouter.get('/updateUserBamboo', async (ctx) =>{
 koaRouter.get('/getUserBamboo', async (ctx) => {
   const res = await userDetailController.getUserBamboo(ctx)
   if (!_.isError(res)) {
-    ctx.body = succRes(LoginCodes.Get_User_Bamboo, res)
+    ctx.cookies.set(
+    'hash',
+    res,
+    {
+      httpOnly: true
+    })
+    ctx.body = succRes(LoginCodes.Get_User_Bamboo, {})
   } else {
     ctx.body = errorRes(res.message)
   }

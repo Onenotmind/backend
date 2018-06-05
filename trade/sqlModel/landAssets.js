@@ -16,8 +16,8 @@ let LandAssetsServerModel = {
 		label: 'bamboo',
 		type: 'int unsigned'
 	},
-	bamboolock: {
-		label: 'bamboolock',
+	bambooLock: {
+		label: 'bambooLock',
 		type: 'int unsigned'
 	},
 	eth: {

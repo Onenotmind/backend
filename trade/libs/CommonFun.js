@@ -73,7 +73,7 @@ async function getParamsCheck (ctx, paramsArray) {
   let params = {}
   for (const element of paramsArray) {
     if (ctx.query[element.label] !== undefined) {
-      if (element.vali) {
+      if (element.vali !== 'null') {
         const valiParam = await joiParamVali[element.vali](ctx.query[element.label])
         if (_.isError(valiParam)) {
           return valiParam
@@ -87,6 +87,7 @@ async function getParamsCheck (ctx, paramsArray) {
       return new Error(`参数${element.label}不存在！`)
     }
   }
+  return params
 }
 
 function checkGetParams (ctx, paramsArray) {
@@ -116,7 +117,7 @@ async function postParamsCheck (ctx, paramsArray) {
   let params = {}
   for (const element of paramsArray) {
     if (requestData[element.label] !== undefined) {
-      if (element.vali) {
+      if (element.vali !== 'null') {
         const valiParam = await joiParamVali[element.vali](requestData[element.label])
         if (_.isError(valiParam)) {
           return valiParam
@@ -130,6 +131,7 @@ async function postParamsCheck (ctx, paramsArray) {
       return new Error(`参数${element.label}不存在！`)
     }
   }
+  return params
 }
 
 function checkToken (token, addr) {

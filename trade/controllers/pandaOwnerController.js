@@ -79,6 +79,7 @@ class PandaOwnerController {
 	async getPandaBackAssets (ctx) {
 		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const checkAddr = ctx.cookies.get('userAddr')
 		const allOutPanda = await pandaOwnerModel.queryAllOutPandaByAddr(checkAddr)
 		if (!allOutPanda || allOutPanda.length === 0) return new Error(PandaOwnerCodes.Not_Out_Panda)
 		let backProducts = [] // 返回的所有商品
@@ -200,6 +201,7 @@ class PandaOwnerController {
 		if (_.isError(pandaGenVali)) return pandaGenVali
 		// 逻辑部分
 		// 判断这只熊猫是否在addr下
+		const checkAddr = ctx.cookies.get('userAddr')
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
 		if (!pandaInfo || pandaInfo.length === 0) return new Error(PandaLandCodes.No_Such_Panda)
 		if (pandaInfo[0][PandaOwnerServerModel.addr.label] !== checkAddr) return new Error(PandaLandCodes.No_Such_Panda)
@@ -209,9 +211,7 @@ class PandaOwnerController {
 	}
 
 	async queryAllPandaBeSold (ctx) {
-		const token = ctx.request.headers['token']
-		const checkAddr = ctx.cookies.get('userAddr')
-		const tokenCheck = await checkToken(token, checkAddr)
+		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const soldPanda = await pandaOwnerModel.queryPandasByState('sold')
 		return soldPanda
@@ -236,7 +236,6 @@ class PandaOwnerController {
 		const addrVali = await joiParamVali.valiAddr(addr)
 		if (_.isError(addrVali)) return addrVali
 		const pandaCount = await pandaOwnerModel.queryAllPandaByAddr(addr)
-		console.log('pandaCount', pandaCount)
 		if (pandaCount && pandaCount.length > 0) {
 			return new Error(PandaOwnerCodes.Already_Gene_Free_Panda)
 		} 
@@ -351,13 +350,15 @@ class PandaOwnerController {
 			}
 		]
 		const params= await getParamsCheck(ctx, paramsType)
+		console.log('params', params)
 		if (_.isError(params)) return params
+		const checkAddr = ctx.cookies.get('userAddr')
 		// 查询某个地址所有未出售的熊猫，若熊猫总数只有一个，则不能卖熊猫
 		const unsoldPandas = await pandaOwnerModel.queryAllPandaByAddr(checkAddr)
 		if (!unsoldPandas || unsoldPandas.length < 2) return new Error(LandProductCodes.Only_One_Unsold_Panda)
 		// const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
 		// if (!checkPwd) return checkPwd
-		const sellPanda = await pandaOwnerModel.sellPanda(gen, price)
+		const sellPanda = await pandaOwnerModel.sellPanda(gen, parseInt(price))
 		return sellPanda
 	}
 
@@ -436,12 +437,13 @@ class PandaOwnerController {
 				return updateOwnerAssets
 			},
 			async function (res) {
-				console.log(res)
 				if (_.isError(res)) return res
+				console.log('transferPandaOwner')
 				const transPanda = await pandaOwnerModel.transferPandaOwner(trans, addr, pandaGen)
 				return transPanda
 			},
 			function (res, callback) {
+				console.log('res', res)
 				if (_.isError(res)) {
 					callback(res)
 				} else {
@@ -497,7 +499,7 @@ class PandaOwnerController {
 			}
 		]
 		const params= await getParamsCheck(ctx, paramsType)
-		if (!params) return params
+		if (_.isError(params)) return params
 		const self = this
 		const geni = params.pandaGen
 		const bamboo = params.bamboo
@@ -513,9 +515,9 @@ class PandaOwnerController {
 				if (!pandaInfo || pandaInfo.length === 0) return new Error(PandaLandCodes.No_Such_Panda)
 				if (parseInt(pandaInfo[0][LandAssetsServerModel.bamboo.label]) < bamboo) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
 				let leftBamboo = parseInt(pandaInfo[0][LandAssetsServerModel.bamboo.label]) - bamboo
-				const updateLandAssets = await pandaOwnerModel.updateLandAssetsByAddrTrans(trans, pandaInfo[0].ownerAddr, 'bamboo', leftBamboo)
+				const updateLandAssets = await pandaOwnerModel.updateLandAssetsByAddrTrans(trans, pandaInfo[0][LandAssetsServerModel.addr.label], 'bamboo', leftBamboo)
 				if (!updateLandAssets) return new Error(CommonCodes.Service_Wrong)
-				console.log('pandaInfo', pandaInfo[0])
+				// console.log('pandaInfo', pandaInfo[0])
 				return pandaInfo[0]
 			},
 			async function (pandaInfo) {
@@ -535,7 +537,7 @@ class PandaOwnerController {
           'fire': pandaInfo[PandaOwnerServerModel.fireCatch.label],
           'earth': pandaInfo[PandaOwnerServerModel.earthCatch.label]
         }
-        console.log({attrArr: attrArr,addr: addr,product: product,geoParams: geoParams})
+        // console.log({attrArr: attrArr,addr: addr,product: product,geoParams: geoParams})
         return {
         	attrArr: attrArr,
         	addr: addr,
@@ -596,7 +598,7 @@ class PandaOwnerController {
             let caclPosRate = self.recognize(centerPos, geoParams)
             const valRate = parseFloat(15 / data.value) // 商品的价值系数
             const catchRate = attrArr[dataTypeArr[index]] * caclPosRate * valRate < 0 ? 0:attrArr[dataTypeArr[index]] * caclPosRate * valRate
-            console.log('catchRate', catchRate)
+            // console.log('catchRate', catchRate)
             if (Math.random() < 0.5) {
               itemRes.push(data)
               let curAssetsType = data[LandProductServerModel.type.label]

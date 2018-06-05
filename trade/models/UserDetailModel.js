@@ -56,7 +56,7 @@ class UserDetailModel {
     let insertData = {
       [LandAssetsServerModel.addr.label]: addr,
       [LandAssetsServerModel.bamboo.label]: 0,
-      [LandAssetsServerModel.bamboolock.label]: 0,
+      [LandAssetsServerModel.bambooLock.label]: 0,
       [LandAssetsServerModel.eth.label]: 0,
       [LandAssetsServerModel.ethLock.label]: 0,
       [LandAssetsServerModel.eos.label]: 0,
@@ -119,9 +119,10 @@ class UserDetailModel {
     let val = [
       UserServerModel.email.label,
       UserModelName,
+      UserServerModel.addr.label,
       addr
     ]
-    let sql = 'select ?? from ?? where uaddr = ?'
+    let sql = 'select ?? from ?? where ?? = ?'
     return db.query(sql, val)
   }
 

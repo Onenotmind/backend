@@ -5,6 +5,7 @@ const Web3 = require('web3')
 const web3 = new Web3()
 const UserDetailModel = require('../models/UserDetailModel.js')
 const userDetailModel = new UserDetailModel()
+const { UserServerModel } = require('../sqlModel/user.js')
 const { LoginCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const { getParamsCheck, checkUserToken, checkGetParams, postParamsCheck, decrypt, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
@@ -58,6 +59,7 @@ class UserDetailController {
 			}
 		]
 		const params= await postParamsCheck(ctx, paramsType)
+		console.log('params', params)
 		if (_.isError(params)) return params
 		const addr = params.addr
 		const pwd = params.pwd
@@ -167,6 +169,8 @@ class UserDetailController {
 		]
 		const valiParams = await getParamsCheck(ctx, paramsType)
 		if (_.isError(valiParams)) return valiParams
+		const addr = ctx.query['addr']
+		const pwd = ctx.query['pwd']
 		const login = await userDetailModel.userLogin(addr, pwd)
 		if (!login || login.length === 0) return new Error(LoginCodes.Login_DataWrong)
 		return login
@@ -243,9 +247,10 @@ class UserDetailController {
 		if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
       tmpCode = ctx.cookies.get('tmpUserId')
     }
-    let decryptRes = parseInt(decrypt(tmpCode, email[0].uemail))
+    let decryptRes = parseInt(decrypt(tmpCode, email[0][UserServerModel.email.label]))
+    console.log(decryptRes)
     if (decryptRes - 1 !== parseInt(code)) {
-      return new Error(LoginCodes.Code_Error)  
+      return new Error(LoginCodes.Code_Error) 
     }
     const newPwdChange = await userDetailModel.changeLoginPwd(addr, pwd)
     return newPwdChange
@@ -284,7 +289,7 @@ class UserDetailController {
 		if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
       tmpCode = ctx.cookies.get('tmpUserId')
     }
-   let decryptRes = parseInt(decrypt(tmpCode, email[0].uemail))
+   let decryptRes = parseInt(decrypt(tmpCode, email[0][UserServerModel.email.label]))
    if (decryptRes - 1 !== parseInt(code)) {
      return errorRes(LoginCodes.Code_Error)  
    }
@@ -393,10 +398,16 @@ class UserDetailController {
 	    }
 	  })
   	if (!res) return new Error(LoginCodes.Get_Combo_Data_Fail)
-  	if (!res.data) return {}
-  	const addCount = parseInt(res.data.total / 100)
+  	if (!res.data) return 0
+  	let preHash = 0
+  	if (ctx.cookies && ctx.cookies.get('hash')) {
+      preHash = ctx.cookies.get('hash')
+    }
+    let addCount = parseInt(res.data.total / 100) - parseInt(preHash / 100)
+    addCount = addCount > 0 ? addCount : 0
   	const addBamboo = await userDetailModel.addUserBamboo(addr, addCount)
-  	return addBamboo
+  	if (!addBamboo) return addBamboo
+  	return res.data.total
   }
 
 	geneLocation () {

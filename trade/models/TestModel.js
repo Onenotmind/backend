@@ -127,7 +127,7 @@ class TestModel {
     let insertData = {
       [LandAssetsServerModel.addr.label]: 'ethland',
       [LandAssetsServerModel.bamboo.label]: 2000,
-      [LandAssetsServerModel.bamboolock.label]: 0,
+      [LandAssetsServerModel.bambooLock.label]: 0,
       [LandAssetsServerModel.eth.label]: 0,
       [LandAssetsServerModel.ethLock.label]: 0,
       [LandAssetsServerModel.eos.label]: 0,

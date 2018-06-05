@@ -35,12 +35,12 @@ class JoiParamVali {
 
   async valiPrice (price) {
     const schema = Joi.number().min(0).max(20000).required().optional()
-    return this.joiDataCheck(price, schema, JoiCodes.Price_Illegal)
+    return this.joiDataCheck(parseInt(price), schema, JoiCodes.Price_Illegal)
   }
 
   async valiBamboo(bamboo) {
     const schema = Joi.number().min(0).max(10000).required().optional()
-    return this.joiDataCheck(bamboo, schema, JoiCodes.Price_Illegal)
+    return this.joiDataCheck(parseInt(bamboo), schema, JoiCodes.Price_Illegal)
   }
 
   async valiEmail (email) {
@@ -55,19 +55,19 @@ class JoiParamVali {
 
   async valiState (state) {
     const AttrList = ['goldCatch', 'waterCatch', 'fireCatch', 'earthCatch', 'woodCatch']
-    const schema = Joi.any().invalid(valiArr)
+    const schema = Joi.any().valid(valiArr)
     return this.joiDataCheck(state, schema, JoiCodes.State_Illegal)
   }
 
   async valiProductAttr (attr) {
     const AttrList = ['gold', 'water', 'fire', 'earth', 'wood']
-    const schema = Joi.any().invalid(AttrList)
+    const schema = Joi.any().valid(AttrList)
     return this.joiDataCheck(attr, schema, JoiCodes.ProductAttr_Illegal)
   }
 
   async valiDir (direct) {
     const AttrList = ['west', 'east', 'north', 'south', 'southeast', 'southwest', 'northeast', 'northwest']
-    const schema = Joi.any().invalid(valiArr)
+    const schema = Joi.any().valid(AttrList)
     return this.joiDataCheck(direct, schema, JoiCodes.Dir_Illegal)
   }
 
@@ -93,6 +93,7 @@ class JoiParamVali {
         if (err === null) {
           resolve(params)
         } else {
+          console.log('err', err)
           resolve(new Error(codes))
         }
       })
