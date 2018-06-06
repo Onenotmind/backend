@@ -100,7 +100,7 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  origin: 'http://localhost:3002',
+  origin: 'http://47.74.228.207',
   credentials: true
 }))
 
@@ -118,6 +118,7 @@ app.use(cors({
     - userRegisterByRandom 用户随机注册
     - queryUserEmail 查询用户的邮箱 
     - testTrans 测试user事务
+    - checkUserLoginExpired 检测用户是否还在登陆状态,判断token
   @个人资产管理
     - 获取用户详细信息和资产 getUserInfoAndAssetsByAddr
   @确认订单
@@ -212,6 +213,15 @@ koaRouter.get('/exchangeProduct', async (ctx) => {
   } else {
     ctx.body = errorRes(res.message)
   } 
+})
+
+koaRouter.get('/checkUserLoginExpired', async (ctx) => {
+  const res = await userDetailController.checkUserLoginExpired(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes('token useful.', {})
+  } else {
+    ctx.body = errorRes('token expired')
+  }
 })
 
 /**
@@ -481,7 +491,6 @@ koaRouter.get('/sellPanda', async (ctx) => {
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Sell_Panda_Succ, res)
   } else {
-    console.log(errorRes(res.message))
     ctx.body = errorRes(res.message)
   }
 })

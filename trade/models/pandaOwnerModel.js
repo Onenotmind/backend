@@ -69,6 +69,7 @@ class PandaOwnerModel {
 
   async queryPandasByState (state) {
     let columns = [
+      PandaOwnerServerModel.addr.label,
       PandaOwnerServerModel.gen.label,
       PandaOwnerServerModel.type.label,
       PandaOwnerServerModel.speed.label,

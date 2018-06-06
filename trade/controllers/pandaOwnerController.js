@@ -350,12 +350,11 @@ class PandaOwnerController {
 			}
 		]
 		const params= await getParamsCheck(ctx, paramsType)
-		console.log('params', params)
 		if (_.isError(params)) return params
 		const checkAddr = ctx.cookies.get('userAddr')
 		// 查询某个地址所有未出售的熊猫，若熊猫总数只有一个，则不能卖熊猫
 		const unsoldPandas = await pandaOwnerModel.queryAllPandaByAddr(checkAddr)
-		if (!unsoldPandas || unsoldPandas.length < 2) return new Error(LandProductCodes.Only_One_Unsold_Panda)
+		if (!unsoldPandas || unsoldPandas.length < 2) return new Error(PandaLandCodes.Only_One_Unsold_Panda)
 		// const checkPwd = await pandaOwnerModel.checkOwnerTradePwd(gen, tradePwd)
 		// if (!checkPwd) return checkPwd
 		const sellPanda = await pandaOwnerModel.sellPanda(gen, parseInt(price))

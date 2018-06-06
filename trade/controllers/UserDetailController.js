@@ -25,6 +25,7 @@ const joiParamVali = new JoiParamVali()
 		检测验证码正确与否 CheckEmailCode
 		通过用户addr查询用户经纬度 getUserLocationByAddr
 		获取用户参与挖矿得到的bamboo数量 getUserBamboo
+		检测用户是否还在登陆状态,判断token checkUserLoginExpired
 	@通过方法
 		随机生成地址(经纬度) geneLocation
 		发送验证码 geneEmailCode
@@ -408,6 +409,12 @@ class UserDetailController {
   	const addBamboo = await userDetailModel.addUserBamboo(addr, addCount)
   	if (!addBamboo) return addBamboo
   	return res.data.total
+  }
+
+  async checkUserLoginExpired (ctx) {
+  	const tokenCheck = await checkUserToken(ctx)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		return true
   }
 
 	geneLocation () {
