@@ -27,11 +27,15 @@ let LandProductServerModel = {
   },
 	productId: {
 		label: 'uk_productId',
-		type: 'VARCHAR(10)'
+		type: 'VARCHAR(20)'
 	},
 	type: {
-		label: 'type',
+		label: 'idx_type',
 		type: 'varchar(5)'
+	},
+	productType: {
+		label: 'idx_productType',
+		type: 'varchar(10)'
 	},
 	state: {
 		label: 'state',
@@ -47,11 +51,19 @@ let LandProductServerModel = {
 	},
 	name: {
 		label: 'name',
-		type: 'varchar(100)'
+		type: 'varchar(150)'
+	},
+	nameEn: {
+		label: 'nameEn',
+		type: 'varchar(200)'
 	},
 	value: {
 		label: 'value',
 		type: 'smallint unsigned'
+	},
+	productSrc: {
+		label: 'productSrc',
+		type: 'varchar(350)'
 	},
 	recommender: {
 		label: 'recommender',
@@ -70,7 +82,13 @@ let LandProductServerModel = {
     label: 'primary key(pk_id),'
   },
   uk_productId: {
-  	label: 'unique key(uk_productId)'
+  	label: 'unique key(uk_productId),'
+  },
+  idx_type: {
+  	label: 'index (idx_type),'
+  },
+  idx_productType: {
+  	label: 'index (idx_productType)'
   },
 	other: {
 		label: ')ENGINE=InnoDB DEFAULT CHARSET=utf8'
@@ -87,29 +105,114 @@ let LandProductServerModel = {
 
 const LandProductInserData = [
 	{
-		productId: 'fangshang',
-		imgSrc: 'https://image.ibb.co/eKJjR7/5ae9326c_Nad9fb674.jpg',
-		name: '艾以纯衣长袖t恤男士纯色印花修身纯棉圆领休闲短袖T恤男半袖体恤衫2018夏季新'
+		productId: 'champion_sold',
+		type: 'fire',
+		productType: 'product',
+		state: 'sold',
+		imgSrc: 'https://image.ibb.co/fcHnho/81x3_Rt_Qem_GL_UL1500.jpg',
+		name: 'Champion 男士 Classic Jersey 印花 T恤',
+		nameEn: 'Champion Men Classic Jersey Print T-Shirt',
+		value: 83,
+		productSrc: 'https://www.amazon.cn/dp/B072Y68647/ref=sr_1_1?ie=UTF8&qid=1528558577&sr=8-1&keywords=%E4%BC%98%E8%A1%A3%E5%BA%93&th=1'
 	},
 	{
-		productId: 'three_giss',
-		imgSrc: 'https://image.ibb.co/gPjPR7/5a3a3de7_Nf6b6fe58.jpg',
-		name: '三只松鼠 坚果零食礼盒 夏威夷果碧根果巴旦木核桃 坚果大礼包火红A 1493g'
+		productId: 'volong_sold',
+		type: 'water',
+		productType: 'product',
+		state: 'sold',
+		imgSrc: 'https://image.ibb.co/gqpdoT/61_FL6w_My_YTL_SL800.jpg',
+		name: '沃隆 每日坚果A款750g（25g*30包）混合坚果仁大礼包',
+		nameEn: 'Daily Nuts 750g (25g*30 pack)',
+		value: 146,
+		productSrc: 'https://www.amazon.cn/dp/B01GY311UY/ref=sr_1_1?ie=UTF8&qid=1528558103&sr=8-1&keywords=%E4%B8%89%E5%8F%AA%E6%9D%BE%E9%BC%A0&th=1'
 	},
 	{
-		productId: 'gucci',
-		imgSrc: 'https://image.ibb.co/c2OvYn/584779e6_N63ee31dd.jpg',
-		name: 'GUCCI 古驰 女士粉色牛皮斜挎包 466506 CAO0G 5806'
+		productId: 'gucci_sold',
+		type: 'earth',
+		productType: 'product',
+		state: 'sold',
+		imgSrc: 'https://image.ibb.co/k0tGa8/61_LOz_F2y_HAL_UL1500.jpg',
+		name: 'Gucci 手表 Guccissima 棕色表盘 YA134506 Ya 女士',
+		nameEn: 'Gucci watch Guccissima brown dial YA134506 Ya',
+		value: 2521,
+		productSrc: 'https://www.amazon.cn/dp/B00R5Z8PIW/ref=sr_1_1?ie=UTF8&qid=1528559539&sr=8-1&keywords=GUCCI+%E5%8F%A4%E9%A9%B0+%E5%A5%B3%E5%A3%AB'
 	},
 	{
-		productId: 'mac',
-		imgSrc: 'https://image.ibb.co/cRwJKS/5a694955_N21107862_1.jpg',
-		name: 'Apple MacBook Pro 13.3英寸笔记本电脑'
+		productId: 'ipad_sold',
+		type: 'fire',
+		productType: 'product',
+		state: 'sold',
+		imgSrc: 'https://image.ibb.co/kG1r8T/61_Dh_MQj22_ZL_SL1000.jpg',
+		name: 'Apple iPad mini 4 MK9Q2CH/A 7.9英寸平板电脑 (128G/WLAN/金色)',
+		nameEn: 'Apple iPad mini 4 MK9Q2CH/A 7.9-inch Tablet (128G/WLAN/Gold)',
+		value: 2621,
+		productSrc: 'https://www.amazon.cn/dp/B015FGE9AU/ref=sr_1_1?ie=UTF8&qid=1528558953&sr=8-1&keywords=ipad%2Bmini&th=1'
 	},
 	{
-		productId: 'luo',
-		imgSrc: 'https://image.ibb.co/iyvvzS/5871e100_N639cb0bf.jpg',
-		name: '骆驼户外双肩背包 26L男女通用徒步旅行出游迷彩包 绿迷彩 均码'
+		productId: 'camel_sold',
+		type: 'water',
+		productType: 'product',
+		state: 'sold',
+		imgSrc: 'https://image.ibb.co/haL7ho/61e_Qz_OKCk_RL_SL1000.jpg',
+		name: 'Camel 骆驼 户外男女款骑行背包 13L运动双肩背包A6S3C3116',
+		nameEn: 'camel outdoor men and women riding backpack 13L sports backpack A6S3C3116',
+		value: 158,
+		productSrc: 'https://www.amazon.cn/dp/B01DNNN8Q8/ref=sr_1_2?ie=UTF8&qid=1528559060&sr=8-2&keywords=%E9%AA%86%E9%A9%BC%E6%88%B7%E5%A4%96%E5%8F%8C%E8%82%A9%E8%83%8C%E5%8C%85&th=1&psc=1'
+	},
+	{
+		productId: 'champion_prep',
+		type: 'fire',
+		productType: 'product',
+		state: 'prep',
+		imgSrc: 'https://image.ibb.co/fcHnho/81x3_Rt_Qem_GL_UL1500.jpg',
+		name: 'Champion 男士 Classic Jersey 印花 T恤',
+		nameEn: 'Champion Men Classic Jersey Print T-Shirt',
+		value: 83,
+		productSrc: 'https://www.amazon.cn/dp/B072Y68647/ref=sr_1_1?ie=UTF8&qid=1528558577&sr=8-1&keywords=%E4%BC%98%E8%A1%A3%E5%BA%93&th=1'
+	},
+	{
+		productId: 'volong_prep',
+		type: 'water',
+		productType: 'product',
+		state: 'prep',
+		imgSrc: 'https://image.ibb.co/gqpdoT/61_FL6w_My_YTL_SL800.jpg',
+		name: '沃隆 每日坚果A款750g（25g*30包）混合坚果仁大礼包',
+		nameEn: 'Daily Nuts 750g (25g*30 pack)',
+		value: 146,
+		productSrc: 'https://www.amazon.cn/dp/B01GY311UY/ref=sr_1_1?ie=UTF8&qid=1528558103&sr=8-1&keywords=%E4%B8%89%E5%8F%AA%E6%9D%BE%E9%BC%A0&th=1'
+	},
+	{
+		productId: 'gucci_prep',
+		type: 'earth',
+		productType: 'product',
+		state: 'prep',
+		imgSrc: 'https://image.ibb.co/k0tGa8/61_LOz_F2y_HAL_UL1500.jpg',
+		name: 'Gucci 手表 Guccissima 棕色表盘 YA134506 Ya 女士',
+		nameEn: 'Gucci watch Guccissima brown dial YA134506 Ya',
+		value: 2521,
+		productSrc: 'https://www.amazon.cn/dp/B00R5Z8PIW/ref=sr_1_1?ie=UTF8&qid=1528559539&sr=8-1&keywords=GUCCI+%E5%8F%A4%E9%A9%B0+%E5%A5%B3%E5%A3%AB'
+	},
+	{
+		productId: 'ipad_prep',
+		type: 'fire',
+		productType: 'product',
+		state: 'prep',
+		imgSrc: 'https://image.ibb.co/kG1r8T/61_Dh_MQj22_ZL_SL1000.jpg',
+		name: 'Apple iPad mini 4 MK9Q2CH/A 7.9英寸平板电脑 (128G/WLAN/金色)',
+		nameEn: 'Apple iPad mini 4 MK9Q2CH/A 7.9-inch Tablet (128G/WLAN/Gold)',
+		value: 2621,
+		productSrc: 'https://www.amazon.cn/dp/B015FGE9AU/ref=sr_1_1?ie=UTF8&qid=1528558953&sr=8-1&keywords=ipad%2Bmini&th=1'
+	},
+	{
+		productId: 'camel_prep',
+		type: 'water',
+		productType: 'product',
+		state: 'prep',
+		imgSrc: 'https://image.ibb.co/haL7ho/61e_Qz_OKCk_RL_SL1000.jpg',
+		name: 'Camel 骆驼 户外男女款骑行背包 13L运动双肩背包A6S3C3116',
+		nameEn: 'camel outdoor men and women riding backpack 13L sports backpack A6S3C3116',
+		value: 158,
+		productSrc: 'https://www.amazon.cn/dp/B01DNNN8Q8/ref=sr_1_2?ie=UTF8&qid=1528559060&sr=8-2&keywords=%E9%AA%86%E9%A9%BC%E6%88%B7%E5%A4%96%E5%8F%8C%E8%82%A9%E8%83%8C%E5%8C%85&th=1&psc=1'
 	}
 ]
 

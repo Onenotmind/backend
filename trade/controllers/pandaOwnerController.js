@@ -597,8 +597,9 @@ class PandaOwnerController {
             let caclPosRate = self.recognize(centerPos, geoParams)
             const valRate = parseFloat(15 / data.value) // 商品的价值系数
             const catchRate = attrArr[dataTypeArr[index]] * caclPosRate * valRate < 0 ? 0:attrArr[dataTypeArr[index]] * caclPosRate * valRate
-            // console.log('catchRate', catchRate)
-            if (Math.random() < 0.5) {
+            console.log('catchRate', catchRate)
+            // if (Math.random() < 0.5) {
+            if (Math.random() < catchRate) {
               itemRes.push(data)
               let curAssetsType = data[LandProductServerModel.type.label]
               if (curAssetsType === 'ETH' || curAssetsType === 'EOS') {

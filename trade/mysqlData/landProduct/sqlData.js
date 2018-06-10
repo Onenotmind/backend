@@ -1,14 +1,14 @@
 let landProductTestData = [
-	"('fangshang','fire','sold',0,'https://image.ibb.co/eKJjR7/5ae9326c_Nad9fb674.jpg','艾以纯衣长袖t恤男士纯色印花修身纯棉圆领休闲短袖T恤男半袖体恤衫2018夏季新',100,'ETHLAND')",
-	"('three_giss','fire','sold',0,'https://image.ibb.co/gPjPR7/5a3a3de7_Nf6b6fe58.jpg','三只松鼠 坚果零食礼盒 夏威夷果碧根果巴旦木核桃 坚果大礼包火红A 1493g',100,'ETHLAND')",
-	"('gucci','fire','sold',0,'https://image.ibb.co/c2OvYn/584779e6_N63ee31dd.jpg','GUCCI 古驰 女士粉色牛皮斜挎包 466506 CAO0G 5806',5400,'ETHLAND')",
-	"('mac','earth','sold',0,'https://image.ibb.co/cRwJKS/5a694955_N21107862_1.jpg','Apple MacBook Pro 13.3英寸笔记本电脑',15000,'ETHLAND')",
-	"('luotuo','fire','sold',0,'https://image.ibb.co/iyvvzS/5871e100_N639cb0bf.jpg','骆驼户外双肩背包 26L男女通用徒步旅行出游迷彩包 绿迷彩 均码',400,'ETHLAND')",
-	"('fangshang','fire','prep',0,'https://image.ibb.co/eKJjR7/5ae9326c_Nad9fb674.jpg','艾以纯衣长袖t恤男士纯色印花修身纯棉圆领休闲短袖T恤男半袖体恤衫2018夏季新',100,'ETHLAND')",
-	"('three_giss','fire','prep',0,'https://image.ibb.co/gPjPR7/5a3a3de7_Nf6b6fe58.jpg','三只松鼠 坚果零食礼盒 夏威夷果碧根果巴旦木核桃 坚果大礼包火红A 1493g',100,'ETHLAND')",
-	"('gucci','fire','prep',0,'https://image.ibb.co/c2OvYn/584779e6_N63ee31dd.jpg','GUCCI 古驰 女士粉色牛皮斜挎包 466506 CAO0G 5806',5400,'ETHLAND')",
-	"('mac','earth','prep',0,'https://image.ibb.co/cRwJKS/5a694955_N21107862_1.jpg','Apple MacBook Pro 13.3英寸笔记本电脑',15000,'ETHLAND')",
-	"('luotuo','fire','prep',0,'https://image.ibb.co/iyvvzS/5871e100_N639cb0bf.jpg','骆驼户外双肩背包 26L男女通用徒步旅行出游迷彩包 绿迷彩 均码',400,'ETHLAND')"
+	"('champion_sold','fire','product','sold',0,'https://image.ibb.co/fcHnho/81x3_Rt_Qem_GL_UL1500.jpg','Champion 男士 Classic Jersey 印花 T恤','Champion Men's Classic Jersey Print T-Shirt',83,'https://www.amazon.cn/dp/B072Y68647/ref=sr_1_1?ie=UTF8&qid=1528558577&sr=8-1&keywords=%E4%BC%98%E8%A1%A3%E5%BA%93&th=1',ETHLAND')",
+	"('volong_sold','fire','product','sold',0,'https://image.ibb.co/gqpdoT/61_FL6w_My_YTL_SL800.jpg','沃隆 每日坚果A款750g（25g*30包）混合坚果仁大礼包', 'Daily Nuts 750g (25g*30 pack)', 146,'https://www.amazon.cn/dp/B01GY311UY/ref=sr_1_1?ie=UTF8&qid=1528558103&sr=8-1&keywords=%E4%B8%89%E5%8F%AA%E6%9D%BE%E9%BC%A0&th=1', ETHLAND')",
+	"('gucci_sold','fire','product','sold',0,'https://image.ibb.co/k0tGa8/61_LOz_F2y_HAL_UL1500.jpg',' Gucci 手表 Guccissima 棕色表盘 YA134506 Ya 女士','Gucci watch Guccissima brown dial YA134506 Ya',2521,'https://www.amazon.cn/dp/B00R5Z8PIW/ref=sr_1_1?ie=UTF8&qid=1528559539&sr=8-1&keywords=GUCCI+%E5%8F%A4%E9%A9%B0+%E5%A5%B3%E5%A3%AB',ETHLAND')",
+	"('ipad_sold','earth','product','sold',0,'https://image.ibb.co/kG1r8T/61_Dh_MQj22_ZL_SL1000.jpg','Apple iPad mini 4 MK9Q2CH/A 7.9英寸平板电脑 (128G/WLAN/金色)','Apple iPad mini 4 MK9Q2CH/A 7.9-inch Tablet (128G/WLAN/Gold)',2622,'https://www.amazon.cn/dp/B015FGE9AU/ref=sr_1_1?ie=UTF8&qid=1528558953&sr=8-1&keywords=ipad%2Bmini&th=1',ETHLAND')",
+	"('camel_sold','fire','product','sold',0,'https://image.ibb.co/haL7ho/61e_Qz_OKCk_RL_SL1000.jpg','Camel 骆驼 户外男女款骑行背包 13L运动双肩背包A6S3C3116','camel outdoor men and women riding backpack 13L sports backpack A6S3C3116',158,'https://www.amazon.cn/dp/B01DNNN8Q8/ref=sr_1_2?ie=UTF8&qid=1528559060&sr=8-2&keywords=%E9%AA%86%E9%A9%BC%E6%88%B7%E5%A4%96%E5%8F%8C%E8%82%A9%E8%83%8C%E5%8C%85&th=1&psc=1',ETHLAND')",
+	"('champion_prep','fire','product','prep',0,'https://image.ibb.co/fcHnho/81x3_Rt_Qem_GL_UL1500.jpg','Champion 男士 Classic Jersey 印花 T恤','Champion Men's Classic Jersey Print T-Shirt',83,'https://www.amazon.cn/dp/B072Y68647/ref=sr_1_1?ie=UTF8&qid=1528558577&sr=8-1&keywords=%E4%BC%98%E8%A1%A3%E5%BA%93&th=1',ETHLAND')",
+	"('volong_prep','fire','product','prep',0,'https://image.ibb.co/gqpdoT/61_FL6w_My_YTL_SL800.jpg','沃隆 每日坚果A款750g（25g*30包）混合坚果仁大礼包', 'Daily Nuts 750g (25g*30 pack)', 146,'https://www.amazon.cn/dp/B01GY311UY/ref=sr_1_1?ie=UTF8&qid=1528558103&sr=8-1&keywords=%E4%B8%89%E5%8F%AA%E6%9D%BE%E9%BC%A0&th=1', ETHLAND')",
+	"('gucci_prep','fire','product','prep',0,'https://image.ibb.co/k0tGa8/61_LOz_F2y_HAL_UL1500.jpg',' Gucci 手表 Guccissima 棕色表盘 YA134506 Ya 女士','Gucci watch Guccissima brown dial YA134506 Ya',2521,'https://www.amazon.cn/dp/B00R5Z8PIW/ref=sr_1_1?ie=UTF8&qid=1528559539&sr=8-1&keywords=GUCCI+%E5%8F%A4%E9%A9%B0+%E5%A5%B3%E5%A3%AB',ETHLAND')",
+	"('ipad_prep','earth','product','prep',0,'https://image.ibb.co/kG1r8T/61_Dh_MQj22_ZL_SL1000.jpg','Apple iPad mini 4 MK9Q2CH/A 7.9英寸平板电脑 (128G/WLAN/金色)','Apple iPad mini 4 MK9Q2CH/A 7.9-inch Tablet (128G/WLAN/Gold)',2622,'https://www.amazon.cn/dp/B015FGE9AU/ref=sr_1_1?ie=UTF8&qid=1528558953&sr=8-1&keywords=ipad%2Bmini&th=1',ETHLAND')",
+	"('camel_prep','fire','product','prep',0,'https://image.ibb.co/haL7ho/61e_Qz_OKCk_RL_SL1000.jpg','Camel 骆驼 户外男女款骑行背包 13L运动双肩背包A6S3C3116','camel outdoor men and women riding backpack 13L sports backpack A6S3C3116',158,'https://www.amazon.cn/dp/B01DNNN8Q8/ref=sr_1_2?ie=UTF8&qid=1528559060&sr=8-2&keywords=%E9%AA%86%E9%A9%BC%E6%88%B7%E5%A4%96%E5%8F%8C%E8%82%A9%E8%83%8C%E5%8C%85&th=1&psc=1',ETHLAND')"
 ]
 
 module.exports = {

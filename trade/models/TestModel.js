@@ -157,17 +157,20 @@ class TestModel {
   }
 
   async insertDataToLandProduct () {
-    let insertCb = async (productId, imgSrc, name) => {
+    let insertCb = async (productId, type, productType, state, imgSrc, name, nameEn, value, productSrc) => {
       let curTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       let timer = new Date().getTime()
       let insertData = {
         [LandProductServerModel.productId.label]: productId,
-        [LandProductServerModel.type.label]: 'fire',
-        [LandProductServerModel.state.label]: 'sold',
+        [LandProductServerModel.type.label]: type,
+        [LandProductServerModel.productType.label]: productType,
+        [LandProductServerModel.state.label]: state,
         [LandProductServerModel.time.label]: timer,
         [LandProductServerModel.imgSrc.label]: imgSrc,
         [LandProductServerModel.name.label]: name,
-        [LandProductServerModel.value.label]: 100,
+        [LandProductServerModel.nameEn.label]: nameEn,
+        [LandProductServerModel.value.label]: value,
+        [LandProductServerModel.productSrc.label]: productSrc,
         [LandProductServerModel.recommender.label]: 'ETHLAND',
         [LandProductServerModel.gmt_create.label]: curTime,
         [LandProductServerModel.gmt_modified.label]:curTime
@@ -178,7 +181,7 @@ class TestModel {
     }
 
     for (let pro of LandProductInserData) {
-      await insertCb(pro.productId, pro.imgSrc, pro.name)
+      await insertCb(pro.productId, pro.type, pro.productType, pro.state, pro.imgSrc, pro.name, pro.nameEn, pro.value, pro.productSrc)
     }
     // let sql = 'INSERT INTO landProduct VALUES '
     // for (let i = 0; i < landProductTestData.length; i++) {
