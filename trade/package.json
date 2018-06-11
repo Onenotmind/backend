@@ -39,6 +39,7 @@
     "koa-mysql-session": "^0.0.2",
     "koa-session-minimal": "^3.0.4",
     "lodash": "^4.17.5",
-    "winston": "^2.4.1"
+    "winston": "^2.4.1",
+    "winston-daily-rotate-file": "^3.2.1"
   }
 }

@@ -20,7 +20,7 @@ const koaBody = require('koa-body')
 const jwt = require('jsonwebtoken')
 const async = require('async')
 const winston = require('winston')
-
+require('winston-daily-rotate-file')
 const app = new Koa()
 const port = 3001
 const assetsController = new AssetsController()
@@ -47,18 +47,36 @@ let bambooTitudeRate = 1000 // 竹子/经纬度 比例
   @日志系统
 
 */
+// const logger = new (winston.Logger)({
+//   transports: [
+//     new (winston.transports.File)({
+//       name: 'info-file',
+//       filename: 'filelog-info.log',
+//       level: 'info'
+//     }),
+//     new (winston.transports.File)({
+//       name: 'error-file',
+//       filename: 'filelog-error.log',
+//       level: 'error'
+//     })
+//   ]
+// })
+ 
+const transport = new (winston.transports.DailyRotateFile)({
+  filename: 'application-%DATE%.log',
+  datePattern: 'YYYY-MM-DD-HH',
+  zippedArchive: true,
+  maxSize: '20m',
+  maxFiles: '14d'
+})
+
+transport.on('rotate', function(oldFilename, newFilename) {
+  // do something fun
+})
+
 const logger = new (winston.Logger)({
   transports: [
-    new (winston.transports.File)({
-      name: 'info-file',
-      filename: 'filelog-info.log',
-      level: 'info'
-    }),
-    new (winston.transports.File)({
-      name: 'error-file',
-      filename: 'filelog-error.log',
-      level: 'error'
-    })
+    transport
   ]
 })
 
@@ -100,7 +118,7 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  origin: 'http://47.74.228.207',
+  origin: 'http://localhost:3002',
   credentials: true
 }))
 

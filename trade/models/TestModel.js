@@ -152,7 +152,7 @@ class TestModel {
   }
 
   async dropLandProductTable() {
-    let sql = 'DROP TABLE landProduct'
+    let sql = 'DROP TABLE landproduct'
     return db.query(sql)
   }
 
@@ -203,7 +203,7 @@ class TestModel {
   /* userLandProduct */
 
   async checkUserLandProductExist () {
-    let sql = 'show tables like "userLandproduct"'
+    let sql = 'show tables like "userlandproduct"'
     return db.query(sql)
   }
 
@@ -213,7 +213,7 @@ class TestModel {
   }
 
   async dropUserLandProductTable () {
-    let sql = 'DROP TABLE userLandProduct'
+    let sql = 'DROP TABLE userlandproduct'
     return db.query(sql)
   }
 
@@ -225,12 +225,12 @@ class TestModel {
   }
 
   async dropUserProductManagerTable () {
-    let sql = 'DROP TABLE userProductManager'
+    let sql = 'DROP TABLE userproductmanager'
     return db.query(sql)
   }
 
   async checkUserProductManager () {
-    let sql = 'show tables like "userProductManager"'
+    let sql = 'show tables like "userproductmanager"'
     return db.query(sql)
   }
 
@@ -252,12 +252,12 @@ class TestModel {
 
   /* pandaowner */
   async dropPandaOwnerTable () {
-    let sql = 'DROP TABLE pandaOwner'
+    let sql = 'DROP TABLE pandaowner'
     return db.query(sql)
   }
 
   async checkPandaownerTableExist () {
-    let sql = 'show tables like "pandaOwner"'
+    let sql = 'show tables like "pandaowner"'
     return db.query(sql)
   }
 
