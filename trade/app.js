@@ -118,7 +118,7 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  origin: 'http://localhost:3002',
+  origin: 'http://47.74.228.207',
   credentials: true
 }))
 
