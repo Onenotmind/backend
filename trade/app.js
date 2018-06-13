@@ -64,7 +64,7 @@ let bambooTitudeRate = 1000 // 竹子/经纬度 比例
  
 const transport = new (winston.transports.DailyRotateFile)({
   filename: 'application-%DATE%.log',
-  datePattern: 'YYYY-MM-DD-HH',
+  datePattern: 'YYYY-MM-DD',
   zippedArchive: true,
   maxSize: '20m',
   maxFiles: '14d'
@@ -542,7 +542,7 @@ koaRouter.get('/queryPandaInfo', async (ctx) => {
 
 // testApi getEthlandProduct?pandaGeni=0x12987uhvr453buyvu3u89&bamboo=300
 koaRouter.get('/getEthlandProduct', async (ctx) => {
-  logger.error('/getEthlandProduct')
+  // logger.error('/getEthlandProduct')
   const starArr = landProductController.getStarPoint()
   const res = await pandaOwnerController.getEthlandProduct(ctx, starArr)
   if (!_.isError(res)) {
@@ -725,5 +725,9 @@ koaRouter.get('/createTestTable', async (ctx) => {
 })
 
 app.use(koaRouter.routes())
+
+app.on('error', err =>  
+ logger.error('server error', err)  
+)
 
 app.listen(port)
