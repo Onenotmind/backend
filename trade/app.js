@@ -118,7 +118,7 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  origin: 'http://47.74.228.207',
+  origin: 'http://localhost:3002',
   credentials: true
 }))
 
@@ -553,7 +553,9 @@ koaRouter.get('/getEthlandProduct', async (ctx) => {
 })
 
 koaRouter.get('/getPandaBackAssets', async (ctx) => {
+  console.log('getPandaBackAssets..begin')
   const res = await pandaOwnerController.getPandaBackAssets(ctx)
+  console.log('getPandaBackAssets', res)
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Back_Assets_Carry_Succ, res)
   } else {
@@ -731,3 +733,8 @@ app.on('error', err =>
 )
 
 app.listen(port)
+
+// setTimeout(async () => {
+//   const sendEmail = await sendCodeFromMail('1343566210@qq.com', 7777)
+//   console.log('email', sendEmail)
+// }, 1000)

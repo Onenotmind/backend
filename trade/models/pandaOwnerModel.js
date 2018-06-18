@@ -27,7 +27,8 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 将外出熊猫回归的状态更改为在家 pandaBackHome
   - 事务处理
     - 更新熊猫属性 updatePandaAttrTrans
-    - 更新熊猫的状态与价钱 updatePandaLocationStateTrans 
+    - 更新熊猫的状态与价钱 updatePandaLocationStateTrans
+    - 将外出熊猫回归的状态更改为在家 pandaBackHomeTrans
   - @MYSQL UserLandProduct:
     - 插入一条商品记录 insertLandProductToUser
     - 更新商品记录 updateUserLandPro

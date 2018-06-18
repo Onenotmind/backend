@@ -15,11 +15,11 @@ let BackPandaAssetsServerModel = {
 	},
 	backAssets: {
 		label: 'backAssets',
-		type: 'VARCHAR(60)'
+		type: 'VARCHAR(100)'
 	},
 	dropAssets: {
 		label: 'dropAssets',
-		type: 'VARCHAR(60)'
+		type: 'VARCHAR(100)'
 	},
 	gmt_create: {
     label: 'gmt_create',

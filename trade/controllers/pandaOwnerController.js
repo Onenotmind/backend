@@ -44,6 +44,7 @@ const { PandaOwnerCodes, AssetsCodes, errorRes, LandProductCodes, CommonCodes, P
    	- 校验参数是否合法 valiParams
    	- 商品中心与熊猫外出时范围计算 recognize
    	- 返回不同属性的商品中心地址 getDiffStarCenter
+   	- 批量更新用户资产 batchUpdateUserAssets
 */
 
 let bambooTitudeRate = 1000 // 竹子/经纬度 比例
@@ -90,31 +91,48 @@ class PandaOwnerController {
 		let dropResProducts = [] // 扔掉的最终商品数组
 		let backPandas = [] // 返回的panda基因
 		const curDate =  Date.parse(new Date()) / 1000 // 当前时间
+		// const trans = await pandaOwnerModel.startTransaction()
+		// if (!trans) return new Error(CommonCodes.Service_Wrong)
+		// let tasks = [
+		// 	async function () {
+		// 	}
+		// ]
 		for (let panda of allOutPanda) {
 			if (curDate > panda[PandaOwnerServerModel.price.label]) {
 				const backPanda = await pandaOwnerModel.pandaBackHome(panda[PandaOwnerServerModel.gen.label])
 				if (!backPanda) return backPanda
 				const backAssets = await pandaOwnerModel.getPandaBackAssets(panda[PandaOwnerServerModel.gen.label])
-				if (!backAssets) return backAssets
+				if (!backAssets || backAssets.length === 0) return backAssets
 				backPandas.push(panda[PandaOwnerServerModel.gen.label])
 				if (backAssets[0][BackPandaAssetsServerModel.backAssets.label]) {
 					const backAssetsArr = backAssets[0][BackPandaAssetsServerModel.backAssets.label].split('|')
 					if (backAssetsArr.length > 0) {
 						backProducts = backProducts.concat(backAssetsArr)
-						for (let landPro of backAssetsArr) {
-		        	// 先查询需要更新的商品是否加入用户资产数据库
+						/**
+						 *	批量更新用户资产 batchUpdateUserAssets
+						 */
+						const batchUpdateUserAssets = async (addr, backAssetsArr) => {
+							// TODO 先查询需要更新的商品是否加入用户资产数据库
 		        	// 没有的话就insert
 		        	// 有的话就update
-		        	const specifiedPro = await pandaOwnerModel.querySpecifiedProByAddr(checkAddr, landPro)
-		        	if (!specifiedPro) return new Error(LandProductCodes.Query_Product_Fail)
-		        	if (specifiedPro.length === 0) {
-		        		const insertPro = await pandaOwnerModel.insertLandProductToUser(checkAddr, landPro)
-		        		if (!insertPro) return new Error(LandProductCodes.Insert_Product_Fail)
-		        	} else {
-		        		const updatePro = await pandaOwnerModel.updateUserLandPro(checkAddr, landPro)
-		        		if (!updatePro) return new Error(LandProductCodes.Update_Product_Fail)
-		        	}
-		        }
+							for (let [index, landPro] of backAssetsArr.entries()) {
+					    	const specifiedPro = await pandaOwnerModel.querySpecifiedProByAddr(addr, landPro)
+					    	if (!specifiedPro) return new Error(LandProductCodes.Query_Product_Fail)
+					    	if (specifiedPro.length === 0) {
+					    		const insertPro = await pandaOwnerModel.insertLandProductToUser(addr, landPro)
+					    		if (!insertPro) return new Error(LandProductCodes.Insert_Product_Fail)
+					    	} else {
+					    		const updatePro = await pandaOwnerModel.updateUserLandPro(addr, landPro)
+					    		if (!updatePro) return new Error(LandProductCodes.Update_Product_Fail)
+					    	}
+					    console.log(backAssetsArr.length)
+						    if (index === backAssetsArr.length - 1) {
+						    	return true
+						    }
+					    }
+						}
+						const updateUserAssets = await batchUpdateUserAssets(checkAddr, backAssetsArr)
+						if (_.isError(updateUserAssets)) return updateUserAssets
 					}
 				}
 				if (backAssets[0][BackPandaAssetsServerModel.dropAssets.label]) {
@@ -437,12 +455,10 @@ class PandaOwnerController {
 			},
 			async function (res) {
 				if (_.isError(res)) return res
-				console.log('transferPandaOwner')
 				const transPanda = await pandaOwnerModel.transferPandaOwner(trans, addr, pandaGen)
 				return transPanda
 			},
 			function (res, callback) {
-				console.log('res', res)
 				if (_.isError(res)) {
 					callback(res)
 				} else {
@@ -453,6 +469,7 @@ class PandaOwnerController {
 		return new Promise((resolve, reject) => {
 			trans.beginTransaction(function (bErr) {
 				if (bErr) {
+					trans.release()
 					reject(bErr)
 					return
 				}
@@ -550,13 +567,13 @@ class PandaOwnerController {
 				const addr = res.addr
 				const proArr = res.product
 				const geoParams = res.geoParams
-				let getDiffValue = (type) => {
-           for (let pro of assetsValArr) {
-           	if (type === pro[LandProductServerModel.productId.label]) {
-           		return pro[LandProductServerModel.value.label]
-           	}
-           }
-        }
+				// let getDiffValue = (type) => {
+    //        for (let pro of assetsValArr) {
+    //        	if (type === pro[LandProductServerModel.productId.label]) {
+    //        		return pro[LandProductServerModel.value.label]
+    //        	}
+    //        }
+    //     }
         let mostValRes = [] // 价值最高的商品组合
         let itemRes = [] // 返回的商品组合
         let dropRes = [] // 丢弃的商品列表
@@ -589,7 +606,7 @@ class PandaOwnerController {
           for (let index in dataTypeArr) {
             // if (true) {
             let starCenter = self.getDiffStarCenter(starArr, dataTypeArr[index])
-            console.log(starCenter)
+            // console.log(starCenter)
             let centerPos = {
             	longitude: starCenter[0],
             	latitude: starCenter[1]
@@ -597,9 +614,10 @@ class PandaOwnerController {
             let caclPosRate = self.recognize(centerPos, geoParams)
             const valRate = parseFloat(15 / data.value) // 商品的价值系数
             const catchRate = attrArr[dataTypeArr[index]] * caclPosRate * valRate < 0 ? 0:attrArr[dataTypeArr[index]] * caclPosRate * valRate
-            console.log('catchRate', catchRate)
-            // if (Math.random() < 0.5) {
-            if (Math.random() < catchRate) {
+            // console.log('catchRate', catchRate)
+            if (Math.random() < 0.5) {
+            // if (Math.random() < catchRate) {
+            	// console.log('data', data)
               itemRes.push(data)
               let curAssetsType = data[LandProductServerModel.type.label]
               if (curAssetsType === 'ETH' || curAssetsType === 'EOS') {
@@ -611,7 +629,7 @@ class PandaOwnerController {
               // itemsVal += getDiffValue(data.value.split('/')[1]) * parseInt(data.value.split('/')[0])
               let finalAttrVal = attrArr[dataTypeArr[index]] + 0.1* Math.random().toFixed(4)
               // TODO updatePandaAttr是否用await
-              pandaOwnerModel.updatePandaAttrTrans(trans, dataTypeArr[index] + 'Catch', finalAttrVal, geni)	
+              // pandaOwnerModel.updatePandaAttrTrans(trans, dataTypeArr[index] + 'Catch', finalAttrVal, geni)	
 							// if (!updateAttr) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)            
             } else {
             	dropRes.push(data[LandProductServerModel.productId.label])
@@ -638,15 +656,23 @@ class PandaOwnerController {
         // 	}
         // }
 
-        // 先查询该熊猫是否在backassets里还有数据
+        // 先查询该熊猫是否在backassets里还有数据 TODO
         // 若没有就插入
         // 有的话就删除这些数据再插入
-        const delBackAssets = await pandaOwnerModel.deleteBackPandaAssetsByGen(trans, geni)
-      	if (!delBackAssets) {
-      		return new Error(PandaLandCodes.Delete_Back_Assets_Fail)
-      	}
-      	const insertBackAssets = await pandaOwnerModel.updateBackPandaAssetsTrans(trans, geni, saveProRes.join('|'), dropRes.join('|'))
+        const querySelectedPro = await pandaOwnerModel.queryBackPandaAssetsByGen(geni)
+        if (!querySelectedPro) return querySelectedPro
+        if (querySelectedPro.length > 0) {
+        	const delBackAssets = await pandaOwnerModel.deleteBackPandaAssetsByGen(trans, geni)
+	      	if (!delBackAssets) {
+	      		return new Error(PandaLandCodes.Delete_Back_Assets_Fail)
+	      	}
+        }
+        console.log('saveRes...')
+        console.log(saveProRes.join('|'))
+        console.log(dropRes.join('|'))
+      	const insertBackAssets = await pandaOwnerModel.updateBackPandaAssetsTrans(trans, geni, saveProRes.length > 0 ? saveProRes.join('|') : [], dropRes.length> 0 ? dropRes.join('|') : [])
       	if (!insertBackAssets) return new Error(PandaLandCodes.Back_Assets_Carry_Fail)
+      	console.log('saveRes...1')
       	// 更新熊猫的积分
       	let finalIntegral = 10
       	if (itemsVal > 0 && itemsVal < baseVal) {
@@ -674,6 +700,7 @@ class PandaOwnerController {
 		return new Promise((resolve, reject) => {
 			trans.beginTransaction(function (bErr) {
 				if (bErr) {
+					trans.release()
 					reject(bErr)
 					return
 				}

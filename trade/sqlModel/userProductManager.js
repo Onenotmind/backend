@@ -18,7 +18,7 @@ let UserProductManagerServerModel = {
   },
 	productId: {
 		label: 'idx_productId',
-		type: 'VARCHAR(10)'
+		type: 'VARCHAR(20)'
 	},
 	userRealAddr: {
 		label: 'userRealAddr',

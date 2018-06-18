@@ -10,6 +10,16 @@ let config_email = {
   }
 }
 
+// let config_email = {
+//   host: 'smtp.mail.yahoo.com',
+//   port: '465',
+//   secure: true,
+//   auth: {
+//     user: 'chenye451@yahoo.com',
+//     pass: 'cryeth8685800'
+//   }
+// }
+
 let transporter = nodemailer.createTransport(config_email)
 
 // let data = {
@@ -31,8 +41,8 @@ function sendCodeFromMail (to, code) {
   let data = {
     from: 'm15002832532@163.com',
     to: to,
-    subject: 'title',
-    html: 'this is test emal:' + code
+    subject: 'Wunoland',
+    html: '[Wunoland] Your Email Code Is: <b>' + code + '</b>'
   }
   return new Promise((resolve, reject) => {
     transporter.sendMail(data, (err, info) => {

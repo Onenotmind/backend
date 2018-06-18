@@ -59,7 +59,7 @@ let LandProductServerModel = {
 	},
 	value: {
 		label: 'value',
-		type: 'smallint unsigned'
+		type: 'decimal(6, 2)'
 	},
 	productSrc: {
 		label: 'productSrc',
@@ -213,6 +213,84 @@ const LandProductInserData = [
 		nameEn: 'camel outdoor men and women riding backpack 13L sports backpack A6S3C3116',
 		value: 158,
 		productSrc: 'https://www.amazon.cn/dp/B01DNNN8Q8/ref=sr_1_2?ie=UTF8&qid=1528559060&sr=8-2&keywords=%E9%AA%86%E9%A9%BC%E6%88%B7%E5%A4%96%E5%8F%8C%E8%82%A9%E8%83%8C%E5%8C%85&th=1&psc=1'
+	},
+	// 虚拟货币部分
+	{
+		productId: 'eth',
+		type: 'fire',
+		productType: 'currency',
+		state: 'sold',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ethereum.png',
+		name: 'Ethereum',
+		nameEn: 'Ethereum',
+		value: '3000.46',
+		productSrc: ''
+	},
+	{
+		productId: 'eos',
+		type: 'water',
+		productType: 'currency',
+		state: 'sold',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/eos.png',
+		name: 'EOS',
+		nameEn: 'EOS',
+		value: '80.24',
+		productSrc: ''
+	},
+	{
+		productId: 'xrp',
+		type: 'fire',
+		productType: 'currency',
+		state: 'sold',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ripple.png',
+		name: 'Ripple',
+		nameEn: 'Ripple',
+		value: '3.44',
+		productSrc: ''
+	},
+	{
+		productId: 'ltc',
+		type: 'fire',
+		productType: 'currency',
+		state: 'sold',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/litecoin.png',
+		name: 'Litecoin',
+		nameEn: 'Litecoin',
+		value: '614.48',
+		productSrc: ''
+	},
+	{
+		productId: 'iota',
+		type: 'fire',
+		productType: 'currency',
+		state: 'sold',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/iota.png',
+		name: 'Iota',
+		nameEn: 'Iota',
+		value: '7.73',
+		productSrc: ''
+	},
+	{
+		productId: 'cardano',
+		type: 'fire',
+		productType: 'currency',
+		state: 'sold',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/cardano.png',
+		name: 'Cardano',
+		nameEn: 'Cardano',
+		value: '0.99',
+		productSrc: ''
+	},
+	{
+		productId: 'menero',
+		type: 'fire',
+		productType: 'currency',
+		state: 'sold',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/monero.png',
+		name: 'Menero',
+		nameEn: 'Menero',
+		value: '772.34',
+		productSrc: ''
 	}
 ]
 

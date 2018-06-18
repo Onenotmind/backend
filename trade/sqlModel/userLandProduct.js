@@ -17,7 +17,7 @@ let UserLandProductServerModel = {
   },
 	productId: {
 		label: 'idx_productId',
-		type: 'VARCHAR(10)'
+		type: 'VARCHAR(20)'
 	},
 	value: {
 		label: 'value',

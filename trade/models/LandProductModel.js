@@ -162,7 +162,7 @@ class LandProductModel {
 
   async queryLandProductByAddr (addr) {
     let val = [addr]
-    let sql = 'SELECT u.value, u.idx_productId, l.imgSrc, l.name ' +
+    let sql = 'SELECT u.value, u.idx_productId, l.imgSrc, l.name, l.nameEn ' +
       ' FROM userLandProduct u, landProduct l WHERE u.idx_addr = ? AND u.idx_productId = l.uk_productId'
     return db.query(sql, val)
   }
