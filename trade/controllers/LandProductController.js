@@ -4,7 +4,8 @@ const async = require('async')
 const landProductModel = new LandProductModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
-const { checkToken, checkUserToken, decrypt } = require('../libs/CommonFun.js')
+const { checkToken, checkUserToken, decrypt, getParamsCheck } = require('../libs/CommonFun.js')
+const { LandAssetsClientModel, LandAssetsServerModel } = require('../sqlModel/landAssets.js')
 const { LandProductClientModel, LandProductServerModel } = require('../sqlModel/landProduct.js')
 const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
@@ -82,7 +83,8 @@ class LandProductController {
   async voteProduct (ctx) {
     const tokenCheck = await checkUserToken(ctx)
     if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
-    const voteNum = ctx.query['num']
+    const userAddr = ctx.cookies.get('userAddr')
+    const voteNum = parseInt(ctx.query['num'])
     const productId = ctx.query['productId']
     const paramsType = [
       {
@@ -96,6 +98,12 @@ class LandProductController {
     ]
     const params= await getParamsCheck(ctx, paramsType)
     if (_.isError(params)) return params
+    const bambooCount = await landProductModel.queryUserBambooCount(userAddr)
+    if (!bambooCount) return bambooCount
+    if (bambooCount.length === 0) return new Error(LoginCodes.Login_No_Account)
+    if (parseInt(bambooCount[0][LandAssetsServerModel.bamboo.label]) < voteNum) {
+      return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
+    }
     const votePro = await landProductModel.voteProduct(productId, voteNum)
     return votePro
   }

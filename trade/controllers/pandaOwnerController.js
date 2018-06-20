@@ -433,11 +433,13 @@ class PandaOwnerController {
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
 		if (!pandaInfo || pandaInfo[0][PandaOwnerServerModel.state.label] !== 'sold') return new Error(PandaLandCodes.Panda_Not_Sold)
 		const ownerAddr = pandaInfo[0][PandaOwnerServerModel.addr.label]
+		const totalPanda = pandaOwnerModel.queryTotalPandaByAddr(ownerAddr)
+		if (!totalPanda || totalPanda.length >= 3) return new Error(PandaOwnerCodes.More_Than_Max_Panda)
 		const ownerAssets = await pandaOwnerModel.queryAssetsByAddr(ownerAddr)
 		if (!ownerAssets) return ownerAssets
 		const bamboo = ownerAssets[0][LandAssetsServerModel.bamboo.label]
 		const assets = await pandaOwnerModel.queryAssetsByAddr(addr)
-		if (!assets || assets[0][LandAssetsServerModel.bamboo.label] < price) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
+		if (!assets || assets[0][LandAssetsServerModel.bamboo.label] < price) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
 		const buyBamboo = assets[0][LandAssetsServerModel.bamboo.label]
 		let buyleft = parseFloat(buyBamboo) - parseFloat(price) > 0 ? parseFloat(buyBamboo) - parseFloat(price): 0
 		let ownerleft = parseFloat(bamboo) + parseFloat(price)
@@ -518,8 +520,11 @@ class PandaOwnerController {
 		if (_.isError(params)) return params
 		const self = this
 		const geni = params.pandaGen
-		const bamboo = params.bamboo
+		const bamboo = parseInt(params.bamboo)
 		const direction = params.direction
+		const cookieAddr = ctx.cookies.get('userAddr')
+		const assets = await pandaOwnerModel.queryAssetsByAddr(cookieAddr)
+		if (!assets || assets[0][LandAssetsServerModel.bamboo.label] < bamboo) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
 		const trans = await pandaOwnerModel.startTransaction()
 		if (!trans) return new Error(CommonCodes.Service_Wrong)
 		console.log('trans begin!')

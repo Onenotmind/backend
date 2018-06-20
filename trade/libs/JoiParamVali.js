@@ -72,7 +72,7 @@ class JoiParamVali {
   }
 
   async valiProductId (productId) {
-    const schema = Joi.string().alphanum().required().optional()
+    const schema = Joi.string().required().optional()
     return this.joiDataCheck(productId, schema, JoiCodes.ProductId_Illegal)
   }
 

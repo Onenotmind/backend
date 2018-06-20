@@ -17,7 +17,8 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 插入一只熊猫 genePanda()
     - 删除特定gen下的熊猫 delPandaByGen()
     - 更新某只熊猫的某个属性 updatePandaAttr()
-    - 查询某个addr下的所有熊猫 queryAllPandaByAddr()
+    - 查询某个addr下的的所有熊猫 queryTotalPandaByAddr
+    - 查询某个addr下的没有出售的所有熊猫 queryAllPandaByAddr()
     - 查询某个addr下所有外出熊猫 queryAllOutPandaByAddr
     - 查询某只熊猫的详细信息 queryPandaInfo()
     - 改变熊猫的oweraddr transferPandaOwner()
@@ -189,6 +190,16 @@ class PandaOwnerModel {
     ]
   	let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
   	return db.query(sql, val)
+  }
+
+  async queryTotalPandaByAddr (addr) {
+    let val = [
+      PandaOwnerName,
+      PandaOwnerServerModel.addr.label,
+      addr
+    ]
+    let sql = 'SELECT * FROM ?? WHERE ?? = ?'
+    return db.query(sql, val)
   }
 
   async queryAllPandaByAddr (addr) {

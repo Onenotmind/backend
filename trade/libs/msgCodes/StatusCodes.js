@@ -46,7 +46,8 @@ let PandaOwnerCodes = {
 	'Gene_Free_Panda_Succ': 'PandaOwnerCodes_Gene_Free_Panda_Succ',
 	'Query_Panda_By_Addr': 'PandaOwnerCodes_Query_Panda_By_Addr',
 	'Query_Panda_In_Sold': 'PandaOwnerCodes_Query_Panda_In_Sold',
-	'Not_Out_Panda': 'PandaOwnerCodes_Not_Out_Panda'
+	'Not_Out_Panda': 'PandaOwnerCodes_Not_Out_Panda',
+	'More_Than_Max_Panda': 'PandaOwnerCodes_More_Than_Max_Panda'
 }
 
 let LandProductCodes = {
@@ -68,7 +69,8 @@ let LandProductCodes = {
 	'Get_Current_Product_Succ': 'LandProductCodes_Get_Current_Product_Succ',
 	'Get_Current_Product_Fail':'LandProductCodes_Get_Current_Product_Fail',
 	'Update_User_Bamboo_Succ': 'LandProductCodes_Update_User_Bamboo_Succ',
-	'Exchange_Product_Succ': 'LandProductCodes_Exchange_Product_Succ'
+	'Exchange_Product_Succ': 'LandProductCodes_Exchange_Product_Succ',
+	'Insufficient_Bamboo_Balance': 'Insufficient_Bamboo_Balance'
 }
 
 let PandaLandCodes = {

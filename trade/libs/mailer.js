@@ -39,7 +39,7 @@ let transporter = nodemailer.createTransport(config_email)
 
 function sendCodeFromMail (to, code) {
   let data = {
-    from: 'm15002832532@163.com',
+    from: 'Wuno Land <m15002832532@163.com>',
     to: to,
     subject: 'Wunoland',
     html: '[Wunoland] Your Email Code Is: <b>' + code + '</b>'

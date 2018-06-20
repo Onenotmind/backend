@@ -118,7 +118,13 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  origin: 'http://wunoland.com',
+  origin: function (ctx) {
+    if (ctx.header && ctx.header.origin && ctx.header.origin.indexOf('wunoland') !== -1) {
+      return ctx.header.origin
+    } else {
+      return false
+    }
+  },
   credentials: true
 }))
 
@@ -606,7 +612,7 @@ koaRouter.get('/buyPanda', async (ctx) => {
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Buy_Panda_Succ, res)
   } else {
-    ctx.body = errorRes(PandaLandCodes.Buy_Panda_Fail)
+    ctx.body = errorRes(res.message)
   }
 })
 
@@ -654,7 +660,7 @@ koaRouter.get('/voteProduct', async (ctx) => {
   if (!_.isError(res)) {
     ctx.body = succRes(LandProductCodes.Vote_Product_Succ, res)
   } else {
-    ctx.body = errorRes(LandProductCodes.Vote_Product_Fail)
+    ctx.body = errorRes(res.message)
   }
 })
 
@@ -734,6 +740,12 @@ app.on('error', err =>
 
 app.listen(port)
 
+// async function testEmail () {
+//   const send = await sendCodeFromMail('1343566210@qq.com', 2233)
+//   console.log(send)
+// }
+
+// testEmail()
 // setTimeout(async () => {
 //   const sendEmail = await sendCodeFromMail('1343566210@qq.com', 7777)
 //   console.log('email', sendEmail)

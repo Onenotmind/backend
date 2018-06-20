@@ -36,6 +36,7 @@ const { UserProductManagerServerModel, UserProductManagerName } = require('../sq
   @MYSQL user
     - 查询用户的邮箱 queryUserEmail
     - 查询用户的交易密码 queryUserTradePwd
+    - 查询当前用户的竹子数量 queryUserBambooCount
 */
 class LandProductModel {
 
@@ -275,6 +276,17 @@ class LandProductModel {
       addr
     ]
     let sql = 'select ?? from ?? where uaddr = ?'
+    return db.query(sql, val)
+  }
+
+  async queryUserBambooCount (addr) {
+    let val = [
+      LandAssetsServerModel.bamboo.label,
+      LandAssetsName,
+      LandAssetsServerModel.addr.label,
+      addr
+    ]
+    let sql = 'select ?? from ?? where ?? = ?'
     return db.query(sql, val)
   }
 }

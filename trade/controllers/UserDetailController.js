@@ -292,14 +292,10 @@ class UserDetailController {
     }
    let decryptRes = parseInt(decrypt(tmpCode, email[0][UserServerModel.email.label]))
    if (decryptRes - 1 !== parseInt(code)) {
-     return errorRes(LoginCodes.Code_Error)  
+     return new Error(LoginCodes.Code_Error)  
    }
 		const newPwdChange = await userDetailModel.changeTradePwd(addr, newPwd)
-		if (newPwdChange) {
-			return newPwdChange
-		} else {
-			return new Error(LoginCodes.Change_Trade_Pwd_Fail)
-		}
+		return newPwdChange
 	}
 
 	/**
