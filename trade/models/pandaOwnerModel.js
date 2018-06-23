@@ -401,7 +401,11 @@ class PandaOwnerModel {
       addr
     ]
     let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ?'
-    return db.transQuery(trans, sql, val)
+    if (trans) {
+      return db.transQuery(trans, sql, val)
+    } else {
+      return db.query(sql, val)
+    }
   }
 
   async updateBackPandaAssetsTrans (trans, pandaGen, carryAssets, dropAssets) {

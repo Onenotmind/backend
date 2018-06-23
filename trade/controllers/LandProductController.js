@@ -6,8 +6,9 @@ const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
 const { checkToken, checkUserToken, decrypt, getParamsCheck } = require('../libs/CommonFun.js')
 const { LandAssetsClientModel, LandAssetsServerModel } = require('../sqlModel/landAssets.js')
+const { UserServerModel } = require('../sqlModel/user.js')
 const { LandProductClientModel, LandProductServerModel } = require('../sqlModel/landProduct.js')
-const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+const { LandProductCodes, LoginCodes, CommonCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 /**
 	业务函数:
@@ -23,6 +24,7 @@ const { LandProductCodes, CommonCodes, errorRes, serviceError, succRes } = requi
     - 删除过期商品 deleteExpiredProduct
     - 兑换商品 exchangeProduct
     - 更新用户的竹子数量 updateUserBamboo
+    - 查询某个用户的所有商品提现信息 queryUserAllProduct
 	辅助函数:
 		- cacl 计算最终的经纬度与长宽
     - geneStarPoint 商品产生核心点
@@ -208,17 +210,17 @@ class LandProductController {
     // 交易密码 与验证码验证
     const realPwd = await landProductModel.queryUserTradePwd(userAddr)
     if (!realPwd) return realPwd
-    if (realPwd[0].utradePwd !== pwd) return new Error(LoginCodes.Trade_Pwd_Wrong)
+    if (realPwd[0][UserServerModel.tradePwd.label] !== pwd) return new Error(LoginCodes.Trade_Pwd_Wrong)
     const email = await landProductModel.queryUserEmail(userAddr)
     if(!email) return email
     let tmpCode = null
     if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
       tmpCode = ctx.cookies.get('tmpUserId')
     }
-     let decryptRes = parseInt(decrypt(tmpCode, email[0].uemail))
-     if (decryptRes - 1 !== parseInt(code)) {
-       return errorRes(LoginCodes.Code_Error)  
-     }
+    let decryptRes = parseInt(decrypt(tmpCode, email[0][UserServerModel.email.label]))
+    if (decryptRes - 1 !== parseInt(code)) {
+      return new Error(LoginCodes.Code_Error)  
+    }
     const specifiedPro = await landProductModel.querySpecifiedProByAddr(userAddr, productId)
     if (!specifiedPro || specifiedPro.length === 0 || parseInt(specifiedPro[0][LandProductServerModel.value.label]) < 1) {
       return new Error(LandProductCodes.User_No_Such_Product)
@@ -272,6 +274,17 @@ class LandProductController {
         })
       })
     })
+  }
+
+  /**
+   *  查询某个用户的所有商品提现信息 queryUserAllProduct
+   */
+  async queryUserAllProduct (ctx) {
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const userAddr = ctx.query['addr']
+    const allProduct = await landProductModel.queryUserAllProduct(userAddr)
+    return allProduct
   }
 
 	findProductByGeo (longitude, latitude, rate, direction, hungry, speed) {

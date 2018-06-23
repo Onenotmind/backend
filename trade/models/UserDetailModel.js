@@ -15,6 +15,7 @@ const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/e
     - 更改用户密码 changeLoginPwd
     - 更改用户交易密码 changeTradePwd
     - 通过用户addr查询用户经纬度 getUserLocationByAddr
+    - 查询该邮箱是否已经绑定 queryEmailIsExist
   MYSQL @landassets
      - 用户资产初始化 createUserAsset
      - 增加用户的bamboo addUserBamboo
@@ -123,6 +124,16 @@ class UserDetailModel {
       addr
     ]
     let sql = 'select ?? from ?? where ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async queryEmailIsExist (email) {
+    let val = [
+      UserModelName,
+      UserServerModel.email.label,
+      email
+    ]
+    let sql = 'select * from ?? where ?? = ?'
     return db.query(sql, val)
   }
 

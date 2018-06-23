@@ -32,6 +32,7 @@ const { PandaOwnerCodes, AssetsCodes, errorRes, LandProductCodes, CommonCodes, P
    	- 出售熊猫 sellPanda
    	- 购买熊猫 buyPanda
    	- 孵化熊猫 sirePanda
+   	- 喂养熊猫 feedPanda
    - market
    	- 查询当前所有待售熊猫 queryAllPandaBeSold
    	- 购买熊猫 buyMarketPanda
@@ -288,6 +289,19 @@ class PandaOwnerController {
 		return sirePanda
 	}
 
+	async feedPanda (ctx) {
+		const tokenCheck = await checkUserToken(ctx)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const gen = ctx.query['pandaGen']
+		const account = parseInt(ctx.query['account'])
+		const cookieAddr = ctx.cookies.get('userAddr')
+		const assets = await pandaOwnerModel.queryAssetsByAddr(cookieAddr)
+		if (!assets || parseInt(assets[0][LandAssetsServerModel.bamboo.label]) < account) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
+		const leftBamboo = parseInt(assets[0][LandAssetsServerModel.bamboo.label]) - account
+		const updateLandAssets = await pandaOwnerModel.updateLandAssetsByAddrTrans(null, cookieAddr, 'bamboo', leftBamboo)
+		return updateLandAssets
+	}
+
 	sireNewPanda (fPanda, mPanda) {
 		let newPandaAddr = Math.random() < 0.5 ? fPanda.ownerAddr : mPanda.ownerAddr
 		let type = this.mixTypeBySire(fPanda.type, mPanda.type)
@@ -323,7 +337,7 @@ class PandaOwnerController {
 
 	// 属性值随机数产生
 	geneAttrVal (val) {
-		return parseInt(Math.random() * val) / 100
+		return parseInt(Math.random() * val)
 	}
 
 	// 属性类型随机数产生
@@ -439,7 +453,7 @@ class PandaOwnerController {
 		if (!ownerAssets) return ownerAssets
 		const bamboo = ownerAssets[0][LandAssetsServerModel.bamboo.label]
 		const assets = await pandaOwnerModel.queryAssetsByAddr(addr)
-		if (!assets || assets[0][LandAssetsServerModel.bamboo.label] < price) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
+		if (!assets || parseInt(assets[0][LandAssetsServerModel.bamboo.label]) < parseInt(price)) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
 		const buyBamboo = assets[0][LandAssetsServerModel.bamboo.label]
 		let buyleft = parseFloat(buyBamboo) - parseFloat(price) > 0 ? parseFloat(buyBamboo) - parseFloat(price): 0
 		let ownerleft = parseFloat(bamboo) + parseFloat(price)
@@ -524,7 +538,7 @@ class PandaOwnerController {
 		const direction = params.direction
 		const cookieAddr = ctx.cookies.get('userAddr')
 		const assets = await pandaOwnerModel.queryAssetsByAddr(cookieAddr)
-		if (!assets || assets[0][LandAssetsServerModel.bamboo.label] < bamboo) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
+		if (!assets || parseInt(assets[0][LandAssetsServerModel.bamboo.label]) < bamboo) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
 		const trans = await pandaOwnerModel.startTransaction()
 		if (!trans) return new Error(CommonCodes.Service_Wrong)
 		console.log('trans begin!')

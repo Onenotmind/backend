@@ -30,6 +30,7 @@ const { UserProductManagerServerModel, UserProductManagerName } = require('../sq
     - 业务接口
       - 插入一条商品兑换成功数据 insertUserProduct
       - 更新当前物流信息 updateUserProductInfo
+      - 查询某个用户的所有商品提现信息 queryUserAllProduct
   @MYSQL landassets
     - 业务接口
       - 更新用户的竹子数量 updateUserBamboo
@@ -245,6 +246,25 @@ class LandProductModel {
     return db.query(sql, val)
   }
 
+  async queryUserAllProduct (addr) {
+    let columns = [
+      UserProductManagerServerModel.id.label,
+      UserProductManagerServerModel.productId.label,
+      UserProductManagerServerModel.userName.label,
+      UserProductManagerServerModel.userPhone.label,
+      UserProductManagerServerModel.userRealAddr.label,
+      UserProductManagerServerModel.state.label
+    ]
+    let val = [
+      columns,
+      UserProductManagerName,
+      UserProductManagerServerModel.addr.label,
+      addr
+    ]
+    let sql = 'select ?? from ?? where ?? = ?'
+    return db.query(sql, val)
+  }
+
   async updateUserBamboo (addr) {
     let val = [
       LandAssetsName,
@@ -270,12 +290,12 @@ class LandProductModel {
 
   async queryUserTradePwd (addr) {
     let val = [
-      UserServerModel.pwd.label,
+      UserServerModel.tradePwd.label,
       UserModelName,
       UserServerModel.addr.label,
       addr
     ]
-    let sql = 'select ?? from ?? where uaddr = ?'
+    let sql = 'select ?? from ?? where ?? = ?'
     return db.query(sql, val)
   }
 

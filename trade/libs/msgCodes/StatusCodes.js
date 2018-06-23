@@ -3,10 +3,14 @@ let CommonCodes = {
 	'Params_Check_Fail': 'CommonCodes_Params_Check_Fail',
 	'Request_Method_Wrong': 'CommonCodes_Request_Method_Wrong',
 	'Token_Fail': 'CommonCodes_Token_Fail',
-	'No_Access': 'CommonCodes_No_Access'
+	'No_Access': 'CommonCodes_No_Access',
+	'Response_Succ': 'CommonCodes_Response_Succ',
+	'Auth_Fail': 'Auth Fail!',
+	'Assets_Not_Enought': 'CommonCodes_Assets_Not_Enought'
 }
 let LoginCodes = {
   'Email_Exist': 'LoginCodes_Email_Exist', // 重复邮箱注册
+  'Email_Already_Exist': 'LoginCodes_Email_Already_Exist',
   'Login_DataWrong': 'LoginCodes_Login_DataWrong', // 账号密码错误
   'Login_Succ': 'LoginCodes_Login_Succ',
   'Login_No_Account': 'LoginCodes_Login_No_Account',

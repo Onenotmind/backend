@@ -1,8 +1,18 @@
 const AssetsRollInModel = require('../models/AssetsRollInModel.js')
 const assetsRollInModel = new AssetsRollInModel()
 
-const { assetsRollIn } = require('../sqlModel/assetsRollIn.js')
-const { AssetsCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+// const { assetsRollIn } = require('../sqlModel/assetsRollIn.js')
+const { AssetsCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
+const { checkUserToken } = require('../libs/CommonFun.js')
+
+/**
+ * @AssetsRollInController
+ *  - 查询数据库中提现订单 queryAllRollInAssets
+ *  - 查询某一特定用户的提现订单 queryRollInAssetsByAddr
+ *  - 提现订单确认 checkOverRollInOrder
+ *  - 提现订单取消 deleteRollInOrder
+ *  - 新增一个充值订单 insertAssetsRollInOrder
+ */
 
 class AssetsRollInController {
 	constructor () {
@@ -10,67 +20,61 @@ class AssetsRollInController {
 	}
 
 	// 接口权限控制！important
-	checkAuth () {
-
+	checkAuth (ctx) {
+		if (ctx.query['rootPwd'] && ctx.query['rootPwd'] === 'chenye1234') {
+			return true
+		} else {
+			return false
+		}
 	}
 
 	// 查询数据库中资产用户
-	queryAllRollInAssets (ctx) {
+	async queryAllRollInAssets (ctx) {
+		if (!this.checkAuth(ctx)) return new Error(CommonCodes.Auth_Fail)
 		let ctxRes = null
-		return assetsRollInModel.queryAllRollInAssets()
-		.then(v => {
-			return succRes(AssetsCodes.Assets_Data_Normal, v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		})
+		const allOrder = await assetsRollInModel.queryAllRollInAssets()
+		return allOrder
+	}
+
+	// 新增一个充值订单 
+	async insertAssetsRollInOrder (ctx) {
+		const tokenCheck = await checkUserToken(ctx)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const type = ctx.query['type'].toLowerCase()
+		const amount = ctx.query['amount']
+		const addr = ctx.query['addr']
+		const userAddr = ctx.query['userAddr']
+		const rollIn = await assetsRollInModel.insertAssetsRollInOrder(type, amount, addr, userAddr)
+		return rollIn
 	}
 
 	// 查询某一特定用户的转入资产
-	queryRollInAssetsByAddr (ctx) {
-		let ctxRes = null
+	async queryRollInAssetsByAddr (ctx) {
+		const tokenCheck = await checkUserToken(ctx)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		let addr = ctx.query['addr']
-		return assetsRollInModel.queryRollInAssetsByAddr(addr)
-		.then(v => {
-			return succRes(AssetsCodes.Assets_Data_Normal, v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		}) 
+		const personOrder = await assetsRollInModel.queryRollInAssetsByAddr(addr)
+		return personOrder
 	}
 
 	// 转入订单确认
-	checkOverRollInOrder (ctx) {
+	async checkOverRollInOrder (ctx) {
 		let ctxRes = null
 		let assetsData = ctx.request.body.assetsData
 		let orderId = parseInt(assetsData.orderId)
 		let state = assetsData.state
-		return assetsRollInModel.changeRollInOrderState(orderId, state)
-		.then(v => {
-			return succRes(AssetsCodes.Assets_Data_Normal, v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		}) 
+		const checkOrder = await assetsRollInModel.changeRollInOrderState(orderId, state)
+		return checkOrder 
 	}
 
 	// 转入订单取消 TODO 与转入订单确认逻辑一样
-	deleteRollInOrder (ctx) {
+	async deleteRollInOrder (ctx) {
 		let ctxRes = null
 		let assetsData = ctx.request.body.assetsData
 		let orderId = parseInt(assetsData.orderId)
 		let state = assetsData.state
-		return assetsRollInModel.changeRollInOrderState(orderId, state)
-		.then(v => {
-			return succRes(AssetsCodes.Assets_Data_Normal, v)
-		})
-		.catch(e => {
-			console.log(e)
-			return serviceError()
-		}) 
+		const checkOrder = await assetsRollInModel.changeRollInOrderState(orderId, state)
+		return checkOrder 
 	}
 }
 

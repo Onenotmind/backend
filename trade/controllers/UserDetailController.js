@@ -77,6 +77,9 @@ class UserDetailController {
 			if (_.isError(emailVali)) {
 				return emailVali
 			}
+			const queryEmail = userDetailModel.queryEmailIsExist(email)
+			if (!queryEmail) return queryEmail
+			if (queryEmail.length > 0) return new Error(LoginCodes.Email_Already_Exist)
 			if (ctx.cookies && ctx.cookies.get('tmpUserId')) {
 	      tmpCode = ctx.cookies.get('tmpUserId')
 	    }
@@ -346,6 +349,9 @@ class UserDetailController {
 		const emailCheck = await this.checkEmailCode(ctx)
 		if (!_.isError(emailCheck)) {
 			const email = ctx.query['email']
+			const queryEmail = userDetailModel.queryEmailIsExist(email)
+			if (!queryEmail) return queryEmail
+			if (queryEmail.length > 0) return new Error(LoginCodes.Email_Already_Exist)
 			const checkAddr = ctx.cookies.get('userAddr')
 			const emailBind = await userDetailModel.bindEmail(email, checkAddr)
 			return emailBind
@@ -355,7 +361,7 @@ class UserDetailController {
 	}
 
 	/**
-   * 用户注册 checkEmailCode
+   * 检测验证码正确与否 checkEmailCode
    * @property {string} addr
    * @property {string} code 
    */
@@ -414,7 +420,9 @@ class UserDetailController {
   }
 
 	geneLocation () {
-		return [123.1, -23.5]
+		const longitude = parseInt(Math.random() * 360 - 180)
+		const latitude = parseInt(Math.random() * 180 - 90)
+		return [longitude, latitude]
 	}
 }
 

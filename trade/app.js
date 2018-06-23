@@ -125,6 +125,7 @@ app.use(cors({
       return false
     }
   },
+  // origin: 'http://localhost:3002',
   credentials: true
 }))
 
@@ -147,6 +148,7 @@ app.use(cors({
     - 获取用户详细信息和资产 getUserInfoAndAssetsByAddr
   @确认订单
     - 确认订单 exchangeProduct
+    - 获取用户所有订单 queryUserAllProduct
   @通用函数
     - 产生验证码 geneEmailCode
     - 加密算法 encrypt
@@ -239,6 +241,15 @@ koaRouter.get('/exchangeProduct', async (ctx) => {
   } 
 })
 
+koaRouter.get('/queryUserAllProduct', async (ctx) => {
+  const res = await landProductController.queryUserAllProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  } 
+})
+
 koaRouter.get('/checkUserLoginExpired', async (ctx) => {
   const res = await userDetailController.checkUserLoginExpired(ctx)
   if (!_.isError(res)) {
@@ -317,52 +328,66 @@ koaRouter.get('/getUserInfoAndAssetsByAddr', async (ctx) => {
     - queryAllAssets 查询用户所有资产
     - queryAllRollInAssets 查询转入所有订单
     - queryRollInAssetsByAddr 查询某一用户的转入订单
+    - insertAssetsRollInOrder 新增一个充值订单 
     - checkOverRollInOrder 转入订单确认
     - deleteRollInOrder 删除转入订单
     - queryAllRollOutAssets 查询所有提现订单
     - queryRollOutAssetsByAddr 查询某一用户的提现订单
     - checkOverRollOutOrder 提现订单确认
     - deleteRollOutOrder 提现订单取消
+    - insertAssetsRollOutOrder 新增一个提现订单 
 */
 
 // assets查询所有资产
 koaRouter.get('/queryAllAssets', async (ctx) => {
-  let res = null
-  await assetsController.queryAllAssets()
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await assetsController.queryAllAssets(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 // RollInAssets查询所有订单
 koaRouter.get('/queryAllRollInAssets', async (ctx) => {
-  let res = null
-  await assetsRollInController.queryAllRollInAssets()
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await assetsRollInController.queryAllRollInAssets(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 // 查询某一特定用户的转入资产
 koaRouter.get('/queryRollInAssetsByAddr', async (ctx) => {
-  let res = null
-  await assetsRollInController.queryRollInAssetsByAddr(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await assetsRollInController.queryRollInAssetsByAddr(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
+
+// 新增一个提现订单
+koaRouter.get('/insertAssetsRollOutOrder', async (ctx) => {
+  const res = await assetsRollOutController.insertAssetsRollOutOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+// 新增一个充值订单
+koaRouter.get('/insertAssetsRollInOrder', async (ctx) => {
+  const res = await assetsRollInController.insertAssetsRollInOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
 
 // 转入订单确认
 koaRouter.post('/checkOverRollInOrder', async (ctx) => {
@@ -402,41 +427,32 @@ koaRouter.post('/checkOverRollInOrder', async (ctx) => {
 
 // 转入订单取消
 koaRouter.post('/deleteRollInOrder', async (ctx) => {
-  let res = null
-  await assetsRollInController.deleteRollInOrder(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await assetsRollInController.deleteRollInOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 // RollOutAssets查询所有订单
 koaRouter.get('/queryAllRollOutAssets', async (ctx) => {
-  let res = null
-  await assetsRollOutController.queryAllRollOutAssets()
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await assetsRollOutController.queryAllRollOutAssets(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 // 查询某一特定用户的提现订单
 koaRouter.get('/queryRollOutAssetsByAddr', async (ctx) => {
-  let res = null
-  await assetsRollOutController.queryRollOutAssetsByAddr(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await assetsRollOutController.queryRollOutAssetsByAddr(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 // 提现订单确认
@@ -477,15 +493,12 @@ koaRouter.post('/checkOverRollOutOrder', async (ctx) => {
 
 // 提现订单取消
 koaRouter.post('/deleteRollOutOrder', async (ctx) => {
-  let res = null
-  await assetsRollOutController.deleteRollOutOrder(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
+  const res = await assetsRollOutController.deleteRollOutOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 
@@ -500,6 +513,7 @@ koaRouter.post('/deleteRollOutOrder', async (ctx) => {
     - 取消出售熊猫 unSoldPanda
     - 丢弃熊猫 delPandaByGen
     - 孵化熊猫 sirePanda
+    - 喂养熊猫 feedPanda
 */
 koaRouter.get('/queryAllPandaByAddr', async (ctx) => {
   const res = await pandaOwnerController.queryAllPandaByAddr(ctx)
@@ -514,6 +528,15 @@ koaRouter.get('/sellPanda', async (ctx) => {
   const res = await pandaOwnerController.sellPanda(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Sell_Panda_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/feedPanda', async (ctx) => {
+  const res = await pandaOwnerController.feedPanda(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
   } else {
     ctx.body = errorRes(res.message)
   }

@@ -21,6 +21,9 @@ const { BackPandaAssetsServerModel, BackPandaAssetsName } = require('../sqlModel
 
 const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/ethAddrManager.js')
 
+const { AssetsRollInName, AssetsRollInServerModel } = require('../sqlModel/assetsRollIn.js')
+
+const { AssetsRollOutName, AssetsRollOutServerModel } = require('../sqlModel/assetsRollOut.js')
 
 /**
 	@TestModel 测试数据专用
@@ -65,6 +68,14 @@ const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/e
       - 新建ethAddrManager数据表 createEthAddrManagerTable()
       - 删除ethAddrManager数据表 dropEthAddrManagerTable()
       - 判断ethAddrManager数据表是否存在 checkEthAddrManagerExist()
+    - assetsrollin
+      - 新建assetsrollin数据表 createAssetsRollInTable()
+      - 删除assetsrollin数据表 dropAssetsRollInTable()
+      - 判断assetsrollin数据表是否存在 checkAssetsRollInExist()
+    - assetsrollout
+      - 新建assetsrollout数据表 createAssetsRollOutTable()
+      - 删除assetsrollout数据表 dropAssetsRollOutTable()
+      - 判断assetsrollout数据表是否存在 checkAssetsRollOutExist()
   - 辅助函数
     - 检测字段是否是索引 checkColumnsIsIndex
     - 根据 model 层返回创建数据表的sql语句 getTableCreateSql
@@ -334,6 +345,36 @@ class TestModel {
 
   async createEthAddrManagerTable () {
     let sql = this.getTableCreateSql(EthAddrManagerName, EthAddrManagerServerModel)
+    return db.query(sql)
+  }
+
+  async createAssetsRollInTable () {
+    let sql = this.getTableCreateSql(AssetsRollInName, AssetsRollInServerModel)
+    return db.query(sql)
+  }
+
+  async dropAssetsRollInTable () {
+    let sql = 'DROP TABLE assetsrollin'
+    return db.query(sql)
+  }
+
+  async checkAssetsRollInExist () {
+    let sql = 'show tables like "assetsrollin"'
+    return db.query(sql)
+  }
+
+  async checkAssetsRollOutExist () {
+    let sql = 'show tables like "assetsrollout"'
+    return db.query(sql)
+  }
+
+  async dropAssetsRollOutTable () {
+    let sql = 'DROP TABLE assetsrollout'
+    return db.query(sql)
+  }
+
+  async createAssetsRollOutTable () {
+    let sql = this.getTableCreateSql(AssetsRollOutName, AssetsRollOutServerModel)
     return db.query(sql)
   }
 

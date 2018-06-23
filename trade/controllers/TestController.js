@@ -110,6 +110,30 @@ class TestController {
 				const ethaddrmanagerCreate = await testModel.createEthAddrManagerTable()
 				return ethaddrmanagerCreate
 			},
+			// @MYSQL assetsrollin
+			async function (res) {
+				if (_.isError(res)) return res
+				const tableExist = await testModel.checkAssetsRollInExist()
+				if (!tableExist) return tableExist
+				if (tableExist.length > 0) {
+					const tableDrop = await testModel.dropAssetsRollInTable()
+					if (!tableDrop) return tableDrop
+				}
+				const tableCreate = await testModel.createAssetsRollInTable()
+				return tableCreate
+			},
+			// @MYSQL assetsrollout
+			async function (res) {
+				if (_.isError(res)) return res
+				const tableExist = await testModel.checkAssetsRollOutExist()
+				if (!tableExist) return tableExist
+				if (tableExist.length > 0) {
+					const tableDrop = await testModel.dropAssetsRollOutTable()
+					if (!tableDrop) return tableDrop
+				}
+				const tableCreate = await testModel.createAssetsRollOutTable()
+				return tableCreate
+			},
 			// @MYSQL backpandaassets
 			async function (res) {
 				if (_.isError(res)) return res
