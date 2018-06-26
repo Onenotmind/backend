@@ -21,11 +21,12 @@ class AssetsRollOutController {
 
 	// 接口权限控制！important
 	checkAuth (ctx) {
-		if (ctx.query['rootPwd'] && ctx.query['rootPwd'] === 'chenye1234') {
-			return true
-		} else {
-			return false
-		}
+		// if (ctx.query['rootPwd'] && ctx.query['rootPwd'] === 'chenye1234') {
+		// 	return true
+		// } else {
+		// 	return false
+		// }
+		return true
 	}
 
 	// 查询数据库中提现订单
@@ -39,7 +40,8 @@ class AssetsRollOutController {
 	async insertAssetsRollOutOrder (ctx) {
 		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
-		let addr = ctx.query['addr']
+		let addr = ctx.cookies.get('userAddr')
+		let receiver = ctx.query['addr']
 		let type = ctx.query['type']
 		let amount = ctx.query['amount']
 		let pwd = ctx.query['pwd']
@@ -50,9 +52,9 @@ class AssetsRollOutController {
 		if (!assets || assets.length === 0) return assets
 		if (parseFloat(assets[0][type.toLowerCase()]) < parseFloat(amount)) return new Error(CommonCodes.Assets_Not_Enought)
 		// TODO 是否事务
-		const order = await assetsRollOutModel.insertAssetsRollOutOrder(addr, type.toLowerCase(), amount)
+		const order = await assetsRollOutModel.insertAssetsRollOutOrder(addr, receiver, type.toLowerCase(), amount)
 		if (!order) return order
-		const rollOut = await assetsRollOutModel.rollOutAssets(type.toLowerCase(), amount, addr)
+		const rollOut = await assetsRollOutModel.rollOutAssets(type.toLowerCase(), amount, addr, 'out')
 		return rollOut
 	}
 
@@ -61,7 +63,6 @@ class AssetsRollOutController {
 		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		let addr = ctx.query['addr']
-	console.log(1)
 		const personOrder = await assetsRollOutModel.queryRollOutAssetsByAddr(addr)
 		console.log(personOrder)
 		return personOrder
@@ -74,6 +75,9 @@ class AssetsRollOutController {
 		let assetsData = ctx.request.body.assetsData
 		let orderId = parseInt(assetsData.orderId)
 		let state = assetsData.state
+		let type = assetsData.type.toLowerCase() + 'Lock'
+		const addAssets = await assetsRollOutModel.changeUserLandAssets(type, assetsData.count, assetsData.addr, 'minus')
+		if (!addAssets) return addAssets
 		const checkOrder = await assetsRollOutModel.changeRollOutOrderState(orderId, state)
 		return checkOrder 
 	}
@@ -85,6 +89,8 @@ class AssetsRollOutController {
 		let assetsData = ctx.request.body.assetsData
 		let orderId = parseInt(assetsData.orderId)
 		let state = assetsData.state
+		const rollOut = await assetsRollOutModel.rollOutAssets(assetsData.type.toLowerCase(), assetsData.count, assetsData.addr, 'back')
+		if (!rollOut) return rollOut
 		const checkOrder = await assetsRollOutModel.changeRollOutOrderState(orderId, state)
 		return checkOrder 
 	}

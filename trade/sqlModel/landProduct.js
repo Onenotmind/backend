@@ -160,59 +160,59 @@ const LandProductInserData = [
 		productSrc: 'https://www.amazon.cn/dp/B01DNNN8Q8/ref=sr_1_2?ie=UTF8&qid=1528559060&sr=8-2&keywords=%E9%AA%86%E9%A9%BC%E6%88%B7%E5%A4%96%E5%8F%8C%E8%82%A9%E8%83%8C%E5%8C%85&th=1&psc=1'
 	},
 	{
-		productId: 'champion_prep',
+		productId: 'nautica_prep',
 		type: 'fire',
 		productType: 'product',
 		state: 'prep',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/81x3RtQemGL._UL1500_.jpg',
-		name: 'Champion 男士 Classic Jersey 印花 T恤',
-		nameEn: 'Champion Men Classic Jersey Print T-Shirt',
-		value: 83,
-		productSrc: 'https://www.amazon.cn/dp/B072Y68647/ref=sr_1_1?ie=UTF8&qid=1528558577&sr=8-1&keywords=%E4%BC%98%E8%A1%A3%E5%BA%93&th=1'
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/nautica.jpg',
+		name: 'Nautica 诺帝卡 男式 条纹 Polo 衫',
+		nameEn: 'Nautica Nordisk Mens Striped Polo Shirt',
+		value:258,
+		productSrc: 'https://www.amazon.cn/dp/B00JOS97C6/ref=sr_1_18?m=A2EDK7H33M5FFG&s=amazon-global-store&ie=UTF8&qid=1529852305&sr=1-18'
 	},
 	{
-		productId: 'volong_prep',
+		productId: 'ferrero_prep',
 		type: 'water',
 		productType: 'product',
 		state: 'prep',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61FL6wMyYTL._SL800_.jpg',
-		name: '沃隆 每日坚果A款750g（25g*30包）混合坚果仁大礼包',
-		nameEn: 'Daily Nuts 750g (25g*30 pack)',
-		value: 146,
-		productSrc: 'https://www.amazon.cn/dp/B01GY311UY/ref=sr_1_1?ie=UTF8&qid=1528558103&sr=8-1&keywords=%E4%B8%89%E5%8F%AA%E6%9D%BE%E9%BC%A0&th=1'
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ferrero.jpg',
+		name: 'Ferrero 费列罗 Rocher榛果威化巧克力T3*16 48粒装600g',
+		nameEn: 'Ferrero Rocher Hazelnut Chocolate T3*16 48 Capsules 600g',
+		value: 149,
+		productSrc: 'https://www.amazon.cn/dp/B01HPW4PSI/ref=lp_2134663051_1_7?s=grocery&ie=UTF8&qid=1529852470&sr=1-7'
 	},
 	{
 		productId: 'gucci_prep',
 		type: 'earth',
 		productType: 'product',
 		state: 'prep',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61LOzF2yHAL._UL1500_.jpg',
-		name: 'Gucci 手表 Guccissima 棕色表盘 YA134506 Ya 女士',
-		nameEn: 'Gucci watch Guccissima brown dial YA134506 Ya',
-		value: 2521,
-		productSrc: 'https://www.amazon.cn/dp/B00R5Z8PIW/ref=sr_1_1?ie=UTF8&qid=1528559539&sr=8-1&keywords=GUCCI+%E5%8F%A4%E9%A9%B0+%E5%A5%B3%E5%A3%AB'
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/gucci.jpg',
+		name: '女神就是要刚柔并济Gucci 古驰 青竹香水喷雾 50ml',
+		nameEn: 'The goddess is to be soft and gentle Gucci Gucci Green Bamboo Eau De Parfum Spray 50ml',
+		value: 486,
+		productSrc: 'https://www.amazon.cn/dp/B06XF6HH4L/ref=sr_1_1?s=amazon-global-store&ie=UTF8&qid=1529852593&sr=8-1&keywords=%E5%8F%A4%E9%A9%B0%E9%A6%99%E6%B0%B4'
 	},
 	{
-		productId: 'ipad_prep',
+		productId: 'kindle_prep',
 		type: 'fire',
 		productType: 'product',
 		state: 'prep',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61DhMQj22ZL._SL1000_.jpg',
-		name: 'Apple iPad mini 4 MK9Q2CH/A 7.9英寸平板电脑 (128G/WLAN/金色)',
-		nameEn: 'Apple iPad mini 4 MK9Q2CH/A 7.9-inch Tablet (128G/WLAN/Gold)',
-		value: 2621,
-		productSrc: 'https://www.amazon.cn/dp/B015FGE9AU/ref=sr_1_1?ie=UTF8&qid=1528558953&sr=8-1&keywords=ipad%2Bmini&th=1'
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/kindle.jpg',
+		name: 'Kindle Paperwhite电子书阅读器',
+		nameEn: 'Kindle Paperwhite E-book reader',
+		value: 958,
+		productSrc: 'https://www.amazon.cn/dp/B00QJDOLIO/ref=sr_1_1?s=amazon-devices&ie=UTF8&qid=1529851901&sr=1-1&keywords=kindle%E9%98%85%E8%AF%BB%E5%99%A8'
 	},
 	{
-		productId: 'camel_prep',
+		productId: 'august_prep',
 		type: 'water',
 		productType: 'product',
 		state: 'prep',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61eQzOKCkRL._SL1000_.jpg',
-		name: 'Camel 骆驼 户外男女款骑行背包 13L运动双肩背包A6S3C3116',
-		nameEn: 'camel outdoor men and women riding backpack 13L sports backpack A6S3C3116',
-		value: 158,
-		productSrc: 'https://www.amazon.cn/dp/B01DNNN8Q8/ref=sr_1_2?ie=UTF8&qid=1528559060&sr=8-2&keywords=%E9%AA%86%E9%A9%BC%E6%88%B7%E5%A4%96%E5%8F%8C%E8%82%A9%E8%83%8C%E5%8C%85&th=1&psc=1'
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/watch.jpg',
+		name: '英国品牌 August 奥科斯 SWB200 智能手环 心率/血氧/疲劳度监测 运动计步睡眠监控 IP67防水',
+		nameEn: 'British brand August OXOS SWB200 smart bracelet Heart rate/oxygen/fatigue monitoring Sports step counter sleep monitoring IP67 waterproof',
+		value: 309,
+		productSrc: 'https://www.amazon.cn/dp/B077SSL2H2/ref=lp_1813550071_1_2?srs=1813550071&ie=UTF8&qid=1529852681&sr=8-2'
 	},
 	// 虚拟货币部分
 	{

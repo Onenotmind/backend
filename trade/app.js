@@ -118,14 +118,14 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  origin: function (ctx) {
-    if (ctx.header && ctx.header.origin && ctx.header.origin.indexOf('wunoland') !== -1) {
-      return ctx.header.origin
-    } else {
-      return false
-    }
-  },
-  // origin: 'http://localhost:3002',
+  // origin: function (ctx) {
+  //   if (ctx.header && ctx.header.origin && ctx.header.origin.indexOf('wunoland') !== -1) {
+  //     return ctx.header.origin
+  //   } else {
+  //     return false
+  //   }
+  // },
+  origin: 'http://localhost:3002',
   credentials: true
 }))
 
@@ -391,38 +391,12 @@ koaRouter.get('/insertAssetsRollInOrder', async (ctx) => {
 
 // 转入订单确认
 koaRouter.post('/checkOverRollInOrder', async (ctx) => {
-  let res = null
-  let type = parseInt(ctx.request.body.assetsData.type)
-  let flag = false
-  if (type === 1) {
-    await assetsController.setEthAssets(ctx)
-    .then(v => {
-      flag = true
-    })
-    .catch(e => {
-      res = e
-    })
-  } else if (type === 2) {
-    await assetsController.setEosAssets(ctx)
-    .then(v => {
-      flag = true
-    })
-    .catch(e => {
-      res = e
-    })
-  } else {}
-  if (!flag) {
-    ctx.body = res
-    return
+  const res = await assetsRollInController.checkOverRollInOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
   }
-  await assetsRollInController.checkOverRollInOrder(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
 })
 
 // 转入订单取消
@@ -457,38 +431,12 @@ koaRouter.get('/queryRollOutAssetsByAddr', async (ctx) => {
 
 // 提现订单确认
 koaRouter.post('/checkOverRollOutOrder', async (ctx) => {
-  let res = null
-  let type = parseInt(ctx.request.body.assetsData.type)
-  let flag = false
-  if (type === 1) {
-    await assetsController.setEthAssets(ctx)
-    .then(v => {
-      flag = true
-    })
-    .catch(e => {
-      res = e
-    })
-  } else if (type === 2) {
-    await assetsController.setEosAssets(ctx)
-    .then(v => {
-      flag = true
-    })
-    .catch(e => {
-      res = e
-    })
-  } else {}
-  if (!flag) {
-    ctx.body = res
-    return
+  const res = await assetsRollOutController.checkOverRollOutOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
   }
-  await assetsRollOutController.checkOverRollOutOrder(ctx)
-  .then(v => {
-    res = v
-  })
-  .catch(e => {
-    res = e
-  })
-  ctx.body = res
 })
 
 // 提现订单取消

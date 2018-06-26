@@ -3,6 +3,7 @@ const db = new Db()
 const moment = require('moment')
 
 const { AssetsRollInName, AssetsRollInServerModel } = require('../sqlModel/assetsRollIn.js')
+const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
 
 /**
  * @AssetsRollInModel
@@ -11,6 +12,8 @@ const { AssetsRollInName, AssetsRollInServerModel } = require('../sqlModel/asset
  *  - 查询指定订单号 queryAssetsRollInById
  *  - 更改订单状态 changeRollInOrderState
  *  - 新增一个充值订单 insertAssetsRollInOrder
+ * @LandAssets
+ *  - 增加某类资产 addUserLandAssets
  */
 
 class AssetsRollInModel {
@@ -71,6 +74,42 @@ class AssetsRollInModel {
       orderId
     ]
     let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ?'
+    return db.query(sql, val)
+  }
+
+  /**
+   * 更改某类资产
+   * @params way 增加'add'  减少'minus'
+   * @params type 'eos' 'eosLock' 'eth' 'ethLock'
+   */
+  changeUserLandAssets (type, amount, addr, way) {
+    const count = parseFloat(amount).toFixed(3)
+    let assetsType = null
+    if (type === 'eth') {
+      assetsType = LandAssetsServerModel.eth.label   
+    } else if (type === 'eos') {
+      assetsType = LandAssetsServerModel.eos.label  
+    } else if (type === 'ethLock') {
+      assetsType = LandAssetsServerModel.ethLock.label    
+    } else if (type === 'eosLock') {
+      assetsType = LandAssetsServerModel.eosLock.label 
+    } else {
+      return
+    }
+    let val = [
+      LandAssetsName,
+      assetsType,
+      assetsType,
+      count,
+      LandAssetsServerModel.addr.label,
+      addr
+    ]
+    let sql = ''
+    if (way === 'add') {
+      sql = 'update ?? set  ?? = ?? + ? WHERE ?? = ?'
+    } else if (way === 'minus') {
+      sql = 'update ?? set  ?? = ?? - ? WHERE ?? = ?'
+    } else {}
     return db.query(sql, val)
   }
 }

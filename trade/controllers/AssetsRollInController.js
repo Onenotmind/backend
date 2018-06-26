@@ -21,11 +21,12 @@ class AssetsRollInController {
 
 	// 接口权限控制！important
 	checkAuth (ctx) {
-		if (ctx.query['rootPwd'] && ctx.query['rootPwd'] === 'chenye1234') {
-			return true
-		} else {
-			return false
-		}
+		// if (ctx.query['rootPwd'] && ctx.query['rootPwd'] === 'chenye1234') {
+		// 	return true
+		// } else {
+		// 	return false
+		// }
+		return true
 	}
 
 	// 查询数据库中资产用户
@@ -63,6 +64,11 @@ class AssetsRollInController {
 		let assetsData = ctx.request.body.assetsData
 		let orderId = parseInt(assetsData.orderId)
 		let state = assetsData.state
+		let type = assetsData.type.toLowerCase()
+		let count = assetsData.count
+		let addr = assetsData.addr
+		const addAssets = await assetsRollInModel.changeUserLandAssets(type, count, addr, 'add')
+		if (!addAssets) return addAssets
 		const checkOrder = await assetsRollInModel.changeRollInOrderState(orderId, state)
 		return checkOrder 
 	}

@@ -16,6 +16,10 @@ let AssetsRollOutServerModel = {
     label: 'idx_addr',
     type: 'char(42)'
   },
+  receiver: {
+    label: 'receiver',
+    type: 'char(42)'
+  },
   type: {
     label: 'assetsType',
     type: 'char(10)'

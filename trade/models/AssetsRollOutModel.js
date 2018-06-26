@@ -29,9 +29,10 @@ class AssetsRollOutModel {
   }
 
   // 新增一个提现订单
-  async insertAssetsRollOutOrder (addr, type, amount) {
+  async insertAssetsRollOutOrder (addr, receiver, type, amount) {
     let insertData = {
       [AssetsRollOutServerModel.addr.label]: addr,
+      [AssetsRollOutServerModel.receiver.label]: receiver,
       [AssetsRollOutServerModel.type.label]: type,
       [AssetsRollOutServerModel.amount.label]: parseFloat(amount).toFixed(4),
       [AssetsRollOutServerModel.state.label]: 'pend', 
@@ -92,8 +93,11 @@ class AssetsRollOutModel {
     return db.query(sql, val)
   }
 
-  // 提现资产
-  rollOutAssets (type, amount, addr) {
+  /**
+   * 提现资产
+   * @params way 'out' 提现 'back' 提现失败
+   */
+  rollOutAssets (type, amount, addr, way) {
     const count = parseFloat(amount).toFixed(3)
     let assetsType = null
     let assetsTypeLock = null
@@ -117,8 +121,12 @@ class AssetsRollOutModel {
       LandAssetsServerModel.addr.label,
       addr
     ]
-    console.log(val)
-    let sql = 'update ?? set ?? = ?? - ?, ?? = ?? +? WHERE ?? = ?'
+    let sql = ''
+    if (way === 'out') {
+      sql = 'update ?? set ?? = ?? - ?, ?? = ?? +? WHERE ?? = ?'
+    } else if (way === 'back') {
+      sql = 'update ?? set ?? = ?? + ?, ?? = ?? -? WHERE ?? = ?'
+    } else {}
     return db.query(sql, val)
   }
 
@@ -130,6 +138,42 @@ class AssetsRollOutModel {
       addr
     ]
     let sql = 'select ?? from ?? where ?? = ?'
+    return db.query(sql, val)
+  }
+
+  /**
+   * 更改某类资产
+   * @params way 增加'add'  减少'minus'
+   * @params type 'eos' 'eosLock' 'eth' 'ethLock'
+   */
+  changeUserLandAssets (type, amount, addr, way) {
+    const count = parseFloat(amount).toFixed(3)
+    let assetsType = null
+    if (type === 'eth') {
+      assetsType = LandAssetsServerModel.eth.label   
+    } else if (type === 'eos') {
+      assetsType = LandAssetsServerModel.eos.label  
+    } else if (type === 'ethLock') {
+      assetsType = LandAssetsServerModel.ethLock.label    
+    } else if (type === 'eosLock') {
+      assetsType = LandAssetsServerModel.eosLock.label 
+    } else {
+      return
+    }
+    let val = [
+      LandAssetsName,
+      assetsType,
+      assetsType,
+      count,
+      LandAssetsServerModel.addr.label,
+      addr
+    ]
+    let sql = ''
+    if (way === 'add') {
+      sql = 'update ?? set  ?? = ?? + ? WHERE ?? = ?'
+    } else if (way === 'minus') {
+      sql = 'update ?? set  ?? = ?? - ? WHERE ?? = ?'
+    } else {}
     return db.query(sql, val)
   }
 }
