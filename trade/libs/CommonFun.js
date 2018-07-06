@@ -134,21 +134,21 @@ async function postParamsCheck (ctx, paramsArray) {
   return params
 }
 
-function checkToken (token, addr) {
+function checkToken (token, addr) { // TODO resolve(false)
   return new Promise((resolve, reject) => {
     // let uuid = ctx.cookies.get('uuid')
     // let token = ctx.cookies.get('token')
-    if (!token) reject(new Error('token is  null.'))
+    if (!token) resolve(false)
     jwt.verify(token, cookieCryp, function (err, decoded) {
-      if (err) reject(new Error(err))
-      if (decoded.uid !== addr) reject('token is out')
+      if (err) resolve(false)
+      if (decoded.uid !== addr) resolve(false)
       resolve(decoded)
     })
   })
 }
 
 function geneToken (addr) {
-  return jwt.sign({ uid: addr, exp: Math.floor(Date.now() / 1000) + (60 * 60) }, cookieCryp)
+  return jwt.sign({ uid: addr, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 3 }, cookieCryp)
 }
 
 function encrypt(str,secret){

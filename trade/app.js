@@ -157,9 +157,7 @@ app.use(cors({
 
 
 koaRouter.post('/userRegister', async (ctx) => {
-  console.log('userRegister')
   const res = await userDetailController.userRegister(ctx)
-  console.log('res', res)
   const token = geneToken(ctx.query['addr'])
   if (!_.isError(res)) {
     ctx.cookies.set(
@@ -171,7 +169,6 @@ koaRouter.post('/userRegister', async (ctx) => {
     })
     ctx.body = succRes(LoginCodes.Register_Succ, token)
   } else {
-    console.log('userRegister', res.message)
     ctx.body = errorRes(res.message)
   }
 })
@@ -307,7 +304,6 @@ async function geneEmailCode (ctx) {
     }
   )
   const sendCode = await sendCodeFromMail(email, code)
-  console.log('sendCode', sendCode)
   if (!sendCode) return false
   return true
 }
@@ -530,9 +526,7 @@ koaRouter.get('/getEthlandProduct', async (ctx) => {
 })
 
 koaRouter.get('/getPandaBackAssets', async (ctx) => {
-  console.log('getPandaBackAssets..begin')
   const res = await pandaOwnerController.getPandaBackAssets(ctx)
-  console.log('getPandaBackAssets', res)
   if (!_.isError(res)) {
     ctx.body = succRes(PandaLandCodes.Back_Assets_Carry_Succ, res)
   } else {
