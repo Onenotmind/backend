@@ -4,7 +4,7 @@ const async = require('async')
 const landProductModel = new LandProductModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
-const { checkToken, checkUserToken, decrypt, getParamsCheck } = require('../libs/CommonFun.js')
+const { checkToken, checkUserToken, decrypt, getParamsCheck, commitTrans } = require('../libs/CommonFun.js')
 const { LandAssetsClientModel, LandAssetsServerModel } = require('../sqlModel/landAssets.js')
 const { UserServerModel } = require('../sqlModel/user.js')
 const { LandProductClientModel, LandProductServerModel } = require('../sqlModel/landProduct.js')
@@ -18,6 +18,7 @@ const { LandProductCodes, LoginCodes, CommonCodes, errorRes, serviceError, succR
     - 增加待投票的商品 addVoteProduct
     - 获取当前投票中的商品 getCurrentVotedProduct
     - 对商品进行投票 voteProduct
+    - 对商品属性进行投票 voteProductAttr
     - 商品投票结束 productVotedOver
     - 获得当前正在出售的商品 getCurrentProduct
     - 下架过期商品 dropOffProduct
@@ -25,14 +26,19 @@ const { LandProductCodes, LoginCodes, CommonCodes, errorRes, serviceError, succR
     - 兑换商品 exchangeProduct
     - 更新用户的竹子数量 updateUserBamboo
     - 查询某个用户的所有商品提现信息 queryUserAllProduct
+    - 查询商品的属性票数 queryCountOfProductId
+    - 获取剩余的正在活动的商品 getCurrentLeftProduct
 	辅助函数:
 		- cacl 计算最终的经纬度与长宽
     - geneStarPoint 商品产生核心点
+    - getNextVoteStartTime 获取下期投票时间
+    - changeNextVoteStartTime 更改下期投票时间
 */
 class LandProductController {
 	constructor () {
     this.starPoint = [] // 商品中心点数组
     this.starCount = 5 // 中心点数量
+    this.nextVoteStartTime = 1531120000 // 下期商品投票开始时间
     setInterval(() => {
       this.geneStarPoint()
     }, 5000)
@@ -88,6 +94,7 @@ class LandProductController {
     const userAddr = ctx.cookies.get('userAddr')
     const voteNum = parseInt(ctx.query['num'])
     const productId = ctx.query['productId']
+    const period = parseInt(ctx.query['period'])
     const paramsType = [
       {
         label: 'num',
@@ -103,11 +110,151 @@ class LandProductController {
     const bambooCount = await landProductModel.queryUserBambooCount(userAddr)
     if (!bambooCount) return bambooCount
     if (bambooCount.length === 0) return new Error(LoginCodes.Login_No_Account)
-    if (parseInt(bambooCount[0][LandAssetsServerModel.bamboo.label]) < voteNum) {
+    const leftBamboo = parseInt(bambooCount[0][LandAssetsServerModel.bamboo.label]) - voteNum
+    if (leftBamboo < 0) {
       return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
     }
-    const votePro = await landProductModel.voteProduct(productId, voteNum)
-    return votePro
+    const trans = await landProductModel.startTransaction()
+    if (!trans) return new Error(CommonCodes.Service_Wrong)
+    let tasks = [
+      async function () {
+        const votePro = await landProductModel.voteProduct(productId, voteNum)
+        return votePro
+      },
+      async function (res) {
+        if (_.isError(res)) return res
+        const minusBamboo = await landProductModel.minusUserBamboo(userAddr, voteNum)
+        return minusBamboo
+      },
+      async function (res) {
+        if (_.isError(res)) return res
+        const insertVoteList = await landProductModel.insertVoteProductList(userAddr, productId, null, period, voteNum)
+        return insertVoteList
+      },
+      function (res, callback) {
+        if (_.isError(res)) {
+          callback(res)
+        } else {
+          callback(null, res)
+        }
+      }
+    ]
+    return commitTrans(trans, tasks) 
+  }
+
+  /**
+   * 查询商品的属性票数 queryCountOfProductId
+   */
+  async queryCountOfProductId (ctx) {
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const curPeriod = await landProductModel.getCurrentPeriodProduct()
+    if (!curPeriod) return curPeriod
+    const period = parseInt(curPeriod[0]['max(idx_period)'])
+    const queryVote = await landProductModel.queryCountOfProductId(period)
+    return queryVote
+  }
+
+  /**
+   * 获取剩余的正在活动的商品 getCurrentLeftProduct
+   */
+  async getCurrentLeftProduct (ctx) {
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const curPeriod = await landProductModel.getCurrentPeriodProduct()
+    if (!curPeriod) return curPeriod
+    const period = parseInt(curPeriod[0]['max(idx_period)']) - 1
+    const tagsArr = ['product']
+    let leftProductObj = {}
+    for (const tag of tagsArr) {
+      const products = await landProductModel.filterProductByTag(tag, period)
+      if (products.length === 0) return {}
+      if (products && products.length > 0) {
+        for (const pro of products) {
+          let proId = pro[LandProductServerModel.productId.label]
+          // 已经集齐了多少个商品
+          const count = await landProductModel.queryCollectedProCount(proId)
+          // 商品投票的票数
+          const vote = await landProductModel.getProductVoteNum(proId)
+          let totalNum = 1
+          if (vote && vote.length > 0) {
+            const voteNum = parseInt(vote[0][LandProductServerModel.time.label])
+            const value = parseInt(vote[0][LandProductServerModel.value.label])
+            // 总数量
+            totalNum = parseInt(voteNum / (100 * value)) === 0 ? 1:parseInt(voteNum / (100 * value))
+          }
+          // 剩余数量
+          const leftLen = totalNum - count.length > 0 ? totalNum - count.length : 0
+          leftProductObj[proId] = leftLen
+          // if (index === products.length - 1) {
+          //   return leftProductObj
+          // }
+        }
+        return leftProductObj
+      }
+    }
+  }
+
+  /**
+   *  给商品属性投票 voteProductAttr
+   */
+  async voteProductAttr (ctx) {
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const userAddr = ctx.cookies.get('userAddr')
+    const voteNum = parseInt(ctx.query['num'])
+    const productId = ctx.query['productId']
+    const attr = ctx.query['attr']
+    const period = parseInt(ctx.query['period'])
+    const paramsType = [
+      {
+        label: 'num',
+        vali: 'valiBamboo'
+      },
+      {
+        label: 'productId',
+        vali: 'valiProductId'
+      },
+      {
+        label: 'attr',
+        vali: 'valiProductAttr'
+      }
+    ]
+    const params= await getParamsCheck(ctx, paramsType)
+    if (_.isError(params)) return params
+    const bambooCount = await landProductModel.queryUserBambooCount(userAddr)
+    if (!bambooCount) return bambooCount
+    if (bambooCount.length === 0) return new Error(LoginCodes.Login_No_Account)
+    const leftBamboo = parseInt(bambooCount[0][LandAssetsServerModel.bamboo.label]) - voteNum
+    if (leftBamboo < 0) {
+      return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
+    }
+    const trans = await landProductModel.startTransaction()
+    if (!trans) return new Error(CommonCodes.Service_Wrong)
+    let tasks = [
+      async function () {
+        const votePro = await landProductModel.voteProduct(productId, voteNum)
+        return votePro
+      },
+      async function (res) {
+        if (_.isError(res)) return res
+        const minusBamboo = await landProductModel.minusUserBamboo(userAddr, voteNum)
+        return minusBamboo
+      },
+      async function (res) {
+        if (_.isError(res)) return res
+        const insertVoteList = await landProductModel.insertVoteProductList(userAddr, productId, attr, period, voteNum)
+        return insertVoteList
+      },
+      function (res, callback) {
+        if (_.isError(res)) {
+          callback(res)
+        } else {
+          callback(null, res)
+        }
+      }
+    ]
+    return commitTrans(trans, tasks) 
   }
 
   /**
@@ -139,7 +286,10 @@ class LandProductController {
   async getCurrentProduct (ctx) {
     const tokenCheck = await checkUserToken(ctx)
     if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
-    const curProduct = await landProductModel.getCurrentProduct()
+    const curPeriod = await landProductModel.getCurrentPeriodProduct()
+    if (!curPeriod) return curPeriod
+    const period = parseInt(curPeriod[0]['max(idx_period)'] - 1)
+    const curProduct = await landProductModel.getCurrentProductByPeriod(period)
     return curProduct
   }
 
@@ -147,7 +297,7 @@ class LandProductController {
    * 下架过期商品 dropOffProduct
    */
   async dropOffProduct () {
-    const curProduct = await landProductModel.getCurrentProduct()
+    const curProduct = await landProductModel.getCurrentProductByPeriod(1)
     if (!curProduct || curProduct.length === 0) return
     let curTime = new Date().getTime()
     for (let pro of curProduct) {
@@ -245,35 +395,7 @@ class LandProductController {
         }
       }
     ]
-    return new Promise((resolve, reject) => {
-      trans.beginTransaction(function (bErr) {
-        if (bErr) {
-          reject(bErr)
-          return
-        }
-        async.waterfall(tasks, function (tErr, res) {
-          if (tErr) {
-            trans.rollback(function () {
-              trans.release()
-              reject(tErr)
-            })
-          } else {
-            trans.commit(function (err, info) {
-              if (err) {
-                console.log('err', err)
-                trans.rollback(function (err) {
-                  trans.release()
-                  reject(err)
-                })
-              } else {
-                trans.release()
-                resolve(res)
-              }
-            })
-          }
-        })
-      })
-    })
+    return commitTrans(trans, tasks)
   }
 
   /**
@@ -369,6 +491,16 @@ class LandProductController {
       width: tmpWidth,
       height: tmpHeight
     }
+  }
+
+  // getNextVoteStartTime 获取下期投票时间
+  getNextVoteStartTime () {
+    return this.nextVoteStartTime
+  }
+
+  // changeNextVoteStartTime 更改下期投票时间
+  changeNextVoteStartTime (val) {
+    this.nextVoteStartTime = val
   }
 
 	// 封装GET请求的参数

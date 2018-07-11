@@ -9,6 +9,10 @@ let BackPandaAssetsServerModel = {
     label: 'pk_id',
     type: 'bigint(20) unsigned not null auto_increment'
   },
+  addr: {
+  	label: 'idx_addr',
+    type: 'char(42)'
+  },
 	gen: {
 		label: 'uk_gen',
 		type: 'char(30)'
@@ -34,7 +38,10 @@ let BackPandaAssetsServerModel = {
     label: 'primary key(pk_id),'
   },
   uk_gen: {
-  	label: 'unique key(uk_gen)'
+  	label: 'unique key(uk_gen),'
+  },
+  idx_addr: {
+  	label: 'index (idx_addr)'
   },
 	other: {
 		label: ')ENGINE=InnoDB DEFAULT CHARSET=utf8'

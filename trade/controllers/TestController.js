@@ -60,7 +60,7 @@ class TestController {
 				const productCreate = await testModel.createLandProductTable()
 				if (!productCreate) return productCreate
 				const inserProduct = await testModel.insertDataToLandProduct()
-				return inserProduct
+				return true
 			},
 			// @MYSQL UserLandProduct
 			async function (res) {
@@ -120,6 +120,18 @@ class TestController {
 					if (!tableDrop) return tableDrop
 				}
 				const tableCreate = await testModel.createAssetsRollInTable()
+				return tableCreate
+			},
+			// @MYSQL votelist
+			async function (res) {
+				if (_.isError(res)) return res
+				const tableExist = await testModel.checkVoteListExist()
+				if (!tableExist) return tableExist
+				if (tableExist.length > 0) {
+					const tableDrop = await testModel.dropVoteListTable()
+					if (!tableDrop) return tableDrop
+				}
+				const tableCreate = await testModel.createVoteListTable()
 				return tableCreate
 			},
 			// @MYSQL assetsrollout

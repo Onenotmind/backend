@@ -35,16 +35,24 @@ let LandProductServerModel = {
 	},
 	productType: {
 		label: 'idx_productType',
-		type: 'varchar(10)'
+		type: 'varchar(15)'
 	},
 	state: {
 		label: 'state',
-		type: 'char(4)'
+		type: 'varchar(10)'
 	},
 	time: {
 		label: 'time',
 		type: 'bigint unsigned'
 	},
+	leftCount: {
+		label: 'leftCount',
+		type: 'smallint unsigned'
+	},
+	period: {
+  	label: 'idx_period',
+  	type: 'smallint unsigned'
+  },
 	imgSrc: {
 		label: 'imgSrc',
 		type: 'varchar(70)'
@@ -88,7 +96,10 @@ let LandProductServerModel = {
   	label: 'index (idx_type),'
   },
   idx_productType: {
-  	label: 'index (idx_productType)'
+  	label: 'index (idx_productType),'
+  },
+  idx_period: {
+  	label: 'index (idx_period)'
   },
 	other: {
 		label: ')ENGINE=InnoDB DEFAULT CHARSET=utf8'
@@ -109,6 +120,7 @@ const LandProductInserData = [
 		type: 'fire',
 		productType: 'product',
 		state: 'sold',
+		period: 1,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/81x3RtQemGL._UL1500_.jpg',
 		name: 'Champion 男士 Classic Jersey 印花 T恤',
 		nameEn: 'Champion Men Classic Jersey Print T-Shirt',
@@ -120,6 +132,7 @@ const LandProductInserData = [
 		type: 'water',
 		productType: 'product',
 		state: 'sold',
+		period: 1,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61FL6wMyYTL._SL800_.jpg',
 		name: '沃隆 每日坚果A款750g（25g*30包）混合坚果仁大礼包',
 		nameEn: 'Daily Nuts 750g (25g*30 pack)',
@@ -131,6 +144,7 @@ const LandProductInserData = [
 		type: 'earth',
 		productType: 'product',
 		state: 'sold',
+		period: 1,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61LOzF2yHAL._UL1500_.jpg',
 		name: 'Gucci 手表 Guccissima 棕色表盘 YA134506 Ya 女士',
 		nameEn: 'Gucci watch Guccissima brown dial YA134506 Ya',
@@ -142,6 +156,7 @@ const LandProductInserData = [
 		type: 'fire',
 		productType: 'product',
 		state: 'sold',
+		period: 1,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61DhMQj22ZL._SL1000_.jpg',
 		name: 'Apple iPad mini 4 MK9Q2CH/A 7.9英寸平板电脑 (128G/WLAN/金色)',
 		nameEn: 'Apple iPad mini 4 MK9Q2CH/A 7.9-inch Tablet (128G/WLAN/Gold)',
@@ -153,6 +168,7 @@ const LandProductInserData = [
 		type: 'water',
 		productType: 'product',
 		state: 'sold',
+		period: 1,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/61eQzOKCkRL._SL1000_.jpg',
 		name: 'Camel 骆驼 户外男女款骑行背包 13L运动双肩背包A6S3C3116',
 		nameEn: 'camel outdoor men and women riding backpack 13L sports backpack A6S3C3116',
@@ -163,7 +179,8 @@ const LandProductInserData = [
 		productId: 'nautica_prep',
 		type: 'fire',
 		productType: 'product',
-		state: 'prep',
+		state: 'voting',
+		period: 2,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/nautica.jpg',
 		name: 'Nautica 诺帝卡 男式 条纹 Polo 衫',
 		nameEn: 'Nautica Nordisk Mens Striped Polo Shirt',
@@ -174,7 +191,8 @@ const LandProductInserData = [
 		productId: 'ferrero_prep',
 		type: 'water',
 		productType: 'product',
-		state: 'prep',
+		state: 'voting',
+		period: 2,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ferrero.jpg',
 		name: 'Ferrero 费列罗 Rocher榛果威化巧克力T3*16 48粒装600g',
 		nameEn: 'Ferrero Rocher Hazelnut Chocolate T3*16 48 Capsules 600g',
@@ -185,7 +203,8 @@ const LandProductInserData = [
 		productId: 'gucci_prep',
 		type: 'earth',
 		productType: 'product',
-		state: 'prep',
+		state: 'voting',
+		period: 2,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/gucci.jpg',
 		name: '女神就是要刚柔并济Gucci 古驰 青竹香水喷雾 50ml',
 		nameEn: 'The goddess is to be soft and gentle Gucci Gucci Green Bamboo Eau De Parfum Spray 50ml',
@@ -196,7 +215,8 @@ const LandProductInserData = [
 		productId: 'kindle_prep',
 		type: 'fire',
 		productType: 'product',
-		state: 'prep',
+		state: 'voting',
+		period: 2,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/kindle.jpg',
 		name: 'Kindle Paperwhite电子书阅读器',
 		nameEn: 'Kindle Paperwhite E-book reader',
@@ -207,91 +227,99 @@ const LandProductInserData = [
 		productId: 'august_prep',
 		type: 'water',
 		productType: 'product',
-		state: 'prep',
+		state: 'voting',
+		period: 2,
 		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/watch.jpg',
 		name: '英国品牌 August 奥科斯 SWB200 智能手环 心率/血氧/疲劳度监测 运动计步睡眠监控 IP67防水',
 		nameEn: 'British brand August OXOS SWB200 smart bracelet Heart rate/oxygen/fatigue monitoring Sports step counter sleep monitoring IP67 waterproof',
 		value: 309,
 		productSrc: 'https://www.amazon.cn/dp/B077SSL2H2/ref=lp_1813550071_1_2?srs=1813550071&ie=UTF8&qid=1529852681&sr=8-2'
-	},
-	// 虚拟货币部分
-	{
-		productId: 'eth',
-		type: 'fire',
-		productType: 'currency',
-		state: 'sold',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ethereum.png',
-		name: 'Ethereum',
-		nameEn: 'Ethereum',
-		value: '3000.46',
-		productSrc: ''
-	},
-	{
-		productId: 'eos',
-		type: 'water',
-		productType: 'currency',
-		state: 'sold',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/eos.png',
-		name: 'EOS',
-		nameEn: 'EOS',
-		value: '80.24',
-		productSrc: ''
-	},
-	{
-		productId: 'xrp',
-		type: 'fire',
-		productType: 'currency',
-		state: 'sold',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ripple.png',
-		name: 'Ripple',
-		nameEn: 'Ripple',
-		value: '3.44',
-		productSrc: ''
-	},
-	{
-		productId: 'ltc',
-		type: 'fire',
-		productType: 'currency',
-		state: 'sold',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/litecoin.png',
-		name: 'Litecoin',
-		nameEn: 'Litecoin',
-		value: '614.48',
-		productSrc: ''
-	},
-	{
-		productId: 'iota',
-		type: 'fire',
-		productType: 'currency',
-		state: 'sold',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/iota.png',
-		name: 'Iota',
-		nameEn: 'Iota',
-		value: '7.73',
-		productSrc: ''
-	},
-	{
-		productId: 'cardano',
-		type: 'fire',
-		productType: 'currency',
-		state: 'sold',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/cardano.png',
-		name: 'Cardano',
-		nameEn: 'Cardano',
-		value: '0.99',
-		productSrc: ''
-	},
-	{
-		productId: 'menero',
-		type: 'fire',
-		productType: 'currency',
-		state: 'sold',
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/monero.png',
-		name: 'Menero',
-		nameEn: 'Menero',
-		value: '772.34',
-		productSrc: ''
 	}
+	// 虚拟货币部分
+	// {
+	// 	productId: 'eth',
+	// 	type: 'fire',
+	// 	productType: 'currency',
+	// 	state: 'sold',
+	// 	period: 1,
+	// 	imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ethereum.png',
+	// 	name: 'Ethereum',
+	// 	nameEn: 'Ethereum',
+	// 	value: '3000.46',
+	// 	productSrc: ''
+	// },
+	// {
+	// 	productId: 'eos',
+	// 	type: 'water',
+	// 	productType: 'currency',
+	// 	state: 'sold',
+	// 	period: 1,
+	// 	imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/eos.png',
+	// 	name: 'EOS',
+	// 	nameEn: 'EOS',
+	// 	value: '80.24',
+	// 	productSrc: ''
+	// },
+	// {
+	// 	productId: 'xrp',
+	// 	type: 'fire',
+	// 	productType: 'currency',
+	// 	state: 'sold',
+	// 	period: 1,
+	// 	imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/ripple.png',
+	// 	name: 'Ripple',
+	// 	nameEn: 'Ripple',
+	// 	value: '3.44',
+	// 	productSrc: ''
+	// },
+	// {
+	// 	productId: 'ltc',
+	// 	type: 'fire',
+	// 	productType: 'currency',
+	// 	state: 'sold',
+	// 	period: 1,
+	// 	imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/litecoin.png',
+	// 	name: 'Litecoin',
+	// 	nameEn: 'Litecoin',
+	// 	value: '614.48',
+	// 	productSrc: ''
+	// },
+	// {
+	// 	productId: 'iota',
+	// 	type: 'fire',
+	// 	productType: 'currency',
+	// 	state: 'sold',
+	// 	period: 1,
+	// 	imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/iota.png',
+	// 	name: 'Iota',
+	// 	nameEn: 'Iota',
+	// 	value: '7.73',
+	// 	productSrc: ''
+	// },
+	// {
+	// 	productId: 'cardano',
+	// 	type: 'fire',
+	// 	productType: 'currency',
+	// 	state: 'sold',
+	// 	period: 1,
+	// 	imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/cardano.png',
+	// 	name: 'Cardano',
+	// 	nameEn: 'Cardano',
+	// 	value: '0.99',
+	// 	productSrc: ''
+	// },
+	// {
+	// 	productId: 'menero',
+	// 	type: 'fire',
+	// 	productType: 'currency',
+	// 	state: 'sold',
+	// 	period: 1,
+	// 	imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/monero.png',
+	// 	name: 'Menero',
+	// 	nameEn: 'Menero',
+	// 	value: '772.34',
+	// 	productSrc: ''
+	// }
 ]
 
 module.exports = {

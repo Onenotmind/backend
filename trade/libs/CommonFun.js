@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const _ = require('lodash')
+const async = require('async')
 const { CommonCodes } = require('./msgCodes/StatusCodes.js')
 const JoiParamVali = require('./JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
@@ -171,6 +172,37 @@ function checkUserToken (ctx) {
   return checkToken(token, checkAddr)
 }
 
+function commitTrans (trans, tasks) {
+  return new Promise((resolve, reject) => {
+    trans.beginTransaction(function (bErr) {
+      if (bErr) {
+        resolve(bErr)
+        return
+      }
+      async.waterfall(tasks, function (tErr, res) {
+        if (tErr) {
+          trans.rollback(function () {
+            trans.release()
+            resolve(tErr)
+          })
+        } else {
+          trans.commit(function (err, info) {
+            if (err) {
+              trans.rollback(function (err) {
+                trans.release()
+                resolve(err)
+              })
+            } else {
+              trans.release()
+              resolve(res)
+            }
+          })
+        }
+      })
+    })
+  })
+}
+
 module.exports = {
 	cacl: cacl,
   uuid: uuid,
@@ -181,5 +213,6 @@ module.exports = {
   decrypt: decrypt,
   checkToken: checkToken,
   geneToken: geneToken,
-  checkUserToken: checkUserToken
+  checkUserToken: checkUserToken,
+  commitTrans: commitTrans
 }

@@ -25,6 +25,8 @@ const { AssetsRollInName, AssetsRollInServerModel } = require('../sqlModel/asset
 
 const { AssetsRollOutName, AssetsRollOutServerModel } = require('../sqlModel/assetsRollOut.js')
 
+const { VoteListName, VoteListClientModel, VoteListServerModel } = require('../sqlModel/voteList.js')
+
 /**
 	@TestModel 测试数据专用
 		- user
@@ -64,6 +66,10 @@ const { AssetsRollOutName, AssetsRollOutServerModel } = require('../sqlModel/ass
       - 新建backpandaassets数据表 createBackPandaAssetsTable()
       - 删除BackPandaAssets数据表 dropBackPandaAssetsTable()
       - 判断BackPandaAssets数据表是否存在 checkBackPandaAssetsExist()
+    - votelist
+      - 新建votelist数据表 createVoteListTable()
+      - 删除votelist数据表 dropVoteListTable()
+      - 判断votelist数据表是否存在 checkVoteListExist()
     - ethAddrManager
       - 新建ethAddrManager数据表 createEthAddrManagerTable()
       - 删除ethAddrManager数据表 dropEthAddrManagerTable()
@@ -168,7 +174,7 @@ class TestModel {
   }
 
   async insertDataToLandProduct () {
-    let insertCb = async (productId, type, productType, state, imgSrc, name, nameEn, value, productSrc) => {
+    let insertCb = async (productId, type, productType, state, period, imgSrc, name, nameEn, value, productSrc) => {
       let curTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       let timer = new Date().getTime()
       let insertData = {
@@ -176,13 +182,15 @@ class TestModel {
         [LandProductServerModel.type.label]: type,
         [LandProductServerModel.productType.label]: productType,
         [LandProductServerModel.state.label]: state,
+        [LandProductServerModel.period.label]: period,
         [LandProductServerModel.time.label]: timer,
         [LandProductServerModel.imgSrc.label]: imgSrc,
+        [LandProductServerModel.leftCount.label]: 2,
         [LandProductServerModel.name.label]: name,
         [LandProductServerModel.nameEn.label]: nameEn,
         [LandProductServerModel.value.label]: value,
         [LandProductServerModel.productSrc.label]: productSrc,
-        [LandProductServerModel.recommender.label]: 'ETHLAND',
+        [LandProductServerModel.recommender.label]: 'wunoland',
         [LandProductServerModel.gmt_create.label]: curTime,
         [LandProductServerModel.gmt_modified.label]:curTime
       }
@@ -190,9 +198,8 @@ class TestModel {
       let sql = 'INSERT INTO ?? SET ?'
       await db.query(sql, val)
     }
-
     for (let pro of LandProductInserData) {
-      await insertCb(pro.productId, pro.type, pro.productType, pro.state, pro.imgSrc, pro.name, pro.nameEn, pro.value, pro.productSrc)
+      await insertCb(pro.productId, pro.type, pro.productType, pro.state, pro.period, pro.imgSrc, pro.name, pro.nameEn, pro.value, pro.productSrc)
     }
     // let sql = 'INSERT INTO landProduct VALUES '
     // for (let i = 0; i < landProductTestData.length; i++) {
@@ -330,6 +337,21 @@ class TestModel {
 
   async checkBackPandaAssetsExist () {
     let sql = 'show tables like "backpandaassets"'
+    return db.query(sql)
+  }
+
+  async createVoteListTable () {
+    let sql = this.getTableCreateSql(VoteListName, VoteListServerModel)
+    return db.query(sql)
+  }
+
+  async dropVoteListTable () {
+    let sql = 'DROP TABLE votelist'
+    return db.query(sql)
+  }
+
+  async checkVoteListExist () {
+    let sql = 'show tables like "votelist"'
     return db.query(sql)
   }
 

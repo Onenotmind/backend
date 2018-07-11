@@ -543,11 +543,6 @@ koaRouter.get('/genePandaRandom', async (ctx) => {
   }
 })
 
-koaRouter.get('/serverTime', (ctx) => {
-  let res = succRes('serverTime', Date.parse(new Date()) / 1000)
-  ctx.body = res
-})
-
 koaRouter.get('/sirePanda', async (ctx) => {
   const res = await pandaOwnerController.sirePanda(ctx)
   if (!_.isError(res)) {
@@ -588,7 +583,10 @@ koaRouter.get('/buyPanda', async (ctx) => {
     - 查询某个地址下所有商品 queryLandProductByAddr
     - 获取当前投票中的商品 getCurrentVotedProduct
     - 给商品投票 voteProduct
+    - 给商品属性投票 voteProductAttr
     - 获得当前正在出售的商品 getCurrentProduct
+    - 查询商品的属性票数 queryCountOfProductId
+    - 获取剩余的正在活动的商品 getCurrentLeftProduct
   @landassets
     - 更新用户的竹子数量 updateUserBamboo
 */
@@ -629,6 +627,16 @@ koaRouter.get('/voteProduct', async (ctx) => {
   }
 })
 
+koaRouter.get('/voteProductAttr', async (ctx) => {
+  const res = await landProductController.voteProductAttr(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(LandProductCodes.Vote_Product_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+
 koaRouter.get('/getCurrentProduct', async (ctx) => {
   const res = await landProductController.getCurrentProduct(ctx)
   if (!_.isError(res)) {
@@ -638,10 +646,28 @@ koaRouter.get('/getCurrentProduct', async (ctx) => {
   }
 })
 
+koaRouter.get('/queryCountOfProductId', async (ctx) => {
+  const res = await landProductController.queryCountOfProductId(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
 koaRouter.get('/updateUserBamboo', async (ctx) =>{
   const res = await landProductController.updateUserBamboo(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(LandProductCodes.Update_User_Bamboo_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/getCurrentLeftProduct', async (ctx) => {
+  const res = await landProductController.getCurrentLeftProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
   } else {
     ctx.body = errorRes(res.message)
   }
@@ -695,6 +721,16 @@ koaRouter.get('/createTestTable', async (ctx) => {
   } else {
     ctx.body = errorRes(res.message)
   }
+})
+
+koaRouter.get('/serverTime', (ctx) => {
+  let res = succRes('serverTime', Date.parse(new Date()) / 1000)
+  ctx.body = res
+})
+
+koaRouter.get('/getNextVoteStartTime', (ctx) => {
+  const time = landProductController.getNextVoteStartTime()
+  ctx.body = succRes(CommonCodes.Response_Succ, time)
 })
 
 app.use(koaRouter.routes())

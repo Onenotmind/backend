@@ -5,7 +5,7 @@ const PandaOwnerModel = require('../models/pandaOwnerModel.js')
 const pandaOwnerModel = new PandaOwnerModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
-const { getParamsCheck, postParamsCheck, checkUserToken, decrypt, cacl, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
+const { getParamsCheck, commitTrans, postParamsCheck, checkUserToken, decrypt, cacl, encrypt, geneToken, checkToken } = require('../libs/CommonFun.js')
 const { PandaOwnerClientModel, PandaOwnerServerModel, AttrList } = require('../sqlModel/pandaOwner.js')
 const { UserServerModel } = require('../sqlModel/user.js')
 const { LandAssetsServerModel } = require('../sqlModel/landAssets.js')
@@ -46,6 +46,11 @@ const { PandaOwnerCodes, AssetsCodes, errorRes, LandProductCodes, CommonCodes, P
    	- 商品中心与熊猫外出时范围计算 recognize
    	- 返回不同属性的商品中心地址 getDiffStarCenter
    	- 批量更新用户资产 batchUpdateUserAssets
+   	- 查询某个地址下某个商品的个数 queryProductNumByAddr
+   	- 计算呜喏的识别程度 caclIgnoreProduct
+   	- 呜喏等级积分升级算法 intergeUpdateForOut
+   	- 呜喏速度属性升级算法 speedUpdateForOut
+   	- 呜喏其他属性升级算法 attrUpdateForOut
 */
 
 let bambooTitudeRate = 1000 // 竹子/经纬度 比例
@@ -78,7 +83,7 @@ class PandaOwnerController {
 		return allPanda
 	}
 
-	async getPandaBackAssets (ctx) {
+	async getPandaBackAssets (ctx) { // TODO 是否做事务
 		const tokenCheck = await checkUserToken(ctx)
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const checkAddr = ctx.cookies.get('userAddr')
@@ -92,12 +97,12 @@ class PandaOwnerController {
 		let dropResProducts = [] // 扔掉的最终商品数组
 		let backPandas = [] // 返回的panda基因
 		const curDate =  Date.parse(new Date()) / 1000 // 当前时间
-		// const trans = await pandaOwnerModel.startTransaction()
-		// if (!trans) return new Error(CommonCodes.Service_Wrong)
-		// let tasks = [
-		// 	async function () {
-		// 	}
-		// ]
+		const trans = await pandaOwnerModel.startTransaction()
+		if (!trans) return new Error(CommonCodes.Service_Wrong)
+		let tasks = [
+			async function () {
+			}
+		]
 		for (let panda of allOutPanda) {
 			if (curDate > panda[PandaOwnerServerModel.price.label]) {
 				const backPanda = await pandaOwnerModel.pandaBackHome(panda[PandaOwnerServerModel.gen.label])
@@ -142,6 +147,9 @@ class PandaOwnerController {
 						dropProducts = dropProducts.concat(dropAssetsArr)
 					}
 				}
+				// 删除某个熊猫下的所有backassets商品
+				// const delBackAssets = await pandaOwnerModel.deleteBackPandaAssetsByGen(panda[PandaOwnerServerModel.gen.label])
+				// if (_.isError(delBackAssets)) return delBackAssets
 			}
 		}
 		// 带回去的商品
@@ -532,8 +540,8 @@ class PandaOwnerController {
 		]
 		const params= await getParamsCheck(ctx, paramsType)
 		if (_.isError(params)) return params
-		const self = this
 		const geni = params.pandaGen
+		const self = this
 		const bamboo = parseInt(params.bamboo)
 		const direction = params.direction
 		const cookieAddr = ctx.cookies.get('userAddr')
@@ -580,133 +588,54 @@ class PandaOwnerController {
         	geoParams: geoParams
         }
 			},
+			// 测试 -- 没有属性更新
 			async function (res) {
 				if (_.isError(res)) return res
 				const attrArr = res.attrArr
 				const addr = res.addr
 				const proArr = res.product
 				const geoParams = res.geoParams
-				// let getDiffValue = (type) => {
-    //        for (let pro of assetsValArr) {
-    //        	if (type === pro[LandProductServerModel.productId.label]) {
-    //        		return pro[LandProductServerModel.value.label]
-    //        	}
-    //        }
-    //     }
-        let mostValRes = [] // 价值最高的商品组合
-        let itemRes = [] // 返回的商品组合
-        let dropRes = [] // 丢弃的商品列表
-        let saveRes = [] // 保存进数据库的资产列表
-        let saveProRes = [] // 保存进数据库的商品列表
-        let itemsVal = 0 // 返回的商品总值
-        let mostVal = 0 // 价值最高的商品总值
-        let baseVal = 0 // 基本的商品组合
-        let overTime = Date.parse(new Date()) / 1000 + 60 * 10 // 10s 后
-        const startOut = await pandaOwnerModel.updatePandaLocationStateTrans(trans, 'out', overTime, geni)
+				let overTime = Date.parse(new Date()) / 1000 + 60 * 10 // 10s 后
+				let saveProRes = [] // 保存进数据库的商品列表
+				let dropRes = [] // 丢弃的商品列表
+				const startOut = await pandaOwnerModel.updatePandaLocationStateTrans(trans, 'out', overTime, geni)
         if (!startOut) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)
-        if (proArr.length >= 3) {
-        	mostValRes = proArr.sort((a, b) => {
-            // let aVal = getDiffValue(a.value.split('/')[1]) * parseInt(a.value.split('/')[0])
-            // let bVal = getDiffValue(b.value.split('/')[1]) * parseInt(b.value.split('/')[0])
-            // return bVal - aVal
-            return parseInt(b[LandProductServerModel.value.label]) - parseInt(a[LandProductServerModel.value.label])
-          }).slice(0,3)
+        for (let pro of proArr) {
+        	const proInfo = await pandaOwnerModel.queryLandProductInfo(pro[LandProductServerModel.productId.label])
+        	if (!proInfo) return proInfo
+        	if (parseInt(proInfo[0][LandProductServerModel.leftCount.label]) < 1) {
+        		continue
+        	}
+        	// 获取商品的属性
+        	const proAttr = proInfo[0][LandProductServerModel.type.label]
+        	const proCount = await self.queryProductNumByAddr(addr, pro[LandProductServerModel.productId.label])
+        	if (_.isError(proCount)) return proCount
+        	// TODO 获取概率
+        	if (Math.random() < self.caclIgnoreProduct(proCount, attrArr[proAttr])) {
+        		saveProRes.push(pro[LandProductServerModel.productId.label])
+        		// 当已有商品碎片为2时，landproduct表中对应leftCount应减去一个
+        		if (proCount === 2) {
+        			const minusPro = await pandaOwnerModel.minusProductCount(pro[LandProductServerModel.productId.label])
+        			if (!minusPro) return minusPro
+        		}
+        	} else {
+        		dropRes.push(pro[LandProductServerModel.productId.label])
+        	}
         }
-        for (let item of mostValRes) {
-          // mostVal += getDiffValue(item.value.split('/')[1]) * parseInt(item.value.split('/')[0])
-        	mostVal += parseInt(item[LandProductServerModel.value.label] / 3)
-        }
-        let itemLen = mostValRes.length === 3 ? 2 : mostValRes.length -1
-        if (itemLen < 0) return
-        baseVal = parseInt(mostValRes[itemLen][LandProductServerModel.value.label] / 3)
-        // baseVal = getDiffValue(mostValRes[itemLen].value.split('/')[1]) * parseInt(mostValRes[itemLen].value.split('/')[0])
-				proArr.forEach(data => {
-          let dataTypeArr = data[LandProductServerModel.type.label].split('|')
-          for (let index in dataTypeArr) {
-            // if (true) {
-            let starCenter = self.getDiffStarCenter(starArr, dataTypeArr[index])
-            // console.log(starCenter)
-            let centerPos = {
-            	longitude: starCenter[0],
-            	latitude: starCenter[1]
-            }
-            let caclPosRate = self.recognize(centerPos, geoParams)
-            const valRate = parseFloat(15 / data.value) // 商品的价值系数
-            const catchRate = attrArr[dataTypeArr[index]] * caclPosRate * valRate < 0 ? 0:attrArr[dataTypeArr[index]] * caclPosRate * valRate
-            // console.log('catchRate', catchRate)
-            if (Math.random() < 0.5) {
-            // if (Math.random() < catchRate) {
-            	// console.log('data', data)
-              itemRes.push(data)
-              let curAssetsType = data[LandProductServerModel.type.label]
-              if (curAssetsType === 'ETH' || curAssetsType === 'EOS') {
-              	saveRes.push(data[LandProductServerModel.value.label])
-              } else {
-              	saveProRes.push(data[LandProductServerModel.productId.label])
-              }
-              itemsVal += parseInt(data[LandProductServerModel.value.label] / 3)
-              // itemsVal += getDiffValue(data.value.split('/')[1]) * parseInt(data.value.split('/')[0])
-              let finalAttrVal = attrArr[dataTypeArr[index]] + 0.1* Math.random().toFixed(4)
-              // TODO updatePandaAttr是否用await
-              // pandaOwnerModel.updatePandaAttrTrans(trans, dataTypeArr[index] + 'Catch', finalAttrVal, geni)	
-							// if (!updateAttr) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)            
-            } else {
-            	dropRes.push(data[LandProductServerModel.productId.label])
-            }
-          }
-        })
-        if (saveRes.length > 0) {
-        	const updateLandAssets = await pandaOwnerModel.updateUserLandAssetsTrans(trans, addr, saveRes)
-	        if (!updateLandAssets) return new Error(PandaLandCodes.Update_Land_Assets_Fail)
-	      }
-	    	// 将更新用户资产逻辑放到显示回家物品里 TODO
-        // for (let landPro of saveProRes) {
-        // 	// 先查询需要更新的商品是否加入用户资产数据库
-        // 	// 没有的话就insert
-        // 	// 有的话就update
-        // 	const specifiedPro = await pandaOwnerModel.querySpecifiedProByAddr(addr, landPro)
-        // 	if (!specifiedPro) return new Error(LandProductCodes.Query_Product_Fail)
-        // 	if (specifiedPro.length === 0) {
-        // 		const insertPro = await pandaOwnerModel.insertLandProductToUser(trans, addr, landPro)
-        // 		if (!insertPro) return new Error(LandProductCodes.Insert_Product_Fail)
-        // 	} else {
-        // 		const updatePro = await pandaOwnerModel.updateUserLandPro(trans, addr, landPro)
-        // 		if (!updatePro) return new Error(LandProductCodes.Update_Product_Fail)
-        // 	}
-        // }
-
         // 先查询该熊猫是否在backassets里还有数据 TODO
         // 若没有就插入
         // 有的话就删除这些数据再插入
         const querySelectedPro = await pandaOwnerModel.queryBackPandaAssetsByGen(geni)
         if (!querySelectedPro) return querySelectedPro
         if (querySelectedPro.length > 0) {
-        	const delBackAssets = await pandaOwnerModel.deleteBackPandaAssetsByGen(trans, geni)
+        	const delBackAssets = await pandaOwnerModel.deleteBackPandaAssetsByGen(geni, trans)
 	      	if (!delBackAssets) {
 	      		return new Error(PandaLandCodes.Delete_Back_Assets_Fail)
 	      	}
         }
-        console.log('saveRes...')
-        console.log(saveProRes.join('|'))
-        console.log(dropRes.join('|'))
-      	const insertBackAssets = await pandaOwnerModel.updateBackPandaAssetsTrans(trans, geni, saveProRes.length > 0 ? saveProRes.join('|') : [], dropRes.length> 0 ? dropRes.join('|') : [])
+        const insertBackAssets = await pandaOwnerModel.updateBackPandaAssetsTrans(trans, addr, geni, saveProRes.length > 0 ? saveProRes.join('|') : null, dropRes.length> 0 ? dropRes.join('|') : null)
       	if (!insertBackAssets) return new Error(PandaLandCodes.Back_Assets_Carry_Fail)
-      	console.log('saveRes...1')
-      	// 更新熊猫的积分
-      	let finalIntegral = 10
-      	if (itemsVal > 0 && itemsVal < baseVal) {
-          finalIntegral = 10
-        }
-        if (itemsVal > baseVal && itemsVal < mostVal) {
-          finalIntegral = 20
-        }
-        if (itemsVal >= mostVal) {
-          finalIntegral = 30
-        }
-        const updateIntegral = await pandaOwnerModel.updatePandaAttrTrans(trans, 'integral', 30, geni)
-        if (!updateIntegral) return new Error(PandaLandCodes.Update_Panda_Attr_Fail)
-        // return new Error('PandaLandCodes.Update_Panda_Attr_Fail')
-        return itemRes
+      	return saveProRes
 			},
 			function (res, callback) {
 				if (_.isError(res)) {
@@ -716,35 +645,7 @@ class PandaOwnerController {
 				}
 			}
 		]
-		return new Promise((resolve, reject) => {
-			trans.beginTransaction(function (bErr) {
-				if (bErr) {
-					trans.release()
-					reject(bErr)
-					return
-				}
-				async.waterfall(tasks, function (tErr, res) {
-		      if (tErr) {
-		        trans.rollback(function () {
-		          trans.release()
-		          reject(tErr)
-		        })
-		      } else {
-		        trans.commit(function (err, info) {
-		          if (err) {
-		            trans.rollback(function (err) {
-		              trans.release()
-		              reject(err)
-		            })
-		          } else {
-		            trans.release()
-		            resolve(res)
-		          }
-		        })
-		      }
-		    })
-			})
-		})
+		return commitTrans(trans, tasks)
 	}
 
 	/**
@@ -802,6 +703,67 @@ class PandaOwnerController {
 			latiRate = 0
 		}
 		return latiRate * longRate
+	}
+
+	/**
+	 * 查询某个地址下某个商品的个数 queryProductNumByAddr
+	 */
+	async queryProductNumByAddr (addr, productId) {
+		// 查看带回家的未计算的同类商品数量
+		const userBackAssets = await pandaOwnerModel.getPandaBackAssetsByAddr(addr)
+		if (!userBackAssets) return userBackAssets
+		let count = 0
+		for (let pro of userBackAssets) {
+			if (userBackAssets[BackPandaAssetsServerModel.backAssets.label]) {
+				const backAssetsStr = userBackAssets[BackPandaAssetsServerModel.backAssets.label]
+				if (backAssetsStr.indexOf(productId) !== -1) {
+					count++
+				}
+			}
+		}
+		const userProducts = await pandaOwnerModel.querySpecifiedProByAddr(addr, productId)
+		if (!userProducts) return userProducts
+		if (userProducts.length > 0) {
+			count = count + parseInt(userProducts[0][UserLandProductServerModel.value.label])
+		}
+		return count
+	}
+
+	/**
+	 * 计算呜喏的识别商品程度 caclIgnoreProduct
+	 */
+	caclIgnoreProduct (count, attrRate) {
+		if (count === 0) return 0.8
+		if (count === 1) return 0.6
+		if (count === 2) return attrRate
+	}
+
+	/**
+	 * 呜喏等级积分升级算法 intergeUpdateForOut
+	 */
+	intergeUpdateForOut (count) {
+		if (count === 0) return 10
+		if (count === 1) return 30
+		if (count === 2) return 50
+	}
+
+	/**
+	 * 呜喏速度属性升级算法 speedUpdateForOut
+	 */
+	speedUpdateForOut (count, bamboo) {
+
+	}
+
+	/**
+	 * 呜喏其他属性升级算法 attrUpdateForOut
+	 */
+	attrUpdateForOut (count, attr) {
+		if (count === 0) {// 系数为0.3
+		}
+		if (count === 1) {// 系数为0.5
+		}
+		if (count === 2) {// 系数为1
+		}
 	}
 
   // todo 测试model层接口

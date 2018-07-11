@@ -37,6 +37,7 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
   - @MYSQL backPandaAssets
     - 查询某只熊猫外出回归带的物品 getPandaBackAssets()
     - 更新熊猫回去的资产 updateBackPandaAssetsTrans
+    - 查询某个addr下所有回归的商品 getPandaBackAssetsByAddr
     - 查询backpandaassets是否还有特定熊猫的资产 queryBackPandaAssetsByGen
     - 删除backpandaassets特定熊猫的资产 deleteBackPandaAssetsByGen
   - @MYSQL landproduct
@@ -44,6 +45,7 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 获取当前land所有商品 findAllproduct
     - 根据用户地址更新用户商品 updateLandProductByAddrTrans TODO
     - 根据经纬度查询物品 findProductByGeo TODO
+    - 剩余商品数量减一 minusProductCount
   - @MYSQL landassets
     - 查询某个地址的资产 queryAssetsByAddr
     - 批量插入landassets表 updateAssetsByAddr
@@ -281,6 +283,17 @@ class PandaOwnerModel {
     return db.query(sql, val)
   }
 
+  async getPandaBackAssetsByAddr (addr) {
+    let val = [
+      BackPandaAssetsServerModel.backAssets.label,
+      BackPandaAssetsName,
+      BackPandaAssetsServerModel.addr.label,
+      addr
+    ]
+    let sql = 'SELECT ?? FROM ?? WHERE ?? = ?'
+    return db.query(sql, val)
+  }
+
   async checkOwnerTradePwd (gen, tradePwd) {
     let val = [gen, tradePwd]
     let sql = "select * from user inner join pandaowner on pandaowner.idx_addr=user.uk_addr " +
@@ -377,8 +390,6 @@ class PandaOwnerModel {
   }
 
   async updatePandaLocationStateTrans (trans, state, price, pandaGen) {
-    console.log(price)
-    console.log(pandaGen)
     let val = [
       PandaOwnerName,
       PandaOwnerServerModel.state.label,
@@ -408,15 +419,17 @@ class PandaOwnerModel {
     }
   }
 
-  async updateBackPandaAssetsTrans (trans, pandaGen, carryAssets, dropAssets) {
+  async updateBackPandaAssetsTrans (trans, addr, pandaGen, carryAssets, dropAssets) {
     let curTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
     let insertData = {
+      [BackPandaAssetsServerModel.addr.label]: addr,
       [BackPandaAssetsServerModel.gen.label]: pandaGen,
       [BackPandaAssetsServerModel.backAssets.label]: carryAssets,
       [BackPandaAssetsServerModel.dropAssets.label]: dropAssets,
       [BackPandaAssetsServerModel.gmt_create.label]: curTime,
       [BackPandaAssetsServerModel.gmt_modified.label]:curTime
     }
+    console.log(insertData)
     let val = [BackPandaAssetsName, insertData]
     let sql = 'INSERT INTO ?? SET ?'
     return db.transQuery(trans, sql, val)
@@ -437,14 +450,18 @@ class PandaOwnerModel {
     return db.query(sql, val)
   }
 
-  async deleteBackPandaAssetsByGen (trans, pandaGen) {
+  async deleteBackPandaAssetsByGen (pandaGen, trans) {
     let val = [
       BackPandaAssetsName,
       BackPandaAssetsServerModel.gen.label,
       pandaGen
     ]
     let sql = 'DELETE FROM ?? WHERE ?? = ?'
-    return db.transQuery(trans, sql, val)
+    if (trans) {
+      return db.transQuery(trans, sql, val)
+    } else {
+      return db.query(sql, val)
+    }
   }
 
   async updateUserLandAssetsTrans (trans, pandaowner, assetsArr) {
@@ -570,9 +587,26 @@ class PandaOwnerModel {
     return db.query(sql, val)
   }
 
+  async minusProductCount (productId) {
+    const val = [
+      LandProductName,
+      LandProductServerModel.leftCount.label,
+      LandProductServerModel.leftCount.label,
+      LandProductServerModel.productId.label,
+      productId
+    ]
+    let sql = 'update ?? set ?? = ?? - 1 where ?? = ?'
+    return db.query(sql, val)
+  }
+
   async queryLandProductInfo (productId) {
-    let val = [
+    const columns = [
       LandProductServerModel.imgSrc.label,
+      LandProductServerModel.leftCount.label,
+      LandProductServerModel.type.label
+    ]
+    let val = [
+      columns,
       LandProductName,
       LandProductServerModel.productId.label,
       productId
