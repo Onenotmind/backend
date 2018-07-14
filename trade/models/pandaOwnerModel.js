@@ -29,6 +29,7 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
   - 事务处理
     - 更新熊猫属性 updatePandaAttrTrans
     - 更新熊猫的状态与价钱 updatePandaLocationStateTrans
+    - 更新熊猫的（金木水火土）属性 updatePandaAttribute
     - 将外出熊猫回归的状态更改为在家 pandaBackHomeTrans
   - @MYSQL UserLandProduct:
     - 插入一条商品记录 insertLandProductToUser
@@ -387,6 +388,48 @@ class PandaOwnerModel {
     ]
     let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ?'
     return db.transQuery(trans, sql, val)
+  }
+
+  /**
+   * attrArr
+   * speed, hungry, gold, wood, water, fire, earth, intergral
+   */
+  async updatePandaAttribute (attrArr, gen, trans) {
+    let val = [
+      PandaOwnerName,
+      PandaOwnerServerModel.speed.label,
+      PandaOwnerServerModel.speed.label,
+      attrArr[0],
+      PandaOwnerServerModel.hungry.label,
+      PandaOwnerServerModel.hungry.label,
+      attrArr[1],
+      PandaOwnerServerModel.goldCatch.label,
+      PandaOwnerServerModel.goldCatch.label,
+      attrArr[2],
+      PandaOwnerServerModel.woodCatch.label,
+      PandaOwnerServerModel.woodCatch.label,
+      attrArr[3],
+      PandaOwnerServerModel.waterCatch.label,
+      PandaOwnerServerModel.waterCatch.label,
+      attrArr[4],
+      PandaOwnerServerModel.fireCatch.label,
+      PandaOwnerServerModel.fireCatch.label,
+      attrArr[5],
+      PandaOwnerServerModel.earthCatch.label,
+      PandaOwnerServerModel.earthCatch.label,
+      attrArr[6],
+      PandaOwnerServerModel.integral.label,
+      PandaOwnerServerModel.integral.label,
+      attrArr[7],
+      PandaOwnerServerModel.gen.label,
+      gen
+    ]
+    let sql = 'UPDATE ?? SET ?? = ?? + ?, ?? = ?? + ?, ?? = ?? + ?, ?? = ?? +?, ? = ??+??, ? = ??+??, ? = ??+??, ? = ??+?? WHERE ?? = ?'
+    if (trans) {
+      return db.transQuery(trans, sql, val)
+    } else {
+      return db.query(sql, val)
+    }
   }
 
   async updatePandaLocationStateTrans (trans, state, price, pandaGen) {

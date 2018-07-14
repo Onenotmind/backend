@@ -578,7 +578,8 @@ class PandaOwnerController {
           'wood': pandaInfo[PandaOwnerServerModel.woodCatch.label],
           'water': pandaInfo[PandaOwnerServerModel.waterCatch.label],
           'fire': pandaInfo[PandaOwnerServerModel.fireCatch.label],
-          'earth': pandaInfo[PandaOwnerServerModel.earthCatch.label]
+          'earth': pandaInfo[PandaOwnerServerModel.earthCatch.label],
+          'integral': pandaInfo[PandaOwnerServerModel.integral.label]
         }
         // console.log({attrArr: attrArr,addr: addr,product: product,geoParams: geoParams})
         return {
@@ -618,7 +619,14 @@ class PandaOwnerController {
         			const minusPro = await pandaOwnerModel.minusProductCount(pro[LandProductServerModel.productId.label])
         			if (!minusPro) return minusPro
         		}
+        	const speedRate = self.speedUpdateForOut(proCount, bamboo, attrArr.integral)
+        	const attrBaseAttr = self.attrUpdateForOut(proCount, proAttr, attrArr.integral)
+        	const integralRate = self.intergeUpdateForOut(proCount, attrArr.integral)
+        	const pandaAttrArr = [speedRate, speedRate, ...attrBaseAttr, integralRate]
+        	const attrUpdate = await pandaOwnerModel.updatePandaAttribute(pandaAttrArr, geni, null)
+        	if (!attrUpdate) return attrUpdate
         	} else {
+        		// TODO 失败时属性更新
         		dropRes.push(pro[LandProductServerModel.productId.label])
         	}
         }
@@ -684,10 +692,10 @@ class PandaOwnerController {
 		if (caclLongi < 0 && Math.abs(caclLongi) > 180) {
 			longRate = 1 - (360 + geoParams.width + caclLongi) / 180
 		}
-		if (caclLongi > 0 && Math.abs(caclLongi) <= 180) {
+		if (caclLongi >= 0 && Math.abs(caclLongi) <= 180) {
 			longRate = 1 - Math.abs(caclLongi - geoParams.width < 0? 0:caclLongi - geoParams.width) / 180
 		}
-		if (caclLongi < 0 && Math.abs(caclLongi) > 180) {
+		if (caclLongi >= 0 && Math.abs(caclLongi) > 180) {
 			longRate = 1 - (360 - caclLongi) / 180
 		}
 		if (caclLati >= 0 && caclLati <= 90) {
@@ -741,7 +749,7 @@ class PandaOwnerController {
 	/**
 	 * 呜喏等级积分升级算法 intergeUpdateForOut
 	 */
-	intergeUpdateForOut (count) {
+	intergeUpdateForOut (count, integral) {
 		if (count === 0) return 10
 		if (count === 1) return 30
 		if (count === 2) return 50
@@ -750,20 +758,59 @@ class PandaOwnerController {
 	/**
 	 * 呜喏速度属性升级算法 speedUpdateForOut
 	 */
-	speedUpdateForOut (count, bamboo) {
-
+	speedUpdateForOut (count, bamboo, integral) {
+		let bambooRate = 0.6
+		if (parseInt(bamboo / integral) >= 10) {
+			bambooRate = 1
+		}
+		let countRate = 0.3
+		switch (count) {
+			case 0:
+			 countRate = 0.3
+			 break
+			case 1:
+				countRate = 0.5
+				break
+			case 2:
+				countRate = 1
+				break
+			default:
+				break
+		}
+		return countRate * bambooRate
 	}
 
 	/**
 	 * 呜喏其他属性升级算法 attrUpdateForOut
 	 */
-	attrUpdateForOut (count, attr) {
-		if (count === 0) {// 系数为0.3
+	attrUpdateForOut (count, attr, integral) {
+		const integralRate = parseInt(integral) >= 500 ? 0.5:1
+		/**
+		 * 按照 金木水火土 排序。比例为选中者 0.4 其他 0.15
+		 */
+		let countRate = 0.3
+		switch (count) {
+			case 0:
+			 countRate = 0.3
+			 break
+			case 1:
+				countRate = 0.5
+				break
+			case 2:
+				countRate = 1
+				break
+			default:
+				break
 		}
-		if (count === 1) {// 系数为0.5
-		}
-		if (count === 2) {// 系数为1
-		}
+		countRate = countRate * integralRate
+		const attrArr = [
+			attr === 'gold' ? countRate * 0.4 : countRate * 0.15,
+			attr === 'wood' ? countRate * 0.4 : countRate * 0.15,
+			attr === 'water' ? countRate * 0.4 : countRate * 0.15,
+			attr === 'fire' ? countRate * 0.4 : countRate * 0.15,
+			attr === 'earth' ? countRate * 0.4 : countRate * 0.15
+		]
+		return attrArr
 	}
 
   // todo 测试model层接口
