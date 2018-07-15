@@ -364,6 +364,11 @@
             "date": 1531576725521,
             "name": "application-2018-07-14.log",
             "hash": "8ea42a4da88ca25dc228fd309949b792"
+        },
+        {
+            "date": 1531582168763,
+            "name": "application-2018-07-14.log",
+            "hash": "1ad9cc7e43af4691cd3ba74b433f2a14"
         }
     ]
 }
