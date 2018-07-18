@@ -97,12 +97,12 @@ class PandaOwnerController {
 		let dropResProducts = [] // 扔掉的最终商品数组
 		let backPandas = [] // 返回的panda基因
 		const curDate =  Date.parse(new Date()) / 1000 // 当前时间
-		const trans = await pandaOwnerModel.startTransaction()
-		if (!trans) return new Error(CommonCodes.Service_Wrong)
-		let tasks = [
-			async function () {
-			}
-		]
+		// const trans = await pandaOwnerModel.startTransaction()
+		// if (!trans) return new Error(CommonCodes.Service_Wrong)
+		// let tasks = [
+		// 	async function () {
+		// 	}
+		// ]
 		for (let panda of allOutPanda) {
 			if (curDate > panda[PandaOwnerServerModel.price.label]) {
 				const backPanda = await pandaOwnerModel.pandaBackHome(panda[PandaOwnerServerModel.gen.label])
@@ -490,35 +490,7 @@ class PandaOwnerController {
 				}
 			}
 		]
-		return new Promise((resolve, reject) => {
-			trans.beginTransaction(function (bErr) {
-				if (bErr) {
-					trans.release()
-					reject(bErr)
-					return
-				}
-				async.waterfall(tasks, function (tErr, res) {
-		      if (tErr) {
-		        trans.rollback(function () {
-		          trans.release()
-		          reject(tErr)
-		        })
-		      } else {
-		        trans.commit(function (err, info) {
-		          if (err) {
-		            trans.rollback(function (err) {
-		              trans.release()
-		              reject(err)
-		            })
-		          } else {
-		            trans.release()
-		            resolve(res)
-		          }
-		        })
-		      }
-		    })
-			})
-		})
+		return commitTrans(trans, tasks)
 	}
 
 	async getEthlandProduct (ctx, starArr) {
@@ -544,6 +516,7 @@ class PandaOwnerController {
 		const self = this
 		const bamboo = parseInt(params.bamboo)
 		const direction = params.direction
+		const tagsStr = ctx.query['tagsStr']
 		const cookieAddr = ctx.cookies.get('userAddr')
 		const assets = await pandaOwnerModel.queryAssetsByAddr(cookieAddr)
 		if (!assets || parseInt(assets[0][LandAssetsServerModel.bamboo.label]) < bamboo) return new Error(LandProductCodes.Insufficient_Bamboo_Balance)
@@ -569,8 +542,23 @@ class PandaOwnerController {
 				let addr = pandaInfo[PandaOwnerServerModel.addr.label]
 				let geoParams = cacl(pandaInfo[UserServerModel.longitude.label], pandaInfo[UserServerModel.latitude.label], baseRate, direction, pandaInfo[PandaOwnerServerModel.hungry.label], pandaInfo[PandaOwnerServerModel.speed.label])
 				// const product = await pandaOwnerModel.findProductByGeo(trans, geoParams.longitude, geoParams.latitude, geoParams.width, geoParams.height)
-				const product = await pandaOwnerModel.findAllproduct()
+				console.log('geoParams', geoParams)
+				let product = await pandaOwnerModel.findAllproduct()
 				if (!product || product.length === 0) return new Error(PandaLandCodes.No_Product_In_Land)
+				product = product.filter(pro => tagsStr.indexOf(pro[LandProductServerModel.productType.label]) !== -1)
+				// 筛选特定属性的商品
+				const baseAttrArr = ['gold', 'wood', 'water', 'fire', 'earth']
+				let recognizeAttrStr = ''
+				for (let i = 0; i < starArr.length; i++) {
+					const recognizeRate = self.recognize(starArr[i], geoParams)
+					if (recognizeRate > 0.1) {
+						recognizeAttrStr += baseAttrArr[i]
+					}
+				}
+				console.log('pro', product)
+				console.log(recognizeAttrStr)
+				product = product.filter(pro => recognizeAttrStr.indexOf(pro[LandProductServerModel.type.label]) !== -1)
+				console.log('product..', product)
 				let attrArr = {
           'speed': parseFloat(pandaInfo[PandaOwnerServerModel.speed.label]),
           'hungry': parseFloat(pandaInfo[PandaOwnerServerModel.hungry.label]),
@@ -623,7 +611,7 @@ class PandaOwnerController {
         	const attrBaseAttr = self.attrUpdateForOut(proCount, proAttr, attrArr.integral)
         	const integralRate = self.intergeUpdateForOut(proCount, attrArr.integral)
         	const pandaAttrArr = [speedRate, speedRate, ...attrBaseAttr, integralRate]
-        	const attrUpdate = await pandaOwnerModel.updatePandaAttribute(pandaAttrArr, geni, null)
+        	const attrUpdate = await pandaOwnerModel.updatePandaAttribute(pandaAttrArr, geni, trans)
         	if (!attrUpdate) return attrUpdate
         	} else {
         		// TODO 失败时属性更新
@@ -681,8 +669,8 @@ class PandaOwnerController {
 		* 返回 经度与纬度的相对比例
 		*/
 	recognize (starPos, geoParams) {
-		const caclLongi = starPos.longitude - geoParams.longitude
-		const caclLati = starPos.latitude - geoParams.latitude
+		const caclLongi = starPos[0] - geoParams.longitude
+		const caclLati = starPos[1] - geoParams.latitude
 		const spreadWid = 180
 		let longRate = 0
 		let latiRate = 0
@@ -710,7 +698,7 @@ class PandaOwnerController {
 		if (caclLati < 0 && Math.abs(caclLati) > 90) {
 			latiRate = 0
 		}
-		return latiRate * longRate
+		return parseFloat(latiRate * longRate).toFixed(4)
 	}
 
 	/**
@@ -741,9 +729,10 @@ class PandaOwnerController {
 	 * 计算呜喏的识别商品程度 caclIgnoreProduct
 	 */
 	caclIgnoreProduct (count, attrRate) {
-		if (count === 0) return 0.8
-		if (count === 1) return 0.6
-		if (count === 2) return attrRate
+		if (count === 0) return 0.6
+		if (count === 1) return 0.4
+		if (count === 2) return attrRate / 100
+		if (count >= 3) return 0
 	}
 
 	/**
