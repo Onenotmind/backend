@@ -400,17 +400,18 @@ class UserDetailController {
 	      name: hash
 	    }
 	  })
-  	if (!res) return new Error(LoginCodes.Get_Combo_Data_Fail)
-  	if (!res.data) return 0
+  	let acceptHash = parseInt(ctx.query['acceptHash'])
+  	if (!res || !res.data) return new Error(LoginCodes.Get_Combo_Data_Fail)
   	let preHash = 0
   	if (ctx.cookies && ctx.cookies.get('hash')) {
       preHash = ctx.cookies.get('hash')
     }
-    let addCount = parseInt(res.data.total / 100) - parseInt(preHash / 100)
+    if ( acceptHash > parseInt(res.data.total)) return new Error(LoginCodes.Get_Combo_Data_Fail)
+    let addCount = parseInt((acceptHash - parseInt(preHash)) / 100)
     addCount = addCount > 0 ? addCount : 0
   	const addBamboo = await userDetailModel.addUserBamboo(addr, addCount)
-  	if (!addBamboo) return addBamboo
-  	return res.data.total
+  	if (!addBamboo) return new Error(LoginCodes.Get_Combo_Data_Fail)
+  	return acceptHash
   }
 
   async checkUserLoginExpired (ctx) {

@@ -676,6 +676,7 @@ koaRouter.get('/getCurrentLeftProduct', async (ctx) => {
 /**
   * combo页面
   * 获取用户参与挖矿得到的bamboo数量 getUserBamboo TODO 暂时放在UserDetailController
+  * 重置用户的hash cookie值 resetUserHash
   */
 koaRouter.get('/getUserBamboo', async (ctx) => {
   const res = await userDetailController.getUserBamboo(ctx)
@@ -686,10 +687,20 @@ koaRouter.get('/getUserBamboo', async (ctx) => {
     {
       httpOnly: true
     })
-    ctx.body = succRes(LoginCodes.Get_User_Bamboo, {})
+    ctx.body = succRes(LoginCodes.Get_User_Bamboo, res)
   } else {
     ctx.body = errorRes(res.message)
   }
+})
+
+koaRouter.get('/resetUserHash', (ctx) => {
+  ctx.cookies.set(
+    'hash',
+    0,
+    {
+      httpOnly: true
+    }
+  )
 })
 
 /**
