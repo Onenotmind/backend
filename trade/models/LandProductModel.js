@@ -1,6 +1,7 @@
 const Db = require('./Db.js')
 const db = new Db()
 const moment = require('moment')
+const _ = require('lodash')
 const { UserServerModel, UserModelName } = require('../sqlModel/user.js')
 const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
 const { LandProductServerModel, LandProductName } = require('../sqlModel/landProduct.js')
@@ -13,6 +14,8 @@ const { VoteListName, VoteListClientModel, VoteListServerModel } = require('../s
     - 业务接口
       - 查询所有物品 selectAllData()
       - 增加待投票的商品 addVoteProduct
+      - 根据商品id查询某个商品是否存在 queryProductById
+      - 修改下一期商品信息 editNextProduct
       - 对商品进行投票 voteProduct
       - 商品投票结束后售卖商品 sellProduct
       - 商品投票结束, 将prepare状态置为end endProductVote
@@ -24,6 +27,7 @@ const { VoteListName, VoteListClientModel, VoteListServerModel } = require('../s
       - 获取当前商品是第几期 getCurrentPeriodProduct
       - 获取商品票数 getProductVoteNum
       - 根据tag筛选当前商品 filterProductByTag
+      - 改变商品的属性 setProductAttr
   @MYSQL UserLandProduct:
     - 业务接口
       - 查询某个地址下所有商品 queryLandProductByAddr
@@ -47,6 +51,7 @@ const { VoteListName, VoteListClientModel, VoteListServerModel } = require('../s
   @MYSQL votelist
     - 新增一条商品投票记录 insertVoteProductList
     - 查询商品的属性票数 queryCountOfProductId
+    - 查询某个商品的属性投票结果 queryCountOfProductById
 */
 class LandProductModel {
 
@@ -61,24 +66,68 @@ class LandProductModel {
     return db.query(sql)
   }
 
-  async addVoteProduct (productId, type, imgSrc, period) {
+  async addVoteProduct (proInfo) {
     let curTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+    const typeArr = ['gold', 'wood', 'water', 'fire', 'earth']
+    const randomNum = _.random(0, 4)
     let insertData = {
-      [LandProductServerModel.productId.label]: productId,
-      [LandProductServerModel.type.label]: type,
+      [LandProductServerModel.productId.label]: proInfo.productId,
+      [LandProductServerModel.type.label]: typeArr[randomNum],
+      [LandProductServerModel.productType.label]: proInfo.productType,
       [LandProductServerModel.state.label]: 'voting',
+      [LandProductServerModel.period.label]: parseInt(proInfo.period),
       [LandProductServerModel.time.label]: 0,
+      [LandProductServerModel.imgSrc.label]: proInfo.imgSrc,
       [LandProductServerModel.leftCount.label]: 0,
-      [LandProductServerModel.period.label]: period,
-      [LandProductServerModel.imgSrc.label]: imgSrc,
-      [LandProductServerModel.name.label]: null,
-      [LandProductServerModel.value.label]: null,
-      [LandProductServerModel.recommender.label]: 'ETHLAND',
+      [LandProductServerModel.name.label]: proInfo.name,
+      [LandProductServerModel.nameEn.label]: proInfo.nameEn,
+      [LandProductServerModel.value.label]: parseInt(proInfo.value),
+      [LandProductServerModel.productSrc.label]: proInfo.productSrc,
+      [LandProductServerModel.recommender.label]: proInfo.recommender || 'WUNOLAND',
       [LandProductServerModel.gmt_create.label]: curTime,
       [LandProductServerModel.gmt_modified.label]:curTime
     }
     let val = [LandProductName, insertData]
     let sql = 'INSERT INTO ?? SET ?'
+    return db.query(sql, val)
+  }
+
+  async queryProductById (productId) {
+    const val = [
+      LandProductName,
+      LandProductServerModel.productId.label,
+      productId
+    ]
+    const sql = 'select * from ?? where ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async editNextProduct (proInfo) {
+    const period = parseInt(proInfo.period)
+    const proValue = parseInt(proInfo.value)
+    const recommender = proInfo.recommender || 'WUNOLAND'
+    const val = [
+      LandProductName,
+      LandProductServerModel.productType.label,
+      proInfo.productType,
+      LandProductServerModel.period.label,
+      period,
+      LandProductServerModel.imgSrc.label,
+      proInfo.imgSrc,
+      LandProductServerModel.name.label,
+      proInfo.name,
+      LandProductServerModel.nameEn.label,
+      proInfo.nameEn,
+      LandProductServerModel.value.label,
+      proValue,
+      LandProductServerModel.productSrc.label,
+      proInfo.productSrc,
+      LandProductServerModel.recommender.label,
+      recommender,
+      LandProductServerModel.productId.label,
+      proInfo.productId
+    ]
+    const sql = 'update ?? set ??=?, ??=?,??=?, ??=?,??=?, ??=?,??=?, ??=? where ??=?'
     return db.query(sql, val)
   }
 
@@ -100,12 +149,10 @@ class LandProductModel {
       LandProductName,
       LandProductServerModel.state.label,
       'sold',
-      LandProductServerModel.time.label,
-      time,
       LandProductServerModel.productId.label,
       productId
     ]
-    let sql = 'UPDATE ?? SET ?? = ?, ?? = ? WHERE ?? = ?'
+    let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ?'
     return db.query(sql, val)
   }
 
@@ -150,7 +197,7 @@ class LandProductModel {
       'voting'
     ]
     let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ?'
-    return db.query(sql)
+    return db.query(sql, val)
   }
 
   async productDropOff (productId) {
@@ -187,6 +234,18 @@ class LandProductModel {
       productId
     ]
     let sql = 'select ?? from ?? WHERE ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async setProductAttr (attr, productId) {
+    const val = [
+      LandProductName,
+      LandProductServerModel.type.label,
+      attr,
+      LandProductServerModel.productId.label,
+      productId
+    ]
+    const sql = 'update ?? set ?? = ? where ?? = ?'
     return db.query(sql, val)
   }
 
@@ -403,17 +462,29 @@ class LandProductModel {
 
   async queryCountOfProductId (period) {
     const columns = [
-      [VoteListServerModel.productId.label],
-      [VoteListServerModel.attr.label],
-      [VoteListServerModel.amount.label]
+      VoteListServerModel.productId.label,
+      VoteListServerModel.attr.label,
+      VoteListServerModel.amount.label
     ]
     const val = [
       columns,
       VoteListName,
-      [VoteListServerModel.period.label],
+      VoteListServerModel.period.label,
       period
     ]
     let sql = 'select ?? from ?? where ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async queryCountOfProductById(productId) {
+    const val = [
+      VoteListName,
+      VoteListServerModel.productId.label,
+      productId,
+      VoteListServerModel.attr.label,
+      'NULL'
+    ]
+    let sql = 'select idx_attr, sum(amount) from ?? where ?? = ? and ?? != ? group by idx_attr'
     return db.query(sql, val)
   }
 }

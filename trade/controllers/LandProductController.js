@@ -4,12 +4,12 @@ const async = require('async')
 const landProductModel = new LandProductModel()
 const JoiParamVali = require('../libs/JoiParamVali.js')
 const joiParamVali = new JoiParamVali()
-const { checkToken, checkUserToken, decrypt, getParamsCheck, commitTrans } = require('../libs/CommonFun.js')
+const { checkToken, checkUserToken, userAuthCheck, decrypt, getParamsCheck, commitTrans } = require('../libs/CommonFun.js')
 const { LandAssetsClientModel, LandAssetsServerModel } = require('../sqlModel/landAssets.js')
 const { UserServerModel } = require('../sqlModel/user.js')
 const { LandProductClientModel, LandProductServerModel } = require('../sqlModel/landProduct.js')
 const { LandProductCodes, LoginCodes, CommonCodes, errorRes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
-
+const { VoteListServerModel } = require('../sqlModel/voteList.js')
 /**
 	业务函数:
 		- findProductByGeo  // 根据经纬度查询ethland物品
@@ -28,6 +28,7 @@ const { LandProductCodes, LoginCodes, CommonCodes, errorRes, serviceError, succR
     - 查询某个用户的所有商品提现信息 queryUserAllProduct
     - 查询商品的属性票数 queryCountOfProductId
     - 获取剩余的正在活动的商品 getCurrentLeftProduct
+    - 删除商品 deleteProduct
 	辅助函数:
 		- cacl 计算最终的经纬度与长宽
     - geneStarPoint 商品产生核心点
@@ -38,28 +39,41 @@ class LandProductController {
 	constructor () {
     this.starPoint = [] // 商品中心点数组
     this.starCount = 5 // 中心点数量
-    this.nextVoteStartTime = 1531120000 // 下期商品投票开始时间
+    this.nextVoteStartTime = 1533016502 // 下期商品投票开始时间
     setInterval(() => {
       this.geneStarPoint()
     }, 5000)
 	}
 
   /**
-   * 对商品进行投票 addVoteProduct
+   * 增加商品 addVoteProduct
    */
    async addVoteProduct (ctx) {
-    const pwd = ctx.query['pwd']
-    if (pwd !== 'chenye1234') return new Error(CommonCodes.No_Access)
-    const productId = ctx.query['productId']
-    const type = ctx.query['type']
-    const imgSrc = ctx.query['imgSrc']
-    const productIdVali = await joiParamVali.valiProductId(productId)
-    const typeVali = await joiParamVali.valiProductAttr(type)
-    if (!productIdVali || !typeVali) {
-      return new Error(CommonCodes.Params_Check_Fail)
+    if (!userAuthCheck(ctx)) return new Error('没有权限')
+    const proInfo = ctx.request.body
+    const proId = proInfo.productId
+    const isExistPro = await landProductModel.queryProductById(proId)
+    if (!isExistPro) return new Error('增加商品失败')
+    if (isExistPro.length === 0) {
+      const addVote = await landProductModel.addVoteProduct(proInfo)
+      return addVote
+    } else {
+      const editPro = await landProductModel.editNextProduct(proInfo)
+      return editPro
     }
-    const addVote = await landProductModel.addVoteProduct(productId, type, imgSrc)
-    return addVote
+    // const pwd = ctx.query['pwd']
+    // if (pwd !== 'chenye1234') return new Error(CommonCodes.No_Access)
+    
+  }
+
+  /**
+   * 删除商品 deleteProduct
+   */
+  async deleteProduct (ctx) {
+    if (!userAuthCheck(ctx)) return new Error('没有权限')
+    const proId = ctx.query['productId']
+    const products = await landProductModel.deleteProduct(proId)
+    return products
   }
 
   /**
@@ -78,8 +92,8 @@ class LandProductController {
     * 获取当前投票中的商品 getCurrentVotedProduct
     */
   async getCurrentVotedProduct (ctx) {
-    const tokenCheck = await checkUserToken(ctx)
-    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    // const tokenCheck = await checkUserToken(ctx)
+    // if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const voteProduct = await landProductModel.getPrepareProduct()
     return voteProduct
   }
@@ -94,7 +108,7 @@ class LandProductController {
     const userAddr = ctx.cookies.get('userAddr')
     const voteNum = parseInt(ctx.query['num'])
     const productId = ctx.query['productId']
-    const period = parseInt(ctx.query['period'])
+    // const period = parseInt(ctx.query['period'])
     const paramsType = [
       {
         label: 'num',
@@ -107,6 +121,9 @@ class LandProductController {
     ]
     const params= await getParamsCheck(ctx, paramsType)
     if (_.isError(params)) return params
+    const curPeriod = await landProductModel.getCurrentPeriodProduct()
+    if (!curPeriod) return curPeriod
+    const period = parseInt(curPeriod[0]['max(idx_period)'])
     const bambooCount = await landProductModel.queryUserBambooCount(userAddr)
     if (!bambooCount) return bambooCount
     if (bambooCount.length === 0) return new Error(LoginCodes.Login_No_Account)
@@ -205,7 +222,7 @@ class LandProductController {
     const voteNum = parseInt(ctx.query['num'])
     const productId = ctx.query['productId']
     const attr = ctx.query['attr']
-    const period = parseInt(ctx.query['period'])
+    // const period = parseInt(ctx.query['period'])
     const paramsType = [
       {
         label: 'num',
@@ -222,6 +239,9 @@ class LandProductController {
     ]
     const params= await getParamsCheck(ctx, paramsType)
     if (_.isError(params)) return params
+    const curPeriod = await landProductModel.getCurrentPeriodProduct()
+    if (!curPeriod) return curPeriod
+    const period = parseInt(curPeriod[0]['max(idx_period)'])
     const bambooCount = await landProductModel.queryUserBambooCount(userAddr)
     if (!bambooCount) return bambooCount
     if (bambooCount.length === 0) return new Error(LoginCodes.Login_No_Account)
@@ -261,19 +281,29 @@ class LandProductController {
    * 商品投票结束 productVotedOver
    */
   async productVotedOver (ctx) {
-    const pwd = ctx.query['pwd']
-    if (pwd !== 'chenye1234') return new Error(CommonCodes.No_Access)
+    if (!userAuthCheck(ctx)) return new Error('没有权限')
     const productSoldNum = 5
     const prepareProductArr = await landProductModel.getPrepareProduct()
     if (!prepareProductArr) return new Error(LandProductCodes.Get_Prepare_Product_Fail)
     const cutLen = prepareProductArr.length > productSoldNum ? productSoldNum: prepareProductArr.length
     prepareProductArr.sort((a, b) => {
       return parseInt(b[LandProductServerModel.time.label]) - parseInt(a[LandProductServerModel.time.label])
-    }).slice(0, cutLen)
-    for (let pro of prepareProductArr) {
+    })
+    const filterArr = prepareProductArr.slice(0, cutLen)
+    for (let pro of filterArr) {
       const curTime = new Date().getTime() + 3 * 60 * 24 * 60
       const sellPro = await landProductModel.sellProduct(pro[LandProductServerModel.productId.label], curTime)
       if (!sellPro) return new Error(LandProductCodes.Sell_Product_Fail)
+      // TODO 确认商品属性
+      const attr = await landProductModel.queryCountOfProductById(pro[LandProductServerModel.productId.label])
+      if (!attr || attr.length === 0) continue
+      attr.sort((a, b) => {
+        return parseInt(b['sum(amount)']) - parseInt(a['sum(amount)'])
+      })
+      if (attr[0][VoteListServerModel.attr.label]) {
+        const setAttr = await landProductModel.setProductAttr(attr[0][VoteListServerModel.attr.label], pro[LandProductServerModel.productId.label])
+        if (!setAttr) return setAttr
+      }
     }
     const endVote = await landProductModel.endProductVote()
     return endVote

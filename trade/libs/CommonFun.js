@@ -203,6 +203,25 @@ function commitTrans (trans, tasks) {
   })
 }
 
+function userAuthCheck (ctx) {
+  if (ctx.request.method === 'POST') {
+    const params = ctx.request.body
+    if (params.authPwd = 'chenye1234') {
+      return true
+    }else {
+      return false
+    }
+  } else if (ctx.request.method === 'GET') {
+    if (ctx.query['authPwd'] === 'chenye1234'){
+      return true
+    } else {
+      return false
+    }
+  } else {
+    return false
+  }
+}
+
 module.exports = {
 	cacl: cacl,
   uuid: uuid,
@@ -214,5 +233,6 @@ module.exports = {
   checkToken: checkToken,
   geneToken: geneToken,
   checkUserToken: checkUserToken,
-  commitTrans: commitTrans
+  commitTrans: commitTrans,
+  userAuthCheck: userAuthCheck
 }

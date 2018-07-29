@@ -118,13 +118,15 @@ const cookieCryp = uuid()
 
 app.use(koaBody())
 app.use(cors({
-  // origin: function (ctx) {
-  //   if (ctx.header && ctx.header.origin && ctx.header.origin.indexOf('wunoland') !== -1) {
-  //     return ctx.header.origin
-  //   } else {
-  //     return false
-  //   }
-  // },
+  /**
+  origin: function (ctx) {
+    if (ctx.header && ctx.header.origin && ctx.header.origin.indexOf('wunoland') !== -1) {
+      return ctx.header.origin
+    } else {
+      return false
+    }
+  },
+  */
   origin: 'http://localhost:3002',
   credentials: true
 }))
@@ -587,6 +589,9 @@ koaRouter.get('/buyPanda', async (ctx) => {
     - 获得当前正在出售的商品 getCurrentProduct
     - 查询商品的属性票数 queryCountOfProductId
     - 获取剩余的正在活动的商品 getCurrentLeftProduct
+    - 新增下一期商品 addVoteProduct
+    - 删除商品 deleteProduct
+    - 商品投票结束 productVotedOver
   @landassets
     - 更新用户的竹子数量 updateUserBamboo
 */
@@ -666,6 +671,34 @@ koaRouter.get('/updateUserBamboo', async (ctx) =>{
 
 koaRouter.get('/getCurrentLeftProduct', async (ctx) => {
   const res = await landProductController.getCurrentLeftProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.post('/addVoteProduct', async (ctx) => {
+  const res = await landProductController.addVoteProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/deleteProduct', async (ctx) => {
+  const res = await landProductController.deleteProduct(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/productVotedOver', async (ctx) => {
+  const res = await landProductController.productVotedOver(ctx)
+  console.log('res',res)
   if (!_.isError(res)) {
     ctx.body = succRes(CommonCodes.Response_Succ, res)
   } else {
