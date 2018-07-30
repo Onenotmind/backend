@@ -105,6 +105,11 @@ class LandProductController {
   async voteProduct (ctx) {
     const tokenCheck = await checkUserToken(ctx)
     if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const curTime =  Date.parse(new Date()) / 1000
+    // 不在投票时间内
+    if (!((curTime > this.nextVoteStartTime) && (curTime < this.nextVoteStartTime + 36 * 3600))) {
+      return new Error('time expired')
+    }
     const userAddr = ctx.cookies.get('userAddr')
     const voteNum = parseInt(ctx.query['num'])
     const productId = ctx.query['productId']
@@ -165,6 +170,11 @@ class LandProductController {
   async queryCountOfProductId (ctx) {
     const tokenCheck = await checkUserToken(ctx)
     if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const curTime =  Date.parse(new Date()) / 1000
+    // 不在投票时间内
+    if (!((curTime < this.nextVoteStartTime + 48 * 3600) && (curTime > this.nextVoteStartTime + 36 * 3600))) {
+      return new Error('time expired')
+    }
     const curPeriod = await landProductModel.getCurrentPeriodProduct()
     if (!curPeriod) return curPeriod
     const period = parseInt(curPeriod[0]['max(idx_period)'])
