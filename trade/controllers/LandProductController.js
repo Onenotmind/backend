@@ -108,7 +108,7 @@ class LandProductController {
     const curTime =  Date.parse(new Date()) / 1000
     // 不在投票时间内
     if (!((curTime > this.nextVoteStartTime) && (curTime < this.nextVoteStartTime + 36 * 3600))) {
-      return new Error('time expired')
+      return new Error('time_expired')
     }
     const userAddr = ctx.cookies.get('userAddr')
     const voteNum = parseInt(ctx.query['num'])
@@ -173,7 +173,7 @@ class LandProductController {
     const curTime =  Date.parse(new Date()) / 1000
     // 不在投票时间内
     if (!((curTime < this.nextVoteStartTime + 48 * 3600) && (curTime > this.nextVoteStartTime + 36 * 3600))) {
-      return new Error('time expired')
+      return new Error('time_expired')
     }
     const curPeriod = await landProductModel.getCurrentPeriodProduct()
     if (!curPeriod) return curPeriod

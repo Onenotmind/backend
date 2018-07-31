@@ -409,7 +409,7 @@ const LandProductInserData = [
 		productType: 'other',
 		state: 'voting',
 		period: 1,
-		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/petkit_other_1',
+		imgSrc: 'http://pa5aui85v.sabkt.gdipper.com/petkit_other_1.jpg',
 		name: 'Petkit  四季深睡床垫狗狗睡觉',
 		nameEn: 'Petkit Four Seasons Deep Sleeping Mattress Dog Sleeping',
 		value: 199,
