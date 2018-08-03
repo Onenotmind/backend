@@ -714,12 +714,12 @@ koaRouter.get('/productVotedOver', async (ctx) => {
 koaRouter.get('/getUserBamboo', async (ctx) => {
   const res = await userDetailController.getUserBamboo(ctx)
   if (!_.isError(res)) {
-    ctx.cookies.set(
-    'hash',
-    res,
-    {
-      httpOnly: true
-    })
+    // ctx.cookies.set(
+    // 'hash',
+    // res,
+    // {
+    //   httpOnly: true
+    // })
     ctx.body = succRes(LoginCodes.Get_User_Bamboo, res)
   } else {
     ctx.body = errorRes(res.message)

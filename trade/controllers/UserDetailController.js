@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const axios = require('axios')
 const async = require('async')
+const qs = require('qs')
 const Web3 = require('web3')
 const web3 = new Web3()
 const UserDetailModel = require('../models/UserDetailModel.js')
@@ -402,16 +403,25 @@ class UserDetailController {
 	  })
   	let acceptHash = parseInt(ctx.query['acceptHash'])
   	if (!res || !res.data) return new Error(LoginCodes.Get_Combo_Data_Fail)
-  	let preHash = 0
-  	if (ctx.cookies && ctx.cookies.get('hash')) {
-      preHash = ctx.cookies.get('hash')
-    }
-    if ( acceptHash > parseInt(res.data.total)) return new Error(LoginCodes.Get_Combo_Data_Fail)
-    let addCount = parseInt((acceptHash - parseInt(preHash)) / 100)
+  	// let preHash = 0
+  	// if (ctx.cookies && ctx.cookies.get('hash')) {
+   //    preHash = ctx.cookies.get('hash')
+   //  }
+    // if (acceptHash > parseInt(res.data.total)) return new Error(LoginCodes.Get_Combo_Data_Fail)
+    let addCount = parseInt(parseInt(res.data.total) / 100)
     addCount = addCount > 0 ? addCount : 0
-  	const addBamboo = await userDetailModel.addUserBamboo(addr, addCount)
-  	if (!addBamboo) return new Error(LoginCodes.Get_Combo_Data_Fail)
-  	return acceptHash
+    const resetRes = await axios.post('https://api.coinhive.com/user/reset', qs.stringify({
+	    secret: '0ikXmamkqZFpcJVxTJ44D1LBC4zSD6Nu',
+	    name: hash
+	  }))
+	    console.log('hash..res', resetRes.data)
+	  if (resetRes.data.success) {
+	  	const addBamboo = await userDetailModel.addUserBamboo(addr, addCount)
+  		if (!addBamboo) return new Error(LoginCodes.Get_Combo_Data_Fail)
+  		return addCount
+	  } else {
+	  	return new Error('reset hash fail')
+	  }
   }
 
   async checkUserLoginExpired (ctx) {

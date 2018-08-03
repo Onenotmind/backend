@@ -477,8 +477,8 @@ class LandProductController {
   geneStarPoint () {
     this.starPoint = []
     for (let i = 0; i < this.starCount; i++) {
-      let longitude = parseFloat(Math.random().toFixed(3) * 360) - 180
-      let latitude = parseFloat(Math.random().toFixed(3) * 180) - 90
+      let longitude = parseInt(Math.random().toFixed(3) * 360) - 180
+      let latitude = parseInt(Math.random().toFixed(3) * 180) - 90
       this.starPoint.push([ longitude, latitude])
     }
   }

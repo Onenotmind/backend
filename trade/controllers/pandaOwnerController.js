@@ -545,7 +545,7 @@ class PandaOwnerController {
 				console.log('geoParams', geoParams)
 				let product = await pandaOwnerModel.findAllproduct()
 				if (!product || product.length === 0) return new Error(PandaLandCodes.No_Product_In_Land)
-				product = product.filter(pro => tagsStr.indexOf(pro[LandProductServerModel.productType.label]) !== -1)
+				// product = product.filter(pro => tagsStr.indexOf(pro[LandProductServerModel.productType.label]) !== -1)
 				// 筛选特定属性的商品
 				const baseAttrArr = ['gold', 'wood', 'water', 'fire', 'earth']
 				let recognizeAttrStr = ''
