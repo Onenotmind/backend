@@ -5,7 +5,7 @@ let config_email = {
   port: '465',
   secure: true,
   auth: {
-    user: 'm15002832532@163.com',
+    user: 'wunoland@163.com',
     pass: 'CHENye8685800'
   }
 }
@@ -39,7 +39,7 @@ let transporter = nodemailer.createTransport(config_email)
 
 function sendCodeFromMail (to, code) {
   let data = {
-    from: 'Wuno Land <m15002832532@163.com>',
+    from: 'Wuno Land <wunoland@163.com>',
     to: to,
     subject: 'Wunoland',
     html: '[Wunoland] Your Email Code Is: <b>' + code + '</b>'

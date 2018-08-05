@@ -33,6 +33,7 @@ const { PandaOwnerCodes, AssetsCodes, errorRes, LandProductCodes, CommonCodes, P
    	- 购买熊猫 buyPanda
    	- 孵化熊猫 sirePanda
    	- 喂养熊猫 feedPanda
+   	- 系统每四小时生成一只呜喏 genePandaBySystem
    - market
    	- 查询当前所有待售熊猫 queryAllPandaBeSold
    	- 购买熊猫 buyMarketPanda
@@ -51,6 +52,7 @@ const { PandaOwnerCodes, AssetsCodes, errorRes, LandProductCodes, CommonCodes, P
    	- 呜喏等级积分升级算法 intergeUpdateForOut
    	- 呜喏速度属性升级算法 speedUpdateForOut
    	- 呜喏其他属性升级算法 attrUpdateForOut
+   	- 生成熊猫属性信息 genePandaInfo
 */
 
 let bambooTitudeRate = 1000 // 竹子/经纬度 比例
@@ -60,6 +62,11 @@ let currentWaterPrice = 3
 
 class PandaOwnerController {
 	constructor () {
+		// 系统每四小时生成一只呜喏 genePandaBySystem
+		setInterval(async () => {
+			const pandaInfo = this.genePandaInfo('WUNOLAND')
+			await pandaOwnerModel.genePanda(...pandaInfo, 'sold', 500)
+		}, 60 * 1000 * 60 * 4)
 	}
 
 	// 根据熊猫基因查询熊猫
@@ -800,6 +807,30 @@ class PandaOwnerController {
 			attr === 'earth' ? countRate * 0.4 : countRate * 0.15
 		]
 		return attrArr
+	}
+
+	/**
+	 * 生成熊猫属性信息 genePandaInfo
+	 */
+	genePandaInfo (addr) {
+		let geni = ''
+		let pandaAttr = null
+		let spAttr = []
+		pandaAttr = this.geneAttr()
+		let genTypeNum = 10
+		let integral = this.geneAttrVal(30)
+		for (let i = 0; i < genTypeNum; i++) {
+			geni += this.geneNumRandom()
+		}
+		// geni = crypto.createHash('sha256').update(geni).digest()
+		for (let i = 0; i < 7; i++) {
+			if (i === parseInt(pandaAttr.index)) {
+				spAttr.push(this.geneAttrVal(30))
+			} else {
+				spAttr.push(this.geneAttrVal(20))
+			}
+		}
+		return [geni, addr, pandaAttr.type, ...spAttr, '', integral]
 	}
 
   // todo 测试model层接口

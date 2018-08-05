@@ -29,11 +29,13 @@ const { VoteListServerModel } = require('../sqlModel/voteList.js')
     - 查询商品的属性票数 queryCountOfProductId
     - 获取剩余的正在活动的商品 getCurrentLeftProduct
     - 删除商品 deleteProduct
+    - 查看当前活动中剩余的商品列表 getLeftProductInCurActivity
 	辅助函数:
 		- cacl 计算最终的经纬度与长宽
     - geneStarPoint 商品产生核心点
     - getNextVoteStartTime 获取下期投票时间
     - changeNextVoteStartTime 更改下期投票时间
+    - getCurActivityPeriod 获取当前活动是第几周期 
 */
 class LandProductController {
 	constructor () {
@@ -74,6 +76,16 @@ class LandProductController {
     const proId = ctx.query['productId']
     const products = await landProductModel.deleteProduct(proId)
     return products
+  }
+
+  /**
+   * 查看当前活动中剩余的商品列表 getLeftProductInCurActivity
+   */
+  async getLeftProductInCurActivity (ctx) {
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const leftPro = await landProductModel.getLeftProductInCurActivity()
+    return leftPro
   }
 
   /**
@@ -541,6 +553,13 @@ class LandProductController {
   // changeNextVoteStartTime 更改下期投票时间
   changeNextVoteStartTime (val) {
     this.nextVoteStartTime = val
+  }
+
+  async getCurActivityPeriod () {
+    const curPeriod = await landProductModel.getCurrentPeriodProduct()
+    if (!curPeriod) return curPeriod
+    const period = parseInt(curPeriod[0]['max(idx_period)'])
+    return period
   }
 
 	// 封装GET请求的参数

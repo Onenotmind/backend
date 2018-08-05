@@ -27,6 +27,7 @@ const joiParamVali = new JoiParamVali()
 		通过用户addr查询用户经纬度 getUserLocationByAddr
 		获取用户参与挖矿得到的bamboo数量 getUserBamboo
 		检测用户是否还在登陆状态,判断token checkUserLoginExpired
+		获取addr查询邀请的注册人 queryRegisterByAddr
 	@通过方法
 		随机生成地址(经纬度) geneLocation
 		发送验证码 geneEmailCode
@@ -58,15 +59,19 @@ class UserDetailController {
 			{
 				label: 'code',
 				vali: 'null'
+			},
+			{
+				label: 'invite',
+				vali: 'null'
 			}
 		]
 		const params= await postParamsCheck(ctx, paramsType)
-		console.log('params', params)
 		if (_.isError(params)) return params
 		const addr = params.addr
 		const pwd = params.pwd
 		const email = params.email
 		const code = params.code
+		const invite = params.invite || ''
 		let tmpCode = null
 		// const addrVali = await joiParamVali.valiAddr(addr)
 		// const pwdVali = await joiParamVali.valiPass(pwd)
@@ -100,7 +105,7 @@ class UserDetailController {
 		let tasks = [
 			async function () {
 				const location = self.geneLocation()
-				const register = await userDetailModel.userRegister(addr, pwd, '', email, ...location)
+				const register = await userDetailModel.userRegister(addr, pwd, '', email, ...location, invite)
 				return register
 			},
 			async function (res) {
@@ -422,6 +427,19 @@ class UserDetailController {
 	  } else {
 	  	return new Error('reset hash fail')
 	  }
+  }
+
+  async queryRegisterByAddr (ctx) {
+  	if (!checkUserToken(ctx)) return new Error(CommonCodes.Token_Fail)
+  	const addr = ctx.query['addr']
+  	const regCount = await userDetailModel.getRegisterCountByAddr(addr)
+  	if (_.isError(regCount)) return regCount
+  	const authCount = await userDetailModel.getAuthCountByAddr(addr)
+  	if (_.isError(authCount)) return authCount
+  	return {
+  		regCount: regCount,
+  		authCount: authCount
+  	}
   }
 
   async checkUserLoginExpired (ctx) {

@@ -148,6 +148,7 @@ app.use(cors({
     - checkUserLoginExpired 检测用户是否还在登陆状态,判断token
   @个人资产管理
     - 获取用户详细信息和资产 getUserInfoAndAssetsByAddr
+    - 获取addr查询邀请的注册人 queryRegisterByAddr
   @确认订单
     - 确认订单 exchangeProduct
     - 获取用户所有订单 queryUserAllProduct
@@ -313,6 +314,15 @@ async function geneEmailCode (ctx) {
 
 koaRouter.get('/getUserInfoAndAssetsByAddr', async (ctx) => {
   const res = await userDetailController.getUserInfoAndAssetsByAddr(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/queryRegisterByAddr', async (ctx) => {
+  const res = await userDetailController.queryRegisterByAddr(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(LoginCodes.Assets_Data_Normal, res)
   } else {
@@ -592,6 +602,7 @@ koaRouter.get('/buyPanda', async (ctx) => {
     - 新增下一期商品 addVoteProduct
     - 删除商品 deleteProduct
     - 商品投票结束 productVotedOver
+    - 查看当前活动中剩余的商品列表 getLeftProductInCurActivity
   @landassets
     - 更新用户的竹子数量 updateUserBamboo
 */
@@ -699,6 +710,15 @@ koaRouter.get('/deleteProduct', async (ctx) => {
 koaRouter.get('/productVotedOver', async (ctx) => {
   const res = await landProductController.productVotedOver(ctx)
   console.log('res',res)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+koaRouter.get('/getLeftProductInCurActivity', async (ctx) => {
+  const res = await landProductController.getLeftProductInCurActivity(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(CommonCodes.Response_Succ, res)
   } else {

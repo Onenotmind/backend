@@ -28,6 +28,7 @@ const { VoteListName, VoteListClientModel, VoteListServerModel } = require('../s
       - 获取商品票数 getProductVoteNum
       - 根据tag筛选当前商品 filterProductByTag
       - 改变商品的属性 setProductAttr
+      - 查看当前活动中剩余的商品列表 getLeftProductInCurActivity
   @MYSQL UserLandProduct:
     - 业务接口
       - 查询某个地址下所有商品 queryLandProductByAddr
@@ -246,6 +247,24 @@ class LandProductModel {
       productId
     ]
     const sql = 'update ?? set ?? = ? where ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async getLeftProductInCurActivity () {
+    const columns = [
+      LandProductServerModel.imgSrc.label,
+      LandProductServerModel.leftCount.label
+    ]
+    const val = [
+      columns,
+      LandProductName,
+      LandProductServerModel.period.label,
+      LandProductName,
+      LandProductServerModel.leftCount.label,
+      LandProductServerModel.state.label,
+      'sold'
+    ]
+    const sql = 'select ?? from ?? where ?? = (select max(idx_period) from ??) and ?? > 0 and ?? = ?'
     return db.query(sql, val)
   }
 

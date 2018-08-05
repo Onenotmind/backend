@@ -6,7 +6,8 @@ let UserClientModel = {
   tradePwd: 'tradePwd',
   state: 'state',
   longitude: 'longitude',
-  latitude: 'latitude'
+  latitude: 'latitude',
+  invite: 'invite'
 }
 /**
   * MYSQL user 用户表
@@ -38,7 +39,7 @@ let UserServerModel = {
   },
   state: {
     label: 'state',
-    type: 'char(3)' // reg 注册 
+    type: 'char(3)' // reg 注册 auth 已邮箱认证 
   },
   longitude: {
     label: 'longitude',
@@ -47,6 +48,10 @@ let UserServerModel = {
   latitude: {
     label: 'latitude',
     type: 'decimal'
+  },
+  invite: {
+    label: 'invite',
+    type: 'char(42)'
   },
   gmt_create: {
     label: 'gmt_create',
@@ -67,7 +72,10 @@ let UserServerModel = {
     label: 'unique key(uk_email),'
   },
   uk_phone: {
-    label: 'unique key(uk_phone)'
+    label: 'unique key(uk_phone),'
+  },
+  idx_invite: {
+    label: 'index (invite)'
   },
   // 默认sql引擎设置
   other: {

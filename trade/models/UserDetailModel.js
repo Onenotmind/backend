@@ -2,6 +2,7 @@ const Db = require('./Db.js')
 const db = new Db()
 const moment = require('moment')
 
+const { CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const { UserServerModel, UserModelName } = require('../sqlModel/user.js')
 const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
 const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/ethAddrManager.js')
@@ -16,6 +17,9 @@ const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/e
     - 更改用户交易密码 changeTradePwd
     - 通过用户addr查询用户经纬度 getUserLocationByAddr
     - 查询该邮箱是否已经绑定 queryEmailIsExist
+    - 获取addr查询邀请的注册人 queryRegisterByAddr
+      - 获取注册的人数 getRegisterCountByAddr
+      - 获取认证的人数 getAuthCountByAddr
   MYSQL @landassets
      - 用户资产初始化 createUserAsset
      - 增加用户的bamboo addUserBamboo
@@ -33,7 +37,7 @@ class UserDetailModel {
     return db.startTransaction()
   }
   
-	async userRegister (addr, pwd, tradePwd, email, longitude, latitude) {
+	async userRegister (addr, pwd, tradePwd, email, longitude, latitude, invite) {
 		let insertData = {
       [UserServerModel.addr.label]: addr,
       [UserServerModel.email.label]: email !== '' ? email : null,
@@ -43,6 +47,7 @@ class UserDetailModel {
       [UserServerModel.state.label]: 'reg',
       [UserServerModel.longitude.label]: longitude,
       [UserServerModel.latitude.label]: latitude,
+      [UserServerModel.invite.label]: invite,
       [UserServerModel.gmt_create.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       [UserServerModel.gmt_modified.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
     }
@@ -135,6 +140,40 @@ class UserDetailModel {
     ]
     let sql = 'select * from ?? where ?? = ?'
     return db.query(sql, val)
+  }
+
+  async queryRegisterByAddr (addr, state) {
+    const columns = [
+    ]
+    const val = [
+      UserModelName,
+      UserServerModel.invite.label,
+      addr,
+      UserServerModel.state.label,
+      state
+    ]
+    let sql = 'select count(state) from ?? where ?? = ? and ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async getRegisterCountByAddr (addr) {
+    const queryRegisters = await this.queryRegisterByAddr(addr, 'reg')
+    if (!queryRegisters) return new Error(CommonCodes.Service_Wrong)
+    if (queryRegisters.length > 0) {
+      return Number(queryRegisters[0]['count(state)'])
+    } else {
+      return 0
+    }
+  }
+
+  async getAuthCountByAddr (addr) {
+    const queryRegisters = await this.queryRegisterByAddr(addr, 'auth')
+    if (!queryRegisters) return new Error(CommonCodes.Service_Wrong)
+    if (queryRegisters.length > 0) {
+      return Number(queryRegisters[0]['count(state)'])
+    } else {
+      return 0
+    }
   }
 
   async bindEmail (email, addr) {
