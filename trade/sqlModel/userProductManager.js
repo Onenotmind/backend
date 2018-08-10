@@ -42,7 +42,7 @@ let UserProductManagerServerModel = {
 	},
 	state: {
 		label: 'state',
-		type: 'VARCHAR(6)'
+		type: 'VARCHAR(10)'
 	},
 	gmt_create: {
     label: 'gmt_create',

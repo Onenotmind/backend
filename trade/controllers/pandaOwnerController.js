@@ -13,7 +13,7 @@ const { LandProductServerModel } = require('../sqlModel/landProduct.js')
 const { UserLandProductServerModel } = require('../sqlModel/userLandProduct.js')
 const { BackPandaAssetsServerModel } = require('../sqlModel/backPandaAssets.js')
 const { AssetsValueServerModel } = require('../sqlModel/assetsValue.js')
-const { PandaOwnerCodes, AssetsCodes, errorRes, LandProductCodes, CommonCodes, PandaLandCodes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
+const { PandaOwnerCodes, AssetsCodes, LoginCodes, errorRes, LandProductCodes, CommonCodes, PandaLandCodes, serviceError, succRes } = require('../libs/msgCodes/StatusCodes.js')
 
 /*
   PandaOwnerController:
@@ -269,10 +269,12 @@ class PandaOwnerController {
 		const addr = ctx.query['addr']
 		const addrVali = await joiParamVali.valiAddr(addr)
 		if (_.isError(addrVali)) return addrVali
+		// const isAuth = await pandaOwnerModel.getUserRegisterState(addr)
+		// if (!isAuth) return new Error(LoginCodes.User_Not_Bind_Email)
 		const pandaCount = await pandaOwnerModel.queryAllPandaByAddr(addr)
 		if (pandaCount && pandaCount.length > 0) {
 			return new Error(PandaOwnerCodes.Already_Gene_Free_Panda)
-		} 
+		}
 		let geni = ''
 		let pandaAttr = null
 		let spAttr = []
@@ -461,8 +463,9 @@ class PandaOwnerController {
 		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
 		const pandaInfo = await pandaOwnerModel.queryPandaInfo(pandaGen)
 		if (!pandaInfo || pandaInfo[0][PandaOwnerServerModel.state.label] !== 'sold') return new Error(PandaLandCodes.Panda_Not_Sold)
+		console.log('pandaInfo', pandaInfo)
 		const ownerAddr = pandaInfo[0][PandaOwnerServerModel.addr.label]
-		const totalPanda = pandaOwnerModel.queryTotalPandaByAddr(ownerAddr)
+		const totalPanda = await pandaOwnerModel.queryTotalPandaByAddr(addr)
 		if (!totalPanda || totalPanda.length >= 3) return new Error(PandaOwnerCodes.More_Than_Max_Panda)
 		const ownerAssets = await pandaOwnerModel.queryAssetsByAddr(ownerAddr)
 		if (!ownerAssets) return ownerAssets
@@ -534,7 +537,7 @@ class PandaOwnerController {
 		// if (!assetsValArr || assetsValArr.length === 0) return new Error(AssetsCodes.Assets_Null)
 		let tasks = [
 			async function () {
-				const pandaInfo = await pandaOwnerModel.getInfoForProduct(trans, geni)
+				const pandaInfo = await pandaOwnerModel.getInfoForProduct(geni, trans)
 				if (!pandaInfo || pandaInfo.length === 0) return new Error(PandaLandCodes.No_Such_Panda)
 				if (parseInt(pandaInfo[0][LandAssetsServerModel.bamboo.label]) < bamboo) return new Error(PandaLandCodes.No_More_Bamboo_For_Out)
 				let leftBamboo = parseInt(pandaInfo[0][LandAssetsServerModel.bamboo.label]) - bamboo
@@ -562,10 +565,7 @@ class PandaOwnerController {
 						recognizeAttrStr += baseAttrArr[i]
 					}
 				}
-				console.log('pro', product)
-				console.log(recognizeAttrStr)
 				product = product.filter(pro => recognizeAttrStr.indexOf(pro[LandProductServerModel.type.label]) !== -1)
-				console.log('product..', product)
 				let attrArr = {
           'speed': parseFloat(pandaInfo[PandaOwnerServerModel.speed.label]),
           'hungry': parseFloat(pandaInfo[PandaOwnerServerModel.hungry.label]),
@@ -607,6 +607,7 @@ class PandaOwnerController {
         	const proCount = await self.queryProductNumByAddr(addr, pro[LandProductServerModel.productId.label])
         	if (_.isError(proCount)) return proCount
         	// TODO 获取概率
+        	// if (true) {
         	if (Math.random() < self.caclIgnoreProduct(proCount, attrArr[proAttr])) {
         		saveProRes.push(pro[LandProductServerModel.productId.label])
         		// 当已有商品碎片为2时，landproduct表中对应leftCount应减去一个
@@ -717,8 +718,8 @@ class PandaOwnerController {
 		if (!userBackAssets) return userBackAssets
 		let count = 0
 		for (let pro of userBackAssets) {
-			if (userBackAssets[BackPandaAssetsServerModel.backAssets.label]) {
-				const backAssetsStr = userBackAssets[BackPandaAssetsServerModel.backAssets.label]
+			if (pro[BackPandaAssetsServerModel.backAssets.label]) {
+				const backAssetsStr = pro[BackPandaAssetsServerModel.backAssets.label]
 				if (backAssetsStr.indexOf(productId) !== -1) {
 					count++
 				}

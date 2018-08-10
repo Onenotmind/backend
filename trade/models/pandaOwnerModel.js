@@ -1,6 +1,7 @@
 const Db = require('./Db.js')
 const db = new Db()
 const moment = require('moment')
+const { CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const { UserServerModel, UserModelName } = require('../sqlModel/user.js')
 const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
 const { LandProductServerModel, LandProductName } = require('../sqlModel/landProduct.js')
@@ -59,6 +60,8 @@ const { pandaOwnerTestData } = require('../mysqlData/pandaOwner/sqlData.js')
     - 删除资产与其价值 delAssetsValue
   - @MYSQL user landassets pandaowner
     - 熊猫搜查商品时所需详细信息 getInfoForProduct
+    - 获取用户的state状态 getUserRegisterState
+    - 获取熊猫对应的addr getAddrByPandaGen
 */
 
 class PandaOwnerModel {
@@ -352,13 +355,36 @@ class PandaOwnerModel {
     return db.transQuery(trans, sql, val)
   }
 
-  async getInfoForProduct (trans, pandaGen) {
+  async getInfoForProduct (pandaGen, trans) {
     let val = [pandaGen]
     let sql = 'select * from user '+
     'inner join pandaowner on pandaowner.idx_addr=user.uk_addr ' +
     ' inner join landassets l on user.uk_addr=l.uk_addr '+
     'where pandaowner.uk_gen= ?'
     return db.query(sql, val)
+  }
+
+  async getAddrByPandaGen (gen) {
+    const info = await this.getInfoForProduct(gen)
+    if (!info || info.length === 0) return new Error(CommonCodes.Service_Wrong)
+    return info[0][UserServerModel.addr.label]
+  }
+
+  async getUserRegisterState (addr) {
+    let val = [
+      UserServerModel.state.label,
+      UserModelName,
+      UserServerModel.addr.label,
+      addr
+    ]
+    let sql = 'select ?? from ?? where ?? = ?'
+    const res = await db.query(sql, val)
+    if (!res || res.length === 0) return new Error(CommonCodes.Service_Wrong)
+    if (res[0][UserServerModel.state.label] === 'auth') {
+      return true
+    } else {
+      return false
+    }
   }
 
   async findProductByGeo (trans, longitude, latitude, wid, height) {

@@ -2,6 +2,7 @@ const Db = require('./Db.js')
 const db = new Db()
 const moment = require('moment')
 const _ = require('lodash')
+const { CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const { UserServerModel, UserModelName } = require('../sqlModel/user.js')
 const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
 const { LandProductServerModel, LandProductName } = require('../sqlModel/landProduct.js')
@@ -35,12 +36,15 @@ const { VoteListName, VoteListClientModel, VoteListServerModel } = require('../s
       - 查询某个地址下某个商品的信息 querySpecifiedProByAddr
       - 插入一条商品记录 insertLandProductToUser
       - 删除用户的商品碎片 deleteLandProductFrag
+      - 增加用户的商品碎片 addLandProductFrag
       - 查询某个商品已经集齐了多少个 queryCollectedProCount
   @MYSQL UserProductManager
     - 业务接口
       - 插入一条商品兑换成功数据 insertUserProduct
       - 更新当前物流信息 updateUserProductInfo
       - 查询某个用户的所有商品提现信息 queryUserAllProduct
+      - 更新订单状态 setUserProductOrderState
+      - 查询订单的状态 getUserProductOrderState
   @MYSQL landassets
     - 业务接口
       - 更新用户的竹子数量 updateUserBamboo
@@ -264,7 +268,7 @@ class LandProductModel {
       LandProductServerModel.state.label,
       'sold'
     ]
-    const sql = 'select ?? from ?? where ?? = (select max(idx_period) from ??) and ?? > 0 and ?? = ?'
+    const sql = 'select ?? from ?? where ?? = (select max(idx_period) from ??) - 1 and ?? > 0 and ?? = ?'
     return db.query(sql, val)
   }
 
@@ -324,17 +328,17 @@ class LandProductModel {
     return db.query(sql, val)
   }
 
-  async insertUserProduct (trans, userAddr, productId, userRealAddr, userPhone) {
+  async insertUserProduct (trans, userAddr, productId, userRealAddr, userPhone, userName) {
     let curTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
     let insertData = {
       [UserProductManagerServerModel.addr.label]: userAddr,
       [UserProductManagerServerModel.productId.label]: productId,
       [UserProductManagerServerModel.userRealAddr.label]: userRealAddr,
       [UserProductManagerServerModel.userPhone.label]: userPhone,
-      [UserProductManagerServerModel.userName.label]: '',
+      [UserProductManagerServerModel.userName.label]: userName,
       [UserProductManagerServerModel.express.label]: '',
       [UserProductManagerServerModel.expressId.label]: '',
-      [UserProductManagerServerModel.state.label]: 'ready',
+      [UserProductManagerServerModel.state.label]: 'pending',
       [UserProductManagerServerModel.gmt_create.label]: curTime,
       [UserProductManagerServerModel.gmt_modified.label]: curTime
     }
@@ -355,6 +359,24 @@ class LandProductModel {
     ]
     let sql = 'UPDATE ?? SET ?? = ?? - 3 WHERE ?? = ? AND ?? = ?'
     return db.transQuery(trans, sql, val)
+  }
+
+  async addLandProductFrag (trans, userAddr, productId) {
+    let val = [
+      UserLandProductName,
+      UserLandProductServerModel.value.label,
+      UserLandProductServerModel.value.label,
+      UserLandProductServerModel.productId.label,
+      productId,
+      UserLandProductServerModel.addr.label,
+      userAddr
+    ]
+    let sql = 'UPDATE ?? SET ?? = ?? + 3 WHERE ?? = ? AND ?? = ?'
+    if (trans) {
+      return db.transQuery(trans, sql, val)
+    } else {
+      return db.query(sql, val)
+    }
   }
 
   async queryCollectedProCount (productId) {
@@ -386,6 +408,39 @@ class LandProductModel {
     return db.query(sql, val)
   }
 
+  async setUserProductOrderState (trans, state, productId, addr) {
+    let val = [
+      UserProductManagerName,
+      UserProductManagerServerModel.state.label,
+      state,
+      UserProductManagerServerModel.productId.label,
+      productId,
+      UserProductManagerServerModel.addr.label,
+      addr
+    ]
+    let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ? AND ?? = ?'
+    if (trans) {
+      return db.transQuery(trans, sql, val)
+    } else {
+      return db.query(sql, val)
+    }
+  }
+
+  async getUserProductOrderState (productId, addr) {
+    let val = [
+      UserProductManagerServerModel.state.label,
+      UserProductManagerName,
+      UserProductManagerServerModel.productId.label,
+      productId,
+      UserProductManagerServerModel.addr.label,
+      addr
+    ]
+    let sql = 'select ?? from ?? where ?? = ? and ?? = ?'
+    const res = await db.query(sql, val)
+    if (!res || res.length === 0) return new Error(CommonCodes.Service_Wrong)
+    return res[0][UserProductManagerServerModel.state.label]
+  }
+
   async queryUserAllProduct (addr) {
     let columns = [
       UserProductManagerServerModel.id.label,
@@ -398,10 +453,11 @@ class LandProductModel {
     let val = [
       columns,
       UserProductManagerName,
-      UserProductManagerServerModel.addr.label,
       addr
     ]
-    let sql = 'select ?? from ?? where ?? = ?'
+    let sql = 'select ?? from ?? ' +
+      'inner join landproduct l on userproductmanager.idx_productId= l.uk_productId' +
+      'where userproductmanager.idx_addr = ?'
     return db.query(sql, val)
   }
 

@@ -359,8 +359,11 @@ class UserDetailController {
 			if (!queryEmail) return queryEmail
 			if (queryEmail.length > 0) return new Error(LoginCodes.Email_Already_Exist)
 			const checkAddr = ctx.cookies.get('userAddr')
+		  // TODO 是否事务
 			const emailBind = await userDetailModel.bindEmail(email, checkAddr)
-			return emailBind
+			if (!emailBind) return emailBind
+			const authUser = await userDetailModel.authUserState(checkAddr)
+			return authUser
 		} else {
 			return emailCheck
 		}

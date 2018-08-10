@@ -20,6 +20,8 @@ const { EthAddrManagerName, EthAddrManagerServerModel } = require('../sqlModel/e
     - 获取addr查询邀请的注册人 queryRegisterByAddr
       - 获取注册的人数 getRegisterCountByAddr
       - 获取认证的人数 getAuthCountByAddr
+    - 更改用户的state状态 changeUserState
+      - 用户进行邮件绑定 authUserState
   MYSQL @landassets
      - 用户资产初始化 createUserAsset
      - 增加用户的bamboo addUserBamboo
@@ -44,7 +46,7 @@ class UserDetailModel {
       [UserServerModel.pwd.label]: pwd,
       [UserServerModel.phone.label]: null,
       [UserServerModel.tradePwd.label]: '',
-      [UserServerModel.state.label]: 'reg',
+      [UserServerModel.state.label]: email ? 'auth' : 'reg',
       [UserServerModel.longitude.label]: longitude,
       [UserServerModel.latitude.label]: latitude,
       [UserServerModel.invite.label]: invite,
@@ -197,6 +199,25 @@ class UserDetailModel {
     ]
     let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ?'
     return db.query(sql, val)
+  }
+
+  async changeUserState (addr, state) {
+    let val = [
+      UserModelName,
+      UserServerModel.state.label,
+      state,
+      UserServerModel.addr.label,
+      addr
+    ]
+    console.log('val', val)
+    let sql = 'UPDATE ?? SET ?? = ? WHERE ?? = ?'
+    return db.query(sql, val)
+  }
+
+  async authUserState (addr) {
+    const changeState = await this.changeUserState(addr, 'auth')
+    if (!changeState) return new Error(CommonCodes.Service_Wrong)
+    return changeState
   }
 
   async changeTradePwd (addr, newPwd) {

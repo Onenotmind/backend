@@ -39,7 +39,7 @@ let UserServerModel = {
   },
   state: {
     label: 'state',
-    type: 'char(3)' // reg 注册 auth 已邮箱认证 
+    type: 'char(5)' // reg 注册 auth 已邮箱认证 
   },
   longitude: {
     label: 'longitude',

@@ -1,9 +1,10 @@
 const AssetsRollInModel = require('../models/AssetsRollInModel.js')
 const assetsRollInModel = new AssetsRollInModel()
-
+const _ = require('lodash')
 // const { assetsRollIn } = require('../sqlModel/assetsRollIn.js')
 const { AssetsCodes, errorRes, serviceError, succRes, CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const { checkUserToken } = require('../libs/CommonFun.js')
+const { AssetsRollInServerModel } = require('../sqlModel/assetsRollIn.js')
 
 /**
  * @AssetsRollInController
@@ -12,6 +13,7 @@ const { checkUserToken } = require('../libs/CommonFun.js')
  *  - 提现订单确认 checkOverRollInOrder
  *  - 提现订单取消 deleteRollInOrder
  *  - 新增一个充值订单 insertAssetsRollInOrder
+ *  - 客户端手动取消订单 clientCancelRollInOrder
  */
 
 class AssetsRollInController {
@@ -81,6 +83,18 @@ class AssetsRollInController {
 		let state = assetsData.state
 		const checkOrder = await assetsRollInModel.changeRollInOrderState(orderId, state)
 		return checkOrder 
+	}
+
+	// 客户端手动取消订单
+	async clientCancelRollInOrder (ctx) {
+		const tokenCheck = await checkUserToken(ctx)
+		if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+		const orderId = parseInt(ctx.query['orderId'])
+		const info = await assetsRollInModel.queryAssetsRollInById(orderId)
+		if (_.isError(info)) return info
+		if (info[AssetsRollInServerModel.state.label] !== 'pending') return new Error(CommonCodes.Service_Wrong)
+		const changeState = await assetsRollInModel.changeRollInOrderState(orderId, 'cancel')
+		return changeState
 	}
 }
 

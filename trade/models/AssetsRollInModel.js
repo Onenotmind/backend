@@ -1,7 +1,7 @@
 const Db = require('./Db.js')
 const db = new Db()
 const moment = require('moment')
-
+const { CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const { AssetsRollInName, AssetsRollInServerModel } = require('../sqlModel/assetsRollIn.js')
 const { LandAssetsServerModel, LandAssetsName } = require('../sqlModel/landAssets.js')
 
@@ -50,7 +50,9 @@ class AssetsRollInModel {
       orderId
     ]
     let sql = 'SELECT * FROM ?? WHERE ?? = ?'
-    return db.query(sql, val)
+    const res = await db.query(sql, val)
+    if (!res || res.length === 0) return new Error(CommonCodes.Service_Wrong)
+    return res[0]
   }
 
   // 查询某一特定用户的转入资产

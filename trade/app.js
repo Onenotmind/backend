@@ -152,6 +152,7 @@ app.use(cors({
   @确认订单
     - 确认订单 exchangeProduct
     - 获取用户所有订单 queryUserAllProduct
+    - deleteAssetsRollOutOrder 取消提现订单
   @通用函数
     - 产生验证码 geneEmailCode
     - 加密算法 encrypt
@@ -239,6 +240,16 @@ koaRouter.get('/exchangeProduct', async (ctx) => {
   } else {
     ctx.body = errorRes(res.message)
   } 
+})
+
+// 取消一个提现订单
+koaRouter.get('/deleteAssetsRollOutOrder', async (ctx) => {
+  const res = await landProductController.deleteAssetsRollOutOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
 })
 
 koaRouter.get('/queryUserAllProduct', async (ctx) => {
@@ -343,7 +354,9 @@ koaRouter.get('/queryRegisterByAddr', async (ctx) => {
     - queryRollOutAssetsByAddr 查询某一用户的提现订单
     - checkOverRollOutOrder 提现订单确认
     - deleteRollOutOrder 提现订单取消
-    - insertAssetsRollOutOrder 新增一个提现订单 
+    - clientCancelRollOutOrder 用户手动取消订单
+    - clientCancelRollInOrder 手动取消充值订单
+    - insertAssetsRollOutOrder 新增一个提现订单
 */
 
 // assets查询所有资产
@@ -450,6 +463,26 @@ koaRouter.post('/checkOverRollOutOrder', async (ctx) => {
 // 提现订单取消
 koaRouter.post('/deleteRollOutOrder', async (ctx) => {
   const res = await assetsRollOutController.deleteRollOutOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+// 用户手动取消订单
+koaRouter.get('/clientCancelRollOutOrder', async (ctx) => {
+  const res = await assetsRollOutController.clientCancelRollOutOrder(ctx)
+  if (!_.isError(res)) {
+    ctx.body = succRes(CommonCodes.Response_Succ, res)
+  } else {
+    ctx.body = errorRes(res.message)
+  }
+})
+
+// 手动取消充值订单
+koaRouter.get('/clientCancelRollInOrder', async (ctx) => {
+  const res = await assetsRollInController.clientCancelRollInOrder(ctx)
   if (!_.isError(res)) {
     ctx.body = succRes(CommonCodes.Response_Succ, res)
   } else {

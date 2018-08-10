@@ -117,9 +117,9 @@ class TestModel {
 
   async insertTestUserData () {
     let insertData = {
-      [UserServerModel.addr.label]: 'ethland',
+      [UserServerModel.addr.label]: 'WUNOLAND',
       [UserServerModel.email.label]: '',
-      [UserServerModel.pwd.label]: 'ethland',
+      [UserServerModel.pwd.label]: 'WUNOLAND',
       [UserServerModel.phone.label]: null,
       [UserServerModel.tradePwd.label]: '',
       [UserServerModel.state.label]: 'reg',
@@ -142,7 +142,7 @@ class TestModel {
 
   async insertTestLandAssetsData () {
     let insertData = {
-      [LandAssetsServerModel.addr.label]: 'ethland',
+      [LandAssetsServerModel.addr.label]: 'WUNOLAND',
       [LandAssetsServerModel.bamboo.label]: 2000,
       [LandAssetsServerModel.bambooLock.label]: 0,
       [LandAssetsServerModel.eth.label]: 0,
@@ -183,9 +183,9 @@ class TestModel {
         [LandProductServerModel.productType.label]: productType,
         [LandProductServerModel.state.label]: state,
         [LandProductServerModel.period.label]: period,
-        [LandProductServerModel.time.label]: timer,
+        [LandProductServerModel.time.label]: 0,
         [LandProductServerModel.imgSrc.label]: imgSrc,
-        [LandProductServerModel.leftCount.label]: 2,
+        [LandProductServerModel.leftCount.label]: 5,
         [LandProductServerModel.name.label]: name,
         [LandProductServerModel.nameEn.label]: nameEn,
         [LandProductServerModel.value.label]: value,

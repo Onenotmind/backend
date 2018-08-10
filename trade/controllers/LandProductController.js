@@ -24,6 +24,7 @@ const { VoteListServerModel } = require('../sqlModel/voteList.js')
     - 下架过期商品 dropOffProduct
     - 删除过期商品 deleteExpiredProduct
     - 兑换商品 exchangeProduct
+    - 删除兑换商品订单 deleteAssetsRollOutOrder
     - 更新用户的竹子数量 updateUserBamboo
     - 查询某个用户的所有商品提现信息 queryUserAllProduct
     - 查询商品的属性票数 queryCountOfProductId
@@ -41,7 +42,7 @@ class LandProductController {
 	constructor () {
     this.starPoint = [] // 商品中心点数组
     this.starCount = 5 // 中心点数量
-    this.nextVoteStartTime = 1533016502 // 下期商品投票开始时间
+    this.nextVoteStartTime = 1533757982 // 下期商品投票开始时间
     setInterval(() => {
       this.geneStarPoint()
     }, 5000)
@@ -275,8 +276,8 @@ class LandProductController {
     if (!trans) return new Error(CommonCodes.Service_Wrong)
     let tasks = [
       async function () {
-        const votePro = await landProductModel.voteProduct(productId, voteNum)
-        return votePro
+        // const votePro = await landProductModel.voteProduct(productId, voteNum)
+        return true
       },
       async function (res) {
         if (_.isError(res)) return res
@@ -340,7 +341,7 @@ class LandProductController {
     if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const curPeriod = await landProductModel.getCurrentPeriodProduct()
     if (!curPeriod) return curPeriod
-    const period = parseInt(curPeriod[0]['max(idx_period)'] - 1)
+    const period = parseInt(curPeriod[0]['max(idx_period)'] - 1) > 0 ? parseInt(curPeriod[0]['max(idx_period)'] - 1) : 1
     const curProduct = await landProductModel.getCurrentProductByPeriod(period)
     return curProduct
   }
@@ -424,7 +425,7 @@ class LandProductController {
       return new Error(LoginCodes.Code_Error)  
     }
     const specifiedPro = await landProductModel.querySpecifiedProByAddr(userAddr, productId)
-    if (!specifiedPro || specifiedPro.length === 0 || parseInt(specifiedPro[0][LandProductServerModel.value.label]) < 1) {
+    if (!specifiedPro || specifiedPro.length === 0 || parseInt(specifiedPro[0][LandProductServerModel.value.label]) < 3) {
       return new Error(LandProductCodes.User_No_Such_Product)
     }
     const trans = await landProductModel.startTransaction()
@@ -432,15 +433,51 @@ class LandProductController {
     let tasks = [
       async function () {
         const deletePro = await landProductModel.deleteLandProductFrag(trans, userAddr, productId)
+        console.log('deletePro', deletePro)
         return deletePro
       },
       async function (res) {
         if (_.isError(res)) return res
-        const insertPro = await landProductModel.insertUserProduct(trans, userAddr, productId, userRealAddr, userPhone)
+        const insertPro = await landProductModel.insertUserProduct(trans, userAddr, productId, userRealAddr, userPhone, userName)
         return insertPro
       },
       function (res, callback) {
         if (_.isError(res)) {
+          callback(res)
+        } else {
+          callback(null, res)
+        }
+      }
+    ]
+    return commitTrans(trans, tasks)
+  }
+
+  /**
+   *  删除商品提现订单
+   */
+  async deleteAssetsRollOutOrder (ctx) {
+    const tokenCheck = await checkUserToken(ctx)
+    if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
+    const addr = ctx.qeury['addr']
+    const productId = ctx.qeury['productId']
+    const orderState = await landProductModel.getUserProductOrderState(productId, addr)
+    if (_.isError(orderState) || orderState === 'pending') return new Error('can not cancel')
+    const trans = await landProductModel.startTransaction()
+    if (!trans) return new Error(CommonCodes.Service_Wrong)
+    let tasks = [
+      async function () {
+        // 把userproductmanager状态置为cancel
+        const data = await landProductModel.setUserProductOrderState(trans, 'cancel', productId, addr)
+        return data
+      },
+      async function (res) {
+        // 将userlandproduct的value加上3
+        if (_.isError(res) || !res) return res
+        const data = await landProductModel.addLandProductFrag(trans, addr, productId)
+        return data
+      },
+      function (res, callback) {
+        if (_.isError(res) || !res) {
           callback(res)
         } else {
           callback(null, res)

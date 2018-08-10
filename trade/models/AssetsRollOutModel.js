@@ -2,6 +2,7 @@ const Db = require('./Db.js')
 const db = new Db()
 const moment = require('moment')
 
+const { CommonCodes } = require('../libs/msgCodes/StatusCodes.js')
 const { LandAssetsName, LandAssetsServerModel } = require('../sqlModel/landAssets.js')
 const { AssetsRollOutName, AssetsRollOutServerModel } = require('../sqlModel/assetsRollOut.js')
 const { UserServerModel, UserModelName } = require('../sqlModel/user.js')
@@ -35,7 +36,7 @@ class AssetsRollOutModel {
       [AssetsRollOutServerModel.receiver.label]: receiver,
       [AssetsRollOutServerModel.type.label]: type,
       [AssetsRollOutServerModel.amount.label]: parseFloat(amount).toFixed(4),
-      [AssetsRollOutServerModel.state.label]: 'pend', 
+      [AssetsRollOutServerModel.state.label]: 'pending', 
       [AssetsRollOutServerModel.gmt_create.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       [AssetsRollOutServerModel.gmt_modified.label]: moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
     }
@@ -54,7 +55,9 @@ class AssetsRollOutModel {
       orderId
     ]
     let sql = 'SELECT * FROM ?? WHERE ?? = ?'
-    return db.query(sql, val)
+    const res = await db.query(sql, val)
+    if (!res || res.length === 0) return new Error(CommonCodes.Service_Wrong)
+    return res[0]
   }
 
   // 查询某一特定用户的转入资产
@@ -121,6 +124,7 @@ class AssetsRollOutModel {
       LandAssetsServerModel.addr.label,
       addr
     ]
+    console.log('val', val)
     let sql = ''
     if (way === 'out') {
       sql = 'update ?? set ?? = ?? - ?, ?? = ?? +? WHERE ?? = ?'
