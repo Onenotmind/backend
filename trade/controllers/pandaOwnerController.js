@@ -66,7 +66,7 @@ class PandaOwnerController {
 		setInterval(async () => {
 			const pandaInfo = this.genePandaInfo('WUNOLAND')
 			await pandaOwnerModel.genePanda(...pandaInfo, 'sold', 500)
-		}, 60 * 1000 * 60 * 4)
+		}, 60 * 1000)
 	}
 
 	// 根据熊猫基因查询熊猫
@@ -552,7 +552,7 @@ class PandaOwnerController {
 				let addr = pandaInfo[PandaOwnerServerModel.addr.label]
 				let geoParams = cacl(pandaInfo[UserServerModel.longitude.label], pandaInfo[UserServerModel.latitude.label], baseRate, direction, pandaInfo[PandaOwnerServerModel.hungry.label], pandaInfo[PandaOwnerServerModel.speed.label])
 				// const product = await pandaOwnerModel.findProductByGeo(trans, geoParams.longitude, geoParams.latitude, geoParams.width, geoParams.height)
-				console.log('geoParams', geoParams)
+				// console.log('geoParams', geoParams)
 				let product = await pandaOwnerModel.findAllproduct()
 				if (!product || product.length === 0) return new Error(PandaLandCodes.No_Product_In_Land)
 				// product = product.filter(pro => tagsStr.indexOf(pro[LandProductServerModel.productType.label]) !== -1)
@@ -566,6 +566,7 @@ class PandaOwnerController {
 					}
 				}
 				product = product.filter(pro => recognizeAttrStr.indexOf(pro[LandProductServerModel.type.label]) !== -1)
+				console.log('preduct', product.length)
 				let attrArr = {
           'speed': parseFloat(pandaInfo[PandaOwnerServerModel.speed.label]),
           'hungry': parseFloat(pandaInfo[PandaOwnerServerModel.hungry.label]),
@@ -608,6 +609,7 @@ class PandaOwnerController {
         	if (_.isError(proCount)) return proCount
         	// TODO 获取概率
         	// if (true) {
+        	// console.log('caclIgnoreProduct:', self.caclIgnoreProduct(proCount, attrArr[proAttr]))
         	if (Math.random() < self.caclIgnoreProduct(proCount, attrArr[proAttr])) {
         		saveProRes.push(pro[LandProductServerModel.productId.label])
         		// 当已有商品碎片为2时，landproduct表中对应leftCount应减去一个
@@ -738,7 +740,7 @@ class PandaOwnerController {
 	 */
 	caclIgnoreProduct (count, attrRate) {
 		if (count === 0) return 0.6
-		if (count === 1) return 0.4
+		if (count === 1) return 0.3
 		if (count === 2) return attrRate / 100
 		if (count >= 3) return 0
 	}

@@ -451,13 +451,11 @@ class LandProductModel {
       UserProductManagerServerModel.state.label
     ]
     let val = [
-      columns,
-      UserProductManagerName,
       addr
     ]
-    let sql = 'select ?? from ?? ' +
-      'inner join landproduct l on userproductmanager.idx_productId= l.uk_productId' +
-      'where userproductmanager.idx_addr = ?'
+    let sql = 'select u.pk_id, u.idx_productId, u.userRealAddr, u.userName, u.state, u.userPhone, l.name, l.nameEn ' +
+      'from userproductmanager u, landproduct l ' +
+      'where u.idx_productId=l.uk_productId and u.idx_addr=?'
     return db.query(sql, val)
   }
 

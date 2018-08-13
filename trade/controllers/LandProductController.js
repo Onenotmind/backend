@@ -458,10 +458,10 @@ class LandProductController {
   async deleteAssetsRollOutOrder (ctx) {
     const tokenCheck = await checkUserToken(ctx)
     if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
-    const addr = ctx.qeury['addr']
-    const productId = ctx.qeury['productId']
+    const addr = ctx.query['addr']
+    const productId = ctx.query['productId']
     const orderState = await landProductModel.getUserProductOrderState(productId, addr)
-    if (_.isError(orderState) || orderState === 'pending') return new Error('can not cancel')
+    if (_.isError(orderState) || orderState !== 'pending') return new Error('can not cancel')
     const trans = await landProductModel.startTransaction()
     if (!trans) return new Error(CommonCodes.Service_Wrong)
     let tasks = [
@@ -495,6 +495,7 @@ class LandProductController {
     if (!tokenCheck) return new Error(CommonCodes.Token_Fail)
     const userAddr = ctx.query['addr']
     const allProduct = await landProductModel.queryUserAllProduct(userAddr)
+    console.log('allProduct', allProduct)
     return allProduct
   }
 
