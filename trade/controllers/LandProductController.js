@@ -305,7 +305,7 @@ class LandProductController {
    */
   async productVotedOver (ctx) {
     if (!userAuthCheck(ctx)) return new Error('没有权限')
-    const productSoldNum = 5
+    const productSoldNum = 10
     const prepareProductArr = await landProductModel.getPrepareProduct()
     if (!prepareProductArr) return new Error(LandProductCodes.Get_Prepare_Product_Fail)
     const cutLen = prepareProductArr.length > productSoldNum ? productSoldNum: prepareProductArr.length

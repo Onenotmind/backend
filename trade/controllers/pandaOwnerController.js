@@ -65,8 +65,9 @@ class PandaOwnerController {
 		// 系统每四小时生成一只呜喏 genePandaBySystem
 		setInterval(async () => {
 			const pandaInfo = this.genePandaInfo('WUNOLAND')
+			console.log('pandaInfo', pandaInfo)
 			await pandaOwnerModel.genePanda(...pandaInfo, 'sold', 500)
-		}, 60 * 1000)
+		}, 1000)
 	}
 
 	// 根据熊猫基因查询熊猫
@@ -354,7 +355,7 @@ class PandaOwnerController {
 
 	// 属性值随机数产生
 	geneAttrVal (val) {
-		return parseInt(Math.random() * val)
+		return _.random(5.1, val)
 	}
 
 	// 属性类型随机数产生
@@ -561,7 +562,7 @@ class PandaOwnerController {
 				let recognizeAttrStr = ''
 				for (let i = 0; i < starArr.length; i++) {
 					const recognizeRate = self.recognize(starArr[i], geoParams)
-					if (recognizeRate > 0.1) {
+					if (recognizeRate > 0.3) {
 						recognizeAttrStr += baseAttrArr[i]
 					}
 				}
@@ -610,7 +611,7 @@ class PandaOwnerController {
         	// TODO 获取概率
         	// if (true) {
         	// console.log('caclIgnoreProduct:', self.caclIgnoreProduct(proCount, attrArr[proAttr]))
-        	if (Math.random() < self.caclIgnoreProduct(proCount, attrArr[proAttr])) {
+        	if (Math.random() < self.caclIgnoreProduct(proCount, attrArr[proAttr], bamboo)) {
         		saveProRes.push(pro[LandProductServerModel.productId.label])
         		// 当已有商品碎片为2时，landproduct表中对应leftCount应减去一个
         		if (proCount === 2) {
@@ -738,10 +739,10 @@ class PandaOwnerController {
 	/**
 	 * 计算呜喏的识别商品程度 caclIgnoreProduct
 	 */
-	caclIgnoreProduct (count, attrRate) {
-		if (count === 0) return 0.6
-		if (count === 1) return 0.3
-		if (count === 2) return attrRate / 100
+	caclIgnoreProduct (count, attrRate, bamboo) {
+		if (count === 0) return 0.6 * ((bamboo / 1000) > 1 ? 1: (bamboo / 1000))
+		if (count === 1) return 0.3 * ((bamboo / 1500) > 1 ? 1: (bamboo / 1500))
+		if (count === 2) return (attrRate / 100) * ((bamboo / 2500) > 1 ? 1: (bamboo / 2500))
 		if (count >= 3) return 0
 	}
 
