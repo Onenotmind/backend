@@ -65,9 +65,8 @@ class PandaOwnerController {
 		// 系统每四小时生成一只呜喏 genePandaBySystem
 		setInterval(async () => {
 			const pandaInfo = this.genePandaInfo('WUNOLAND')
-			console.log('pandaInfo', pandaInfo)
 			await pandaOwnerModel.genePanda(...pandaInfo, 'sold', 500)
-		}, 1000)
+		}, 60 * 1000 * 30)
 	}
 
 	// 根据熊猫基因查询熊猫
